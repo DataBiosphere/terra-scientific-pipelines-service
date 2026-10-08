@@ -4,10 +4,15 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.common.utils.QuotaAllocationSourceEnum;
+import bio.terra.pipelines.common.utils.QuotaAllocationStatusEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
 import bio.terra.pipelines.db.entities.UserQuota;
+import bio.terra.pipelines.db.entities.UserQuotaAllocation;
+import bio.terra.pipelines.db.repositories.UserQuotaAllocationsRepository;
 import bio.terra.pipelines.db.repositories.UserQuotasRepository;
 import bio.terra.pipelines.model.PipelineQuota;
+import bio.terra.pipelines.model.UserQuotaTotals;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,12 +24,16 @@ import org.springframework.stereotype.Service;
 public class QuotasService {
   private static final Logger logger = LoggerFactory.getLogger(QuotasService.class);
   private final UserQuotasRepository userQuotasRepository;
+  private final UserQuotaAllocationsRepository userQuotaAllocationsRepository;
   private final PipelineConfigurations pipelineConfigurations;
 
   @Autowired
   QuotasService(
-      UserQuotasRepository userQuotasRepository, PipelineConfigurations pipelineConfigurations) {
+      UserQuotasRepository userQuotasRepository,
+      UserQuotaAllocationsRepository userQuotaAllocationsRepository,
+      PipelineConfigurations pipelineConfigurations) {
     this.userQuotasRepository = userQuotasRepository;
+    this.userQuotaAllocationsRepository = userQuotaAllocationsRepository;
     this.pipelineConfigurations = pipelineConfigurations;
   }
 
@@ -156,5 +165,79 @@ public class QuotasService {
                   + "Please visit https://services.terra.bio/pipelines/quotas to purchase additional quota.")
               .formatted(availableUserQuota, minQuotaNeededByPipeline));
     }
+  }
+
+  /**
+   * This method validates the request to update a user's quota allocation
+   *
+   * @param userId - the user id
+   * @param pipelineName - the pipeline name
+   * @param quotaSource - the source of the quota allocation
+   * @param amount - the amount of quota to allocate
+   */
+  public void validateUpdateQuotaRequest(
+      String userId,
+      PipelinesEnum pipelineName,
+      QuotaAllocationSourceEnum quotaSource,
+      int amount) {
+    if (amount <= 0) {
+      throw new BadRequestException(
+          "Quota amount to allocate must be positive, was %d".formatted(amount));
+    }
+
+    // user can only have one DEFAULT_FREE allocation per pipeline, so check if one already exists
+    if (quotaSource == QuotaAllocationSourceEnum.DEFAULT_FREE) {
+      Optional<UserQuotaAllocation> existingAllocation =
+          userQuotaAllocationsRepository.findByUserIdAndPipelineNameAndQuotaSource(
+              userId, pipelineName, quotaSource);
+      if (existingAllocation.isPresent()) {
+        throw new BadRequestException(
+            "User already has a DEFAULT_FREE quota allocation for pipeline %s"
+                .formatted(pipelineName));
+      }
+    }
+  }
+
+  /**
+   * This method creates a new quota allocation for a given user and pipeline, tagged with the given
+   * source
+   *
+   * @param userId - the user id
+   * @param pipelineName - the pipeline name
+   * @param quotaSource - the source this quota allocation should be attributed to
+   * @param amount - the amount of quota to allocate
+   * @param comments - optional comments to record on the allocation for the audit trail
+   * @return - the newly created quota allocation
+   */
+  public UserQuotaAllocation allocateQuotaForUserAndPipeline(
+      String userId,
+      PipelinesEnum pipelineName,
+      QuotaAllocationSourceEnum quotaSource,
+      int amount,
+      String comments) {
+    UserQuotaAllocation newAllocation =
+        new UserQuotaAllocation(
+            pipelineName,
+            userId,
+            quotaSource,
+            amount,
+            0,
+            QuotaAllocationStatusEnum.ACTIVE,
+            comments);
+    return userQuotaAllocationsRepository.save(newAllocation);
+  }
+
+  /**
+   * This method returns the total quota allocated and total quota consumed for a given user and
+   * pipeline, computed by aggregating across all the user's allocations for that pipeline.
+   *
+   * @param userId - the user id
+   * @param pipelineName - the pipeline name
+   * @return - the user's total quota allocated and consumed for the pipeline
+   */
+  public UserQuotaTotals getQuotaTotalsForUserAndPipeline(
+      String userId, PipelinesEnum pipelineName) {
+    return userQuotaAllocationsRepository.sumQuotaTotalsByUserIdAndPipelineName(
+        userId, pipelineName);
   }
 }
