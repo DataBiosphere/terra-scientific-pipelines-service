@@ -12,8 +12,8 @@ import org.hibernate.annotations.SourceType;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "user_quota_allocation_deductions")
-public class UserQuotaAllocationDeduction {
+@Table(name = "quota_allocation_deductions")
+public class QuotaAllocationDeduction {
   @Id
   @Column(name = "id", nullable = false)
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,7 +35,7 @@ public class UserQuotaAllocationDeduction {
   @CreationTimestamp(source = SourceType.DB)
   private Instant created;
 
-  public UserQuotaAllocationDeduction(
+  public QuotaAllocationDeduction(
       Long userQuotaAllocationId, Long pipelineRunId, int amount, String comments) {
     this.userQuotaAllocationId = userQuotaAllocationId;
     this.pipelineRunId = pipelineRunId;
