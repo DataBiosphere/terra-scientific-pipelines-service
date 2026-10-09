@@ -46,10 +46,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
@@ -773,73 +777,6 @@ class AdminApiControllerTest {
     }
 
     @Test
-    void allocateQuotaRequireOperationType() throws Exception {
-      MvcResult result =
-          mockMvc
-              .perform(
-                  patch(
-                          String.format(
-                              "/api/admin/v3/quotas/%s/%s",
-                              PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
-                              TEST_SAM_USER.getEmail()))
-                      .contentType(MediaType.APPLICATION_JSON)
-                      .content("{\"quotaSource\": \"EXTERNAL_PAID\", \"amount\": 500}"))
-              .andExpect(status().isBadRequest())
-              .andReturn();
-
-      // verify that the error message contains the expected text
-      String responseContent = result.getResponse().getContentAsString();
-      assertTrue(responseContent.contains("operationType must not be null"));
-
-      verifyNoInteractions(quotasServiceMock);
-    }
-
-    @Test
-    void allocateQuotaRequireQuotaSource() throws Exception {
-      MvcResult result =
-          mockMvc
-              .perform(
-                  patch(
-                          String.format(
-                              "/api/admin/v3/quotas/%s/%s",
-                              PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
-                              TEST_SAM_USER.getEmail()))
-                      .contentType(MediaType.APPLICATION_JSON)
-                      .content("{\"operationType\": \"ALLOCATE\", \"amount\": 500}"))
-              .andExpect(status().isBadRequest())
-              .andReturn();
-
-      // verify that the error message contains the expected text
-      String responseContent = result.getResponse().getContentAsString();
-      assertTrue(responseContent.contains("quotaSource must not be null"));
-
-      verifyNoInteractions(quotasServiceMock);
-    }
-
-    @Test
-    void allocateQuotaRequireAmount() throws Exception {
-      MvcResult result =
-          mockMvc
-              .perform(
-                  patch(
-                          String.format(
-                              "/api/admin/v3/quotas/%s/%s",
-                              PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
-                              TEST_SAM_USER.getEmail()))
-                      .contentType(MediaType.APPLICATION_JSON)
-                      .content(
-                          "{\"operationType\": \"ALLOCATE\", \"quotaSource\": \"EXTERNAL_PAID\"}"))
-              .andExpect(status().isBadRequest())
-              .andReturn();
-
-      // verify that the error message contains the expected text
-      String responseContent = result.getResponse().getContentAsString();
-      assertTrue(responseContent.contains("amount must not be null"));
-
-      verifyNoInteractions(quotasServiceMock);
-    }
-
-    @Test
     void allocateQuotaAmountMustBePositive() throws Exception {
       String userEmail = TEST_SAM_USER.getEmail();
       when(samServiceMock.getUserIdFromEmail(testUser, userEmail))
@@ -895,6 +832,45 @@ class AdminApiControllerTest {
           .andExpect(status().isBadRequest());
 
       verify(quotasServiceMock, never()).getQuotaTotalsForUserAndPipeline(any(), any());
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideInvalidQuotaPayloads")
+    void allocateQuotaMissingRequiredFields(String requestBody, String expectedErrorMessage)
+        throws Exception {
+      MvcResult result =
+          mockMvc
+              .perform(
+                  patch(
+                          String.format(
+                              "/api/admin/v3/quotas/%s/%s",
+                              PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
+                              TEST_SAM_USER.getEmail()))
+                      .contentType(MediaType.APPLICATION_JSON)
+                      .content(requestBody))
+              .andExpect(status().isBadRequest())
+              .andReturn();
+
+      // verify that the error message contains the expected text
+      String responseContent = result.getResponse().getContentAsString();
+      assertTrue(responseContent.contains(expectedErrorMessage));
+
+      verifyNoInteractions(quotasServiceMock);
+    }
+
+    private static Stream<Arguments> provideInvalidQuotaPayloads() {
+      return Stream.of(
+          // Missing operationType
+          Arguments.of(
+              "{\"quotaSource\": \"EXTERNAL_PAID\", \"amount\": 500}",
+              "operationType must not be null"),
+          // Missing quotaSource
+          Arguments.of(
+              "{\"operationType\": \"ALLOCATE\", \"amount\": 500}", "quotaSource must not be null"),
+          // Missing amount
+          Arguments.of(
+              "{\"operationType\": \"ALLOCATE\", \"quotaSource\": \"EXTERNAL_PAID\"}",
+              "amount must not be null"));
     }
   }
 

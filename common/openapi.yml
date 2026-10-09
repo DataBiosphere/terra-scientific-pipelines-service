@@ -1,3 +1,5 @@
+# Teaspoons API schema definitions
+# Note: Schemas are organized alphabetically within each section below
 openapi: 3.0.3
 info:
   title: Terra Scientific Pipelines Service
@@ -830,6 +832,26 @@ components:
         quotaConsumed:
           $ref: "#/components/schemas/QuotaConsumed"
 
+    AdminUpdateQuotaRequestBodyV3:
+      description: |
+        json object containing the admin provided information used to update a user's quota.
+        Currently only the ALLOCATE operation is supported, which creates a new quota
+        allocation for the user and pipeline.
+      type: object
+      required: [ operationType, quotaSource, amount ]
+      properties:
+        operationType:
+          description: The type of quota update operation to perform
+          type: string
+          enum: [ 'ALLOCATE' ]
+        quotaSource:
+          $ref: "#/components/schemas/QuotaAllocationSource"
+        amount:
+          description: Amount of quota to allocate
+          type: integer
+        comments:
+          $ref: "#/components/schemas/QuotaComments"
+
     AgreeToTerms:
       description: |
         Whether the user agrees to the terms of service for running pipelines.
@@ -1430,9 +1452,16 @@ components:
         - EXTERNAL_PAID
         - INTERNAL_PAID
 
+    QuotaComments:
+      description: |
+        Optional free-text comments for the audit trail
+      type: string
+
     QuotaConsumed:
       description: |
-        Quota consumed by the user, job or an allocation
+        Quota consumed may refer to total quota consumed by a user for a pipeline,
+        quota consumed by a single pipeline run, or quota consumed from a specific
+        quota allocation
       type: integer
 
     QuotaLimit:
@@ -1444,11 +1473,6 @@ components:
       description: |
         Quota remaining for the user and pipeline (quotaLimit - quotaConsumed)
       type: integer
-
-    QuotaComments:
-      description: |
-        Optional free-text comments for the audit trail
-      type: string
 
     QuotaUnits:
       description: |
@@ -1511,26 +1535,6 @@ components:
       properties:
         quotaLimit:
           $ref: "#/components/schemas/QuotaLimit"
-
-    AdminUpdateQuotaRequestBodyV3:
-      description: |
-        json object containing the admin provided information used to update a user's quota.
-        Currently only the ALLOCATE operation is supported, which creates a new quota
-        allocation for the user and pipeline.
-      type: object
-      required: [ operationType, quotaSource, amount ]
-      properties:
-        operationType:
-          description: The type of quota update operation to perform
-          type: string
-          enum: [ 'ALLOCATE' ]
-        quotaSource:
-          $ref: "#/components/schemas/QuotaAllocationSource"
-        amount:
-          description: Amount of quota to allocate
-          type: integer
-        comments:
-          $ref: "#/components/schemas/QuotaComments"
 
     UseResumableUploads:
       type: boolean

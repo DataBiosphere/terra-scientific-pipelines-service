@@ -23,6 +23,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class QuotasService {
   private static final Logger logger = LoggerFactory.getLogger(QuotasService.class);
+  private static final String DEFAULT_FREE_UNIQUE_INDEX_NAME =
+      "idx_quota_allocations_unique_default_free_per_user_pipeline";
   private final UserQuotasRepository userQuotasRepository;
   private final QuotaAllocationsRepository quotaAllocationsRepository;
   private final PipelineConfigurations pipelineConfigurations;
@@ -196,11 +198,13 @@ public class QuotasService {
     try {
       return quotaAllocationsRepository.save(newAllocation);
     } catch (org.springframework.dao.DataIntegrityViolationException e) {
-      // The partial unique index on (user_id, pipeline_name) WHERE quota_source = 'DEFAULT_FREE'
-      // is currently the only constraint that can trigger this for this table.
-      throw new BadRequestException(
-          "User already has a DEFAULT_FREE quota allocation for pipeline %s"
-              .formatted(pipelineName));
+      if (isDefaultFreeUniqueConstraintViolation(e)) {
+        throw new BadRequestException(
+            "User already has a DEFAULT_FREE quota allocation for pipeline %s"
+                .formatted(pipelineName));
+      }
+      // If the exception is not DEFAULT_FREE unique index violation, rethrow it
+      throw e;
     }
   }
 
@@ -215,5 +219,18 @@ public class QuotasService {
   public UserQuotaTotals getQuotaTotalsForUserAndPipeline(
       String userId, PipelinesEnum pipelineName) {
     return quotaAllocationsRepository.sumQuotaTotalsByUserIdAndPipelineName(userId, pipelineName);
+  }
+
+  /**
+   * Checks whether the given exception's root cause was thrown by the partial unique index
+   * enforcing at most one DEFAULT_FREE allocation per user/pipeline.
+   */
+  private boolean isDefaultFreeUniqueConstraintViolation(
+      org.springframework.dao.DataIntegrityViolationException e) {
+    Throwable rootCause = e.getMostSpecificCause();
+    return rootCause instanceof org.postgresql.util.PSQLException psqlException
+        && psqlException.getServerErrorMessage() != null
+        && DEFAULT_FREE_UNIQUE_INDEX_NAME.equals(
+            psqlException.getServerErrorMessage().getConstraint());
   }
 }
