@@ -8,9 +8,14 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.common.utils.QuotaAllocationSourceEnum;
+import bio.terra.pipelines.common.utils.QuotaAllocationStatusEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
+import bio.terra.pipelines.db.entities.QuotaAllocation;
 import bio.terra.pipelines.db.entities.UserQuota;
+import bio.terra.pipelines.db.repositories.QuotaAllocationsRepository;
 import bio.terra.pipelines.db.repositories.UserQuotasRepository;
+import bio.terra.pipelines.model.UserQuotaTotals;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import java.util.ArrayList;
@@ -28,6 +33,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 class QuotasServiceTest extends BaseEmbeddedDbTest {
   @Autowired QuotasService quotasService;
   @Autowired UserQuotasRepository userQuotasRepository;
+  @Autowired QuotaAllocationsRepository quotaAllocationsRepository;
   @Autowired PipelineConfigurations pipelineConfigurations;
 
   @Test
@@ -348,7 +354,9 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   void testRaceConditionRetryReturnsEmpty() {
     // Create a mock repository to simulate the edge case
     UserQuotasRepository mockRepo = mock(UserQuotasRepository.class);
-    QuotasService serviceWithMock = new QuotasService(mockRepo, pipelineConfigurations);
+    QuotaAllocationsRepository mockAllocationsRepo = mock(QuotaAllocationsRepository.class);
+    QuotasService serviceWithMock =
+        new QuotasService(mockRepo, mockAllocationsRepo, pipelineConfigurations);
 
     String userId = "test-user-edge-case-rocket";
     PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
@@ -378,5 +386,146 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     // Verify the retry happened (findByUserIdAndPipelineName called twice)
     verify(mockRepo, times(2)).findByUserIdAndPipelineName(userId, pipeline);
     verify(mockRepo, times(1)).save(any(UserQuota.class));
+  }
+
+  @Test
+  void allocateQuotaForUserAndPipelineOk() {
+    String userId = "i-am-groot";
+    PipelinesEnum pipeline = PipelinesEnum.LOW_PASS_IMPUTATION;
+
+    QuotaAllocation allocation =
+        quotasService.allocateQuotaForUserAndPipeline(
+            userId,
+            pipeline,
+            QuotaAllocationSourceEnum.PRODUCTION_FREE,
+            500,
+            "Additional free quota for testing");
+
+    assertNotNull(allocation.getId());
+    assertEquals(userId, allocation.getUserId());
+    assertEquals(pipeline, allocation.getPipelineName());
+    assertEquals(QuotaAllocationSourceEnum.PRODUCTION_FREE, allocation.getQuotaSource());
+    assertEquals(500, allocation.getQuotaAllocated());
+    assertEquals(0, allocation.getQuotaConsumed());
+    assertEquals(QuotaAllocationStatusEnum.ACTIVE, allocation.getQuotaStatus());
+    assertEquals("Additional free quota for testing", allocation.getComments());
+    assertNotNull(allocation.getCreated());
+    assertNotNull(allocation.getUpdated());
+  }
+
+  @Test
+  void allocateQuotaForUserAndPipelineAllowsNullComments() {
+    QuotaAllocation allocation =
+        quotasService.allocateQuotaForUserAndPipeline(
+            "rocket-raccoon",
+            PipelinesEnum.SV_IMPUTATION,
+            QuotaAllocationSourceEnum.INTERNAL_PAID,
+            500,
+            null);
+
+    assertNotNull(allocation.getId());
+    assertNull(allocation.getComments());
+  }
+
+  @Test
+  void allocateQuotaAllowsMultipleNonDefaultFreeAllocationsOfSameSource() {
+    String userId = "i-am-groot";
+    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
+
+    // the partial unique index only restricts DEFAULT_FREE, so a user can have multiple
+    // EXTERNAL_PAID allocations for the same pipeline
+    QuotaAllocation first =
+        quotasService.allocateQuotaForUserAndPipeline(
+            userId, pipeline, QuotaAllocationSourceEnum.FRIENDS_AND_FAMILY_FREE, 500, null);
+    QuotaAllocation second =
+        quotasService.allocateQuotaForUserAndPipeline(
+            userId, pipeline, QuotaAllocationSourceEnum.EXTERNAL_PAID, 300, "first purchase");
+
+    assertNotEquals(first.getId(), second.getId());
+
+    UserQuotaTotals totals = quotasService.getQuotaTotalsForUserAndPipeline(userId, pipeline);
+    assertEquals(800, totals.totalAllocated());
+    assertEquals(0, totals.totalConsumed());
+  }
+
+  @Test
+  void getQuotaTotalsReturnsZeroWhenNoAllocationsExist() {
+    UserQuotaTotals totals =
+        quotasService.getQuotaTotalsForUserAndPipeline(
+            "groot-has-zero-quota", PipelinesEnum.ARRAY_IMPUTATION);
+
+    assertEquals(0, totals.totalAllocated());
+    assertEquals(0, totals.totalConsumed());
+  }
+
+  @Test
+  void getQuotaTotalsIsScopedToUserAndPipeline() {
+    String userId = "i-am-groot";
+    String otherUserId = "rocket-raccoon";
+
+    quotasService.allocateQuotaForUserAndPipeline(
+        userId, PipelinesEnum.ARRAY_IMPUTATION, QuotaAllocationSourceEnum.DEFAULT_FREE, 2500, null);
+    // same user, different pipeline - should not be included
+    quotasService.allocateQuotaForUserAndPipeline(
+        userId,
+        PipelinesEnum.LOW_PASS_IMPUTATION,
+        QuotaAllocationSourceEnum.DEFAULT_FREE,
+        100,
+        null);
+    // different user, same pipeline - should not be included
+    quotasService.allocateQuotaForUserAndPipeline(
+        otherUserId,
+        PipelinesEnum.ARRAY_IMPUTATION,
+        QuotaAllocationSourceEnum.DEFAULT_FREE,
+        10000,
+        null);
+
+    UserQuotaTotals totals =
+        quotasService.getQuotaTotalsForUserAndPipeline(userId, PipelinesEnum.ARRAY_IMPUTATION);
+    assertEquals(2500, totals.totalAllocated());
+    assertEquals(0, totals.totalConsumed());
+  }
+
+  /**
+   * This test verifies the partial unique index on (user_id, pipeline_name) WHERE quota_source =
+   * 'DEFAULT_FREE' exists and is enforced, and that allocateQuotaForUserAndPipeline surfaces that
+   * violation as a BadRequestException.
+   */
+  @Test
+  void allocateQuotaRejectsDuplicateDefaultFree() {
+    String userId = "i-am-groot";
+    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
+
+    // first DEFAULT_FREE allocation should succeed
+    QuotaAllocation firstAllocation =
+        quotasService.allocateQuotaForUserAndPipeline(
+            userId, pipeline, QuotaAllocationSourceEnum.DEFAULT_FREE, 2500, null);
+    assertNotNull(firstAllocation.getId());
+
+    // a second DEFAULT_FREE allocation for the same user/pipeline should violate the partial
+    // unique index and be translated into a BadRequestException
+    BadRequestException exception =
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                quotasService.allocateQuotaForUserAndPipeline(
+                    userId, pipeline, QuotaAllocationSourceEnum.DEFAULT_FREE, 2500, null));
+
+    assertEquals(
+        "User already has a DEFAULT_FREE quota allocation for pipeline ARRAY_IMPUTATION",
+        exception.getMessage());
+
+    // a non-DEFAULT_FREE allocation for the same user/pipeline is unaffected by the partial index
+    // and should succeed
+    QuotaAllocation secondAllocation =
+        quotasService.allocateQuotaForUserAndPipeline(
+            userId, pipeline, QuotaAllocationSourceEnum.EXTERNAL_PAID, 500, "extra quota");
+    assertNotNull(secondAllocation.getId());
+
+    // only the two successful allocations (DEFAULT_FREE + EXTERNAL_PAID) should have persisted;
+    // the failed duplicate DEFAULT_FREE insert should not have left a row behind
+    UserQuotaTotals totals = quotasService.getQuotaTotalsForUserAndPipeline(userId, pipeline);
+    assertEquals(3000, totals.totalAllocated());
+    assertEquals(0, totals.totalConsumed());
   }
 }

@@ -1,20 +1,25 @@
 package bio.terra.pipelines.app.controller;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.common.utils.QuotaAllocationSourceEnum;
+import bio.terra.pipelines.db.entities.QuotaAllocation;
 import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.api.AdminApi;
 import bio.terra.pipelines.generated.model.*;
 import bio.terra.pipelines.model.Pipeline;
+import bio.terra.pipelines.model.UserQuotaTotals;
 import bio.terra.pipelines.notifications.NotificationService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.service.QuotasService;
 import io.swagger.annotations.Api;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -104,13 +109,7 @@ public class AdminApiController implements AdminApi {
 
     // get userId from Sam using the email address and throw not found error
     // if the user doesn't exist in Sam
-    String userId;
-    try {
-      userId = samService.getUserIdFromEmail(authedUser, userEmail);
-    } catch (bio.terra.common.exception.NotFoundException e) {
-      throw new NotFoundException(
-          String.format("User with email '%s' not found in SAM", userEmail), e);
-    }
+    String userId = getUserId(userEmail, authedUser);
 
     // check if row exists for this user and pipeline. If user does not have a quota row,
     // create one with default quota limit and return it
@@ -120,6 +119,7 @@ public class AdminApiController implements AdminApi {
     return new ResponseEntity<>(userQuotaToApiAdminQuotaV2(userQuota, userEmail), HttpStatus.OK);
   }
 
+  // Note: This will be deprecated in https://broadworkbench.atlassian.net/browse/TSPS-1238
   @Override
   public ResponseEntity<ApiAdminQuotaV2> updateQuotaLimitForPipelineAndUserV2(
       String pipelineName, String userEmail, ApiUpdateQuotaLimitRequestBody body) {
@@ -132,13 +132,7 @@ public class AdminApiController implements AdminApi {
 
     // get userId from Sam using the email address and throw not found error
     // if the user doesn't exist in Sam
-    String userId;
-    try {
-      userId = samService.getUserIdFromEmail(authedUser, userEmail);
-    } catch (bio.terra.common.exception.NotFoundException e) {
-      throw new NotFoundException(
-          String.format("User with email '%s' not found in SAM", userEmail), e);
-    }
+    String userId = getUserId(userEmail, authedUser);
 
     // check if row exists for this user and pipeline. If user does not have a quota row,
     // create one with default quota limit
@@ -168,6 +162,42 @@ public class AdminApiController implements AdminApi {
         userQuotaToApiAdminQuotaV2(updatedUserQuota, userEmail), HttpStatus.OK);
   }
 
+  @Override
+  public ResponseEntity<ApiAdminUpdateQuotaResponseV3> updateQuotaForPipelineAndUserV3(
+      String pipelineName, String userEmail, ApiAdminUpdateQuotaRequestBodyV3 body) {
+    // check if user is an admin
+    final SamUser authedUser = getAuthenticatedInfo();
+    samService.checkAdminAuthz(authedUser);
+
+    PipelinesEnum validatedPipelineName =
+        PipelineApiUtils.validatePipelineName(pipelineName, logger);
+
+    // get userId from Sam using the email address and throw not found error
+    // if the user doesn't exist in Sam
+    String userId = getUserId(userEmail, authedUser);
+
+    // validate the amount
+    int amount = body.getAmount();
+    if (amount <= 0) {
+      throw new BadRequestException(
+          "Quota amount to allocate must be greater than 0, was %d".formatted(amount));
+    }
+
+    QuotaAllocationSourceEnum quotaSource =
+        QuotaAllocationSourceEnum.valueOf(body.getQuotaSource().toString());
+
+    // allocate the quota for the user/pipeline and fetch the user's quota totals for that pipeline
+    QuotaAllocation newAllocation =
+        quotasService.allocateQuotaForUserAndPipeline(
+            userId, validatedPipelineName, quotaSource, amount, body.getComments());
+
+    UserQuotaTotals quotaTotals =
+        quotasService.getQuotaTotalsForUserAndPipeline(userId, validatedPipelineName);
+
+    return new ResponseEntity<>(
+        toApiAdminUpdateQuotaResponseV3(userEmail, newAllocation, quotaTotals), HttpStatus.OK);
+  }
+
   public ApiAdminPipeline pipelineToApiAdminPipeline(Pipeline pipeline) {
     return new ApiAdminPipeline()
         .pipelineName(pipeline.getName().getLowerCaseValue())
@@ -183,6 +213,23 @@ public class AdminApiController implements AdminApi {
         .updated(pipeline.getUpdated().toString());
   }
 
+  /**
+   * Get user ID (subject ID) from user email address via Sam admin API.
+   *
+   * @param authedUser Authenticated Sam user with admin privileges
+   * @param userEmail Email address of the user to look up
+   * @return User's subject ID
+   * @throws bio.terra.common.exception.NotFoundException if user doesn't exist in Sam
+   */
+  private String getUserId(String userEmail, SamUser authedUser) {
+    try {
+      return samService.getUserIdFromEmail(authedUser, userEmail);
+    } catch (bio.terra.common.exception.NotFoundException e) {
+      throw new NotFoundException(
+          String.format("User with email '%s' not found in SAM", userEmail), e);
+    }
+  }
+
   private ApiAdminQuotaV2 userQuotaToApiAdminQuotaV2(UserQuota userQuota, String userEmail) {
     return new ApiAdminQuotaV2()
         .userEmail(userEmail)
@@ -190,5 +237,44 @@ public class AdminApiController implements AdminApi {
         .pipelineName(userQuota.getPipelineName().getLowerCaseValue())
         .quotaLimit(userQuota.getQuota())
         .quotaConsumed(userQuota.getQuotaConsumed());
+  }
+
+  /**
+   * Convert a QuotaAllocation and UserQuotaTotals to an ApiAdminUpdateQuotaResponseV3 object.
+   *
+   * @param userEmail The email of the user for whom the quota was updated.
+   * @param allocation The QuotaAllocation object representing the new allocation.
+   * @param quotaTotals The UserQuotaTotals object representing the user's total quota information.
+   * @return An ApiAdminUpdateQuotaResponseV3 object containing the updated quota information.
+   */
+  private ApiAdminUpdateQuotaResponseV3 toApiAdminUpdateQuotaResponseV3(
+      String userEmail, QuotaAllocation allocation, UserQuotaTotals quotaTotals) {
+    return new ApiAdminUpdateQuotaResponseV3()
+        .userEmail(userEmail)
+        .userId(allocation.getUserId())
+        .pipelineName(allocation.getPipelineName().getLowerCaseValue())
+        .quotaLimit(quotaTotals.totalAllocated())
+        .quotaConsumed(quotaTotals.totalConsumed())
+        .quotaRemaining(quotaTotals.totalAllocated() - quotaTotals.totalConsumed())
+        .allocations(List.of(toApiQuotaAllocation(allocation)));
+  }
+
+  /**
+   * Convert a QuotaAllocation object to an ApiQuotaAllocation object.
+   *
+   * @param allocation The QuotaAllocation object to convert.
+   * @return An ApiQuotaAllocation object representing the same allocation information.
+   */
+  private ApiQuotaAllocation toApiQuotaAllocation(QuotaAllocation allocation) {
+    return new ApiQuotaAllocation()
+        .allocationId(allocation.getId())
+        .quotaSource(ApiQuotaAllocationSource.valueOf(allocation.getQuotaSource().toString()))
+        .quotaAllocated(allocation.getQuotaAllocated())
+        .quotaConsumed(allocation.getQuotaConsumed())
+        .quotaStatus(
+            ApiQuotaAllocation.QuotaStatusEnum.valueOf(allocation.getQuotaStatus().toString()))
+        .comments(allocation.getComments())
+        .created(allocation.getCreated().toString())
+        .updated(allocation.getUpdated().toString());
   }
 }

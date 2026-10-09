@@ -1,3 +1,5 @@
+# Teaspoons API schema definitions
+# Note: Schemas are organized alphabetically within each section below
 openapi: 3.0.3
 info:
   title: Terra Scientific Pipelines Service
@@ -70,6 +72,7 @@ paths:
           $ref: '#/components/responses/PermissionDenied'
         500:
           $ref: '#/components/responses/ServerError'
+    # v2 PATCH endpoint will be deprecated in https://broadworkbench.atlassian.net/browse/TSPS-1238
     patch:
       summary: Update quota limit for a given pipeline and user identified by email
       tags: [ admin ]
@@ -87,6 +90,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdminQuotaV2'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        403:
+          $ref: '#/components/responses/PermissionDenied'
+        500:
+          $ref: '#/components/responses/ServerError'
+
+  /api/admin/v3/quotas/{pipelineName}/{userEmail}:
+    parameters:
+      - $ref: '#/components/parameters/PipelineName'
+      - $ref: '#/components/parameters/UserEmail'
+    patch:
+      summary: Update quota for a given pipeline and user identified by email
+      tags: [ admin ]
+      operationId: updateQuotaForPipelineAndUserV3
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminUpdateQuotaRequestBodyV3'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUpdateQuotaResponseV3'
         400:
           $ref: '#/components/responses/BadRequest'
         403:
@@ -759,6 +790,31 @@ components:
         updated:
           $ref: "#/components/schemas/PipelineRuntimeMetadataUpdated"
 
+    AdminUpdateQuotaResponseV3:
+      description: |
+        Result of a quota update for a user and pipeline. Contains the user's aggregate quota
+        limit, consumed and remaining quota, and the list of allocations created by this update.
+      type: object
+      required: [ userEmail, userId, pipelineName, quotaLimit, quotaConsumed, quotaRemaining, allocations ]
+      properties:
+        userEmail:
+          $ref: "#/components/schemas/UserEmail"
+        userId:
+          $ref: "#/components/schemas/UserId"
+        pipelineName:
+          $ref: "#/components/schemas/PipelineName"
+        quotaLimit:
+          $ref: "#/components/schemas/QuotaLimit"
+        quotaConsumed:
+          $ref: "#/components/schemas/QuotaConsumed"
+        quotaRemaining:
+          $ref: '#/components/schemas/QuotaRemaining'
+        allocations:
+          description: List of allocations created or modified during this update
+          type: array
+          items:
+            $ref: "#/components/schemas/QuotaAllocation"
+
     AdminQuotaV2:
       description: |
         Object containing the use id, pipeline identifier, quota limit, and quota usage of a Pipeline for a user.
@@ -775,6 +831,26 @@ components:
           $ref: "#/components/schemas/QuotaLimit"
         quotaConsumed:
           $ref: "#/components/schemas/QuotaConsumed"
+
+    AdminUpdateQuotaRequestBodyV3:
+      description: |
+        json object containing the admin provided information used to update a user's quota.
+        Currently only the ALLOCATE operation is supported, which creates a new quota
+        allocation for the user and pipeline.
+      type: object
+      required: [ operationType, quotaSource, amount ]
+      properties:
+        operationType:
+          description: The type of quota update operation to perform
+          type: string
+          enum: [ 'ALLOCATE' ]
+        quotaSource:
+          $ref: "#/components/schemas/QuotaAllocationSource"
+        amount:
+          description: Amount of quota to allocate
+          type: integer
+        comments:
+          $ref: "#/components/schemas/QuotaComments"
 
     AgreeToTerms:
       description: |
@@ -1335,14 +1411,67 @@ components:
             additionalProperties:
               type: string
 
+    QuotaAllocation:
+      description: A single quota allocation record
+      type: object
+      required: [ allocationId, quotaSource, quotaAllocated, quotaConsumed, quotaStatus, created, updated ]
+      properties:
+        allocationId:
+          description: Unique identifier for the allocation
+          type: integer
+          format: int64
+        quotaSource:
+          $ref: "#/components/schemas/QuotaAllocationSource"
+        quotaAllocated:
+          description: Quota allocated to the user and pipeline
+          type: integer
+        quotaConsumed:
+          $ref: "#/components/schemas/QuotaConsumed"
+        quotaStatus:
+          description: The status of the quota allocation
+          type: string
+          enum: [ 'ACTIVE', 'EXHAUSTED' ]
+        comments:
+          $ref: "#/components/schemas/QuotaComments"
+        created:
+          description: timestamp when the allocation was created; in ISO-8601 format
+          type: string
+        updated:
+          description: timestamp when the allocation was last updated; in ISO-8601 format
+          type: string
+
+    QuotaAllocationSource:
+      description: Identifies the source of a quota allocation
+      type: string
+      enum:
+        - DEFAULT_FREE
+        - FRIENDS_AND_FAMILY_FREE
+        - DEVELOPMENT_FREE
+        - PRODUCTION_FREE
+        - PRODUCTION_CLIENT_TESTING_FREE
+        - EXTERNAL_PAID
+        - INTERNAL_PAID
+
+    QuotaComments:
+      description: |
+        Optional free-text comments for the audit trail
+      type: string
+
     QuotaConsumed:
       description: |
-        Quota consumed by the user or job
+        Quota consumed may refer to total quota consumed by a user for a pipeline,
+        quota consumed by a single pipeline run, or quota consumed from a specific
+        quota allocation
       type: integer
 
     QuotaLimit:
       description: |
         Maximum allowable quota for the pipeline
+      type: integer
+
+    QuotaRemaining:
+      description: |
+        Quota remaining for the user and pipeline (quotaLimit - quotaConsumed)
       type: integer
 
     QuotaUnits:

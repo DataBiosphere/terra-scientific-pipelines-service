@@ -16,8 +16,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "user_quota_allocations")
-public class UserQuotaAllocation {
+@Table(name = "quota_allocations")
+public class QuotaAllocation {
   @Id
   @Column(name = "id", nullable = false)
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -52,7 +52,7 @@ public class UserQuotaAllocation {
   @Column(name = "comments")
   private String comments;
 
-  public UserQuotaAllocation(
+  public QuotaAllocation(
       PipelinesEnum pipelineName,
       String userId,
       QuotaAllocationSourceEnum quotaSource,
