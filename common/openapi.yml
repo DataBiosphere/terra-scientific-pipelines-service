@@ -1432,7 +1432,7 @@ components:
 
     QuotaConsumed:
       description: |
-        Quota consumed by the user or job
+        Quota consumed by the user, job or an allocation
       type: integer
 
     QuotaLimit:
