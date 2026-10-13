@@ -101,23 +101,23 @@ paths:
     parameters:
       - $ref: '#/components/parameters/PipelineName'
       - $ref: '#/components/parameters/UserEmail'
-    patch:
-      summary: Update quota for a given pipeline and user identified by email
+    post:
+      summary: Allocate quota for a given pipeline and user identified by email
       tags: [ admin ]
-      operationId: updateQuotaForPipelineAndUserV3
+      operationId: allocateQuotaForPipelineAndUser
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AdminUpdateQuotaRequestBodyV3'
+              $ref: '#/components/schemas/AdminAllocateQuotaRequestBody'
       responses:
         200:
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AdminUpdateQuotaResponseV3'
+                $ref: '#/components/schemas/AdminAllocateQuotaResponse'
         400:
           $ref: '#/components/responses/BadRequest'
         403:
@@ -761,6 +761,46 @@ components:
     AnyTypeMapsToJavaObject: {}
 
     # Teaspoons schemas; please keep alphabetized
+    AdminAllocateQuotaRequestBody:
+      description: |
+        json object containing the admin provided information used to allocate quota
+        for a user and pipeline. Creates a new quota allocation for the user and pipeline.
+      type: object
+      required: [ quotaSource, amount, comments ]
+      properties:
+        quotaSource:
+          $ref: "#/components/schemas/QuotaAllocationSource"
+        amount:
+          description: Amount of quota to allocate
+          type: integer
+        comments:
+          $ref: "#/components/schemas/QuotaComments"
+
+    AdminAllocateQuotaResponse:
+      description: |
+        Result of a quota update for a user and pipeline. Contains the user's aggregate quota
+        limit, consumed and remaining quota, and the list of allocations created by this update.
+      type: object
+      required: [ userEmail, userId, pipelineName, quotaLimit, quotaConsumed, quotaRemaining, allocations ]
+      properties:
+        userEmail:
+          $ref: "#/components/schemas/UserEmail"
+        userId:
+          $ref: "#/components/schemas/UserId"
+        pipelineName:
+          $ref: "#/components/schemas/PipelineName"
+        quotaLimit:
+          $ref: "#/components/schemas/QuotaLimit"
+        quotaConsumed:
+          $ref: "#/components/schemas/QuotaConsumed"
+        quotaRemaining:
+          $ref: '#/components/schemas/QuotaRemaining'
+        allocations:
+          description: List of allocations created or modified during this update
+          type: array
+          items:
+            $ref: "#/components/schemas/QuotaAllocation"
+
     AdminPipeline:
       description: |
         Object containing the pipeline identifier, version, display name, description, and control workspace information for a Pipeline.
@@ -790,31 +830,6 @@ components:
         updated:
           $ref: "#/components/schemas/PipelineRuntimeMetadataUpdated"
 
-    AdminUpdateQuotaResponseV3:
-      description: |
-        Result of a quota update for a user and pipeline. Contains the user's aggregate quota
-        limit, consumed and remaining quota, and the list of allocations created by this update.
-      type: object
-      required: [ userEmail, userId, pipelineName, quotaLimit, quotaConsumed, quotaRemaining, allocations ]
-      properties:
-        userEmail:
-          $ref: "#/components/schemas/UserEmail"
-        userId:
-          $ref: "#/components/schemas/UserId"
-        pipelineName:
-          $ref: "#/components/schemas/PipelineName"
-        quotaLimit:
-          $ref: "#/components/schemas/QuotaLimit"
-        quotaConsumed:
-          $ref: "#/components/schemas/QuotaConsumed"
-        quotaRemaining:
-          $ref: '#/components/schemas/QuotaRemaining'
-        allocations:
-          description: List of allocations created or modified during this update
-          type: array
-          items:
-            $ref: "#/components/schemas/QuotaAllocation"
-
     AdminQuotaV2:
       description: |
         Object containing the use id, pipeline identifier, quota limit, and quota usage of a Pipeline for a user.
@@ -831,26 +846,6 @@ components:
           $ref: "#/components/schemas/QuotaLimit"
         quotaConsumed:
           $ref: "#/components/schemas/QuotaConsumed"
-
-    AdminUpdateQuotaRequestBodyV3:
-      description: |
-        json object containing the admin provided information used to update a user's quota.
-        Currently only the ALLOCATE operation is supported, which creates a new quota
-        allocation for the user and pipeline.
-      type: object
-      required: [ operationType, quotaSource, amount ]
-      properties:
-        operationType:
-          description: The type of quota update operation to perform
-          type: string
-          enum: [ 'ALLOCATE' ]
-        quotaSource:
-          $ref: "#/components/schemas/QuotaAllocationSource"
-        amount:
-          description: Amount of quota to allocate
-          type: integer
-        comments:
-          $ref: "#/components/schemas/QuotaComments"
 
     AgreeToTerms:
       description: |
@@ -1454,7 +1449,7 @@ components:
 
     QuotaComments:
       description: |
-        Optional free-text comments for the audit trail
+        Free text comments for the audit trail
       type: string
 
     QuotaConsumed:

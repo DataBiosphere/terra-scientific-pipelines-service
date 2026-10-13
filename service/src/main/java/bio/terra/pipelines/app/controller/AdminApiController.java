@@ -163,8 +163,8 @@ public class AdminApiController implements AdminApi {
   }
 
   @Override
-  public ResponseEntity<ApiAdminUpdateQuotaResponseV3> updateQuotaForPipelineAndUserV3(
-      String pipelineName, String userEmail, ApiAdminUpdateQuotaRequestBodyV3 body) {
+  public ResponseEntity<ApiAdminAllocateQuotaResponse> allocateQuotaForPipelineAndUser(
+      String pipelineName, String userEmail, ApiAdminAllocateQuotaRequestBody body) {
     // check if user is an admin
     final SamUser authedUser = getAuthenticatedInfo();
     samService.checkAdminAuthz(authedUser);
@@ -240,16 +240,16 @@ public class AdminApiController implements AdminApi {
   }
 
   /**
-   * Convert a QuotaAllocation and UserQuotaTotals to an ApiAdminUpdateQuotaResponseV3 object.
+   * Convert a QuotaAllocation and UserQuotaTotals to an ApiAdminAllocateQuotaResponse object.
    *
    * @param userEmail The email of the user for whom the quota was updated.
    * @param allocation The QuotaAllocation object representing the new allocation.
    * @param quotaTotals The UserQuotaTotals object representing the user's total quota information.
-   * @return An ApiAdminUpdateQuotaResponseV3 object containing the updated quota information.
+   * @return An ApiAdminAllocateQuotaResponse object containing the updated quota information.
    */
-  private ApiAdminUpdateQuotaResponseV3 toApiAdminUpdateQuotaResponseV3(
+  private ApiAdminAllocateQuotaResponse toApiAdminUpdateQuotaResponseV3(
       String userEmail, QuotaAllocation allocation, UserQuotaTotals quotaTotals) {
-    return new ApiAdminUpdateQuotaResponseV3()
+    return new ApiAdminAllocateQuotaResponse()
         .userEmail(userEmail)
         .userId(allocation.getUserId())
         .pipelineName(allocation.getPipelineName().getLowerCaseValue())
