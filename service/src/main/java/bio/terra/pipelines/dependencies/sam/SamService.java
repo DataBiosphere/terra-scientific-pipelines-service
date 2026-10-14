@@ -3,6 +3,7 @@ package bio.terra.pipelines.dependencies.sam;
 import bio.terra.common.exception.ErrorReportException;
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.exception.InternalServerErrorException;
+import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.sam.SamRetry;
@@ -143,14 +144,19 @@ public class SamService implements HealthCheck {
    * @return User's subject ID
    * @throws bio.terra.common.exception.NotFoundException if user doesn't exist in Sam
    */
-  public String getUserIdFromEmail(SamUser authenticatedUser, String userEmail) {
-    return executeWithSamRetry(
-        () -> {
-          UserStatus userStatus =
-              samClient
-                  .adminApi(authenticatedUser.getBearerToken().getToken())
-                  .adminGetUserByEmail(userEmail);
-          return userStatus.getUserInfo().getUserSubjectId();
-        });
+  public String getUserIdFromEmailAdmin(SamUser authenticatedUser, String userEmail) {
+    try {
+      return executeWithSamRetry(
+          () -> {
+            UserStatus userStatus =
+                samClient
+                    .adminApi(authenticatedUser.getBearerToken().getToken())
+                    .adminGetUserByEmail(userEmail);
+            return userStatus.getUserInfo().getUserSubjectId();
+          });
+    } catch (NotFoundException e) {
+      throw new NotFoundException(
+          String.format("User with email '%s' not found in Sam", userEmail), e);
+    }
   }
 }

@@ -4,10 +4,15 @@ import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.common.utils.QuotaAllocationSourceEnum;
+import bio.terra.pipelines.common.utils.QuotaAllocationStatusEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
+import bio.terra.pipelines.db.entities.QuotaAllocation;
 import bio.terra.pipelines.db.entities.UserQuota;
+import bio.terra.pipelines.db.repositories.QuotaAllocationsRepository;
 import bio.terra.pipelines.db.repositories.UserQuotasRepository;
 import bio.terra.pipelines.model.PipelineQuota;
+import bio.terra.pipelines.model.UserQuotaTotals;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,13 +23,19 @@ import org.springframework.stereotype.Service;
 @Service
 public class QuotasService {
   private static final Logger logger = LoggerFactory.getLogger(QuotasService.class);
+  private static final String DEFAULT_FREE_UNIQUE_INDEX_NAME =
+      "idx_quota_allocations_unique_default_free_per_user_pipeline";
   private final UserQuotasRepository userQuotasRepository;
+  private final QuotaAllocationsRepository quotaAllocationsRepository;
   private final PipelineConfigurations pipelineConfigurations;
 
   @Autowired
   QuotasService(
-      UserQuotasRepository userQuotasRepository, PipelineConfigurations pipelineConfigurations) {
+      UserQuotasRepository userQuotasRepository,
+      QuotaAllocationsRepository quotaAllocationsRepository,
+      PipelineConfigurations pipelineConfigurations) {
     this.userQuotasRepository = userQuotasRepository;
+    this.quotaAllocationsRepository = quotaAllocationsRepository;
     this.pipelineConfigurations = pipelineConfigurations;
   }
 
@@ -156,5 +167,70 @@ public class QuotasService {
                   + "Please visit https://services.terra.bio/pipelines/quotas to purchase additional quota.")
               .formatted(availableUserQuota, minQuotaNeededByPipeline));
     }
+  }
+
+  /**
+   * This method creates a new quota allocation for a given user and pipeline. It will throw an
+   * exception if the user already has a DEFAULT_FREE quota allocation for the given pipeline
+   *
+   * @param userId - the user id
+   * @param pipelineName - the pipeline name
+   * @param quotaSource - the source this quota allocation should be attributed to
+   * @param amount - the amount of quota to allocate
+   * @param comments - optional comments to record on the allocation for the audit trail
+   * @return - the newly created quota allocation
+   */
+  public QuotaAllocation allocateQuotaForUserAndPipeline(
+      String userId,
+      PipelinesEnum pipelineName,
+      QuotaAllocationSourceEnum quotaSource,
+      int amount,
+      String comments) {
+    QuotaAllocation newAllocation =
+        new QuotaAllocation(
+            pipelineName,
+            userId,
+            quotaSource,
+            amount,
+            0,
+            QuotaAllocationStatusEnum.ACTIVE,
+            comments);
+    try {
+      return quotaAllocationsRepository.save(newAllocation);
+    } catch (org.springframework.dao.DataIntegrityViolationException e) {
+      if (isDefaultFreeUniqueConstraintViolation(e)) {
+        throw new BadRequestException(
+            "User already has a DEFAULT_FREE quota allocation for pipeline %s"
+                .formatted(pipelineName));
+      }
+      // If the exception is not DEFAULT_FREE unique index violation, rethrow it
+      throw e;
+    }
+  }
+
+  /**
+   * This method returns the total quota allocated and total quota consumed for a given user and
+   * pipeline, computed by aggregating across all the user's allocations for that pipeline.
+   *
+   * @param userId - the user id
+   * @param pipelineName - the pipeline name
+   * @return - the user's total quota allocated and consumed for the pipeline
+   */
+  public UserQuotaTotals getQuotaTotalsForUserAndPipeline(
+      String userId, PipelinesEnum pipelineName) {
+    return quotaAllocationsRepository.sumQuotaTotalsByUserIdAndPipelineName(userId, pipelineName);
+  }
+
+  /**
+   * Checks whether the given exception's root cause was thrown by the partial unique index
+   * enforcing at most one DEFAULT_FREE allocation per user/pipeline.
+   */
+  private boolean isDefaultFreeUniqueConstraintViolation(
+      org.springframework.dao.DataIntegrityViolationException e) {
+    Throwable rootCause = e.getMostSpecificCause();
+    return rootCause instanceof org.postgresql.util.PSQLException psqlException
+        && psqlException.getServerErrorMessage() != null
+        && DEFAULT_FREE_UNIQUE_INDEX_NAME.equals(
+            psqlException.getServerErrorMessage().getConstraint());
   }
 }

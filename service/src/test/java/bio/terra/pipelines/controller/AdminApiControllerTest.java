@@ -8,9 +8,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.ForbiddenException;
 import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.iam.BearerTokenFactory;
@@ -20,13 +22,14 @@ import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.app.controller.AdminApiController;
 import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.common.utils.QuotaAllocationSourceEnum;
+import bio.terra.pipelines.common.utils.QuotaAllocationStatusEnum;
+import bio.terra.pipelines.db.entities.QuotaAllocation;
 import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.dependencies.sam.SamService;
-import bio.terra.pipelines.generated.model.ApiAdminPipeline;
-import bio.terra.pipelines.generated.model.ApiAdminQuotaV2;
-import bio.terra.pipelines.generated.model.ApiUpdatePipelineRequestBody;
-import bio.terra.pipelines.generated.model.ApiUpdateQuotaLimitRequestBody;
+import bio.terra.pipelines.generated.model.*;
 import bio.terra.pipelines.model.Pipeline;
+import bio.terra.pipelines.model.UserQuotaTotals;
 import bio.terra.pipelines.notifications.NotificationService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.service.QuotasService;
@@ -35,10 +38,15 @@ import bio.terra.pipelines.testutils.TestUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.Instant;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
@@ -319,7 +327,7 @@ class AdminApiControllerTest {
     @Test
     void getUserQuotaOk() throws Exception {
       String userEmail = TEST_SAM_USER.getEmail();
-      when(samServiceMock.getUserIdFromEmail(testUser, userEmail))
+      when(samServiceMock.getUserIdFromEmailAdmin(testUser, userEmail))
           .thenReturn(TEST_SAM_USER.getSubjectId());
       when(quotasServiceMock.getOrCreateQuotaForUserAndPipeline(
               TEST_SAM_USER.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
@@ -365,7 +373,7 @@ class AdminApiControllerTest {
     @Test
     void getAdminQuotaUserNotFoundInSam() throws Exception {
       String userEmail = "nonexistent@example.com";
-      when(samServiceMock.getUserIdFromEmail(testUser, userEmail))
+      when(samServiceMock.getUserIdFromEmailAdmin(testUser, userEmail))
           .thenThrow(new NotFoundException("User not found in SAM"));
 
       mockMvc
@@ -380,7 +388,7 @@ class AdminApiControllerTest {
     @Test
     void getAdminQuotaUserQuotaDoesntExist() throws Exception {
       String userEmail = TEST_SAM_USER.getEmail();
-      when(samServiceMock.getUserIdFromEmail(testUser, userEmail))
+      when(samServiceMock.getUserIdFromEmailAdmin(testUser, userEmail))
           .thenReturn(TEST_SAM_USER.getSubjectId());
 
       // this is to simulate creation of new row in database for a user
@@ -428,7 +436,7 @@ class AdminApiControllerTest {
       UserQuota updatedUserQuota =
           new UserQuota(PipelinesEnum.ARRAY_IMPUTATION, TEST_SAM_USER.getSubjectId(), 800, 0);
 
-      when(samServiceMock.getUserIdFromEmail(testUser, userEmail))
+      when(samServiceMock.getUserIdFromEmailAdmin(testUser, userEmail))
           .thenReturn(TEST_SAM_USER.getSubjectId());
       when(quotasServiceMock.getOrCreateQuotaForUserAndPipeline(
               TEST_SAM_USER.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
@@ -512,7 +520,7 @@ class AdminApiControllerTest {
     @Test
     void updateAdminQuotaUserNotFoundInSam() throws Exception {
       String userEmail = "nonexistent@example.com";
-      when(samServiceMock.getUserIdFromEmail(testUser, userEmail))
+      when(samServiceMock.getUserIdFromEmailAdmin(testUser, userEmail))
           .thenThrow(new NotFoundException("User not found in SAM"));
 
       mockMvc
@@ -534,7 +542,7 @@ class AdminApiControllerTest {
     @Test
     void updateAdminQuotaUserQuotaDoesntExist() throws Exception {
       String userEmail = TEST_SAM_USER.getEmail();
-      when(samServiceMock.getUserIdFromEmail(testUser, userEmail))
+      when(samServiceMock.getUserIdFromEmailAdmin(testUser, userEmail))
           .thenReturn(TEST_SAM_USER.getSubjectId());
 
       // this is to simulate creation of new row in database for a user
@@ -587,6 +595,227 @@ class AdminApiControllerTest {
     }
   }
 
+  @Nested
+  @DisplayName("allocateQuotaForPipelineAndUser tests")
+  class AllocateAdminQuotaTests {
+
+    final String mockComments = "test comments";
+
+    private QuotaAllocation buildTestAllocation(
+        QuotaAllocationSourceEnum quotaSource, int amount, String comments) {
+      QuotaAllocation allocation =
+          new QuotaAllocation(
+              PipelinesEnum.ARRAY_IMPUTATION,
+              TEST_SAM_USER.getSubjectId(),
+              quotaSource,
+              amount,
+              0,
+              QuotaAllocationStatusEnum.ACTIVE,
+              comments);
+      allocation.setId(101L);
+      // set created and updated timestamps to now for testing purposes
+      allocation.setCreated(Instant.now());
+      allocation.setUpdated(Instant.now());
+      return allocation;
+    }
+
+    @Test
+    void allocateQuotaOk() throws Exception {
+      String userEmail = TEST_SAM_USER.getEmail();
+      QuotaAllocation newAllocation =
+          buildTestAllocation(QuotaAllocationSourceEnum.EXTERNAL_PAID, 500, mockComments);
+      UserQuotaTotals quotaTotals = new UserQuotaTotals(4000, 3200);
+
+      when(samServiceMock.getUserIdFromEmailAdmin(testUser, userEmail))
+          .thenReturn(TEST_SAM_USER.getSubjectId());
+      when(quotasServiceMock.allocateQuotaForUserAndPipeline(
+              TEST_SAM_USER.getSubjectId(),
+              PipelinesEnum.ARRAY_IMPUTATION,
+              QuotaAllocationSourceEnum.EXTERNAL_PAID,
+              500,
+              mockComments))
+          .thenReturn(newAllocation);
+      when(quotasServiceMock.getQuotaTotalsForUserAndPipeline(
+              TEST_SAM_USER.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
+          .thenReturn(quotaTotals);
+
+      MvcResult result =
+          mockMvc
+              .perform(
+                  post(String.format(
+                          "/api/admin/v3/quotas/%s/%s",
+                          PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(), userEmail))
+                      .contentType(MediaType.APPLICATION_JSON)
+                      .content(
+                          createTestAllocateQuotaPostBody(
+                              ApiQuotaAllocationSource.EXTERNAL_PAID, 500, mockComments)))
+              .andExpect(status().isOk())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiAdminAllocateQuotaResponse response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiAdminAllocateQuotaResponse.class);
+
+      assertEquals(PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(), response.getPipelineName());
+      assertEquals(TEST_SAM_USER.getSubjectId(), response.getUserId());
+      assertEquals(userEmail, response.getUserEmail());
+      assertEquals(4000, response.getQuotaLimit());
+      assertEquals(3200, response.getQuotaConsumed());
+      assertEquals(800, response.getQuotaRemaining());
+      assertEquals(1, response.getAllocations().size());
+
+      ApiQuotaAllocation allocationResponse = response.getAllocations().get(0);
+      assertEquals(101L, allocationResponse.getAllocationId());
+      assertEquals(ApiQuotaAllocationSource.EXTERNAL_PAID, allocationResponse.getQuotaSource());
+      assertEquals(500, allocationResponse.getQuotaAllocated());
+      assertEquals(0, allocationResponse.getQuotaConsumed());
+      assertEquals(ApiQuotaAllocation.QuotaStatusEnum.ACTIVE, allocationResponse.getQuotaStatus());
+      assertEquals(mockComments, allocationResponse.getComments());
+      assertNotNull(allocationResponse.getCreated());
+      assertNotNull(allocationResponse.getUpdated());
+    }
+
+    @Test
+    void allocateQuotaNotAdminUser() throws Exception {
+      doThrow(new ForbiddenException("Not an admin error"))
+          .when(samServiceMock)
+          .checkAdminAuthz(testUser);
+
+      mockMvc
+          .perform(
+              post(String.format(
+                      "/api/admin/v3/quotas/%s/%s",
+                      PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(), TEST_SAM_USER.getEmail()))
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(
+                      createTestAllocateQuotaPostBody(
+                          ApiQuotaAllocationSource.EXTERNAL_PAID, 500, mockComments)))
+          .andExpect(status().isForbidden());
+
+      verifyNoInteractions(quotasServiceMock);
+    }
+
+    @Test
+    void allocateQuotaUserNotFoundInSam() throws Exception {
+      String userEmail = "nonexistent@example.com";
+      when(samServiceMock.getUserIdFromEmailAdmin(testUser, userEmail))
+          .thenThrow(new NotFoundException("User not found in SAM"));
+
+      mockMvc
+          .perform(
+              post(String.format(
+                      "/api/admin/v3/quotas/%s/%s",
+                      PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(), userEmail))
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(
+                      createTestAllocateQuotaPostBody(
+                          ApiQuotaAllocationSource.EXTERNAL_PAID, 500, mockComments)))
+          .andExpect(status().isNotFound());
+
+      verifyNoInteractions(quotasServiceMock);
+    }
+
+    @Test
+    void allocateQuotaAmountMustBePositive() throws Exception {
+      String userEmail = TEST_SAM_USER.getEmail();
+      when(samServiceMock.getUserIdFromEmailAdmin(testUser, userEmail))
+          .thenReturn(TEST_SAM_USER.getSubjectId());
+
+      MvcResult result =
+          mockMvc
+              .perform(
+                  post(String.format(
+                          "/api/admin/v3/quotas/%s/%s",
+                          PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(), userEmail))
+                      .contentType(MediaType.APPLICATION_JSON)
+                      .content(
+                          createTestAllocateQuotaPostBody(
+                              ApiQuotaAllocationSource.DEVELOPMENT_FREE, 0, mockComments)))
+              .andExpect(status().isBadRequest())
+              .andReturn();
+
+      // verify that the error message contains the expected text
+      String responseContent = result.getResponse().getContentAsString();
+      assertTrue(
+          responseContent.contains("Quota amount to allocate must be greater than 0, was 0"));
+
+      verifyNoInteractions(quotasServiceMock);
+    }
+
+    @Test
+    void allocateQuotaDefaultFreeAlreadyExists() throws Exception {
+      String userEmail = TEST_SAM_USER.getEmail();
+      when(samServiceMock.getUserIdFromEmailAdmin(testUser, userEmail))
+          .thenReturn(TEST_SAM_USER.getSubjectId());
+      when(quotasServiceMock.allocateQuotaForUserAndPipeline(
+              TEST_SAM_USER.getSubjectId(),
+              PipelinesEnum.ARRAY_IMPUTATION,
+              QuotaAllocationSourceEnum.DEFAULT_FREE,
+              2000,
+              mockComments))
+          .thenThrow(
+              new BadRequestException(
+                  "User already has a DEFAULT_FREE quota allocation for pipeline array_imputation"));
+
+      mockMvc
+          .perform(
+              post(String.format(
+                      "/api/admin/v3/quotas/%s/%s",
+                      PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(), userEmail))
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content(
+                      createTestAllocateQuotaPostBody(
+                          ApiQuotaAllocationSource.DEFAULT_FREE, 2000, mockComments)))
+          .andExpect(status().isBadRequest());
+
+      verify(quotasServiceMock, never()).getQuotaTotalsForUserAndPipeline(any(), any());
+    }
+
+    private static Stream<Arguments> provideInvalidQuotaPayloads() {
+      return Stream.of(
+          // Missing quotaSource
+          Arguments.of(
+              "{\"amount\": 500, \"comments\": \"Purchased 500 additional samples\"}",
+              "quotaSource must not be null"),
+          // Missing amount
+          Arguments.of(
+              "{\"quotaSource\": \"EXTERNAL_PAID\", \"comments\": \"Purchased 500 additional samples\"}",
+              "amount must not be null"),
+          // Missing comments
+          Arguments.of(
+              "{\"quotaSource\": \"EXTERNAL_PAID\", \"amount\": 500}", "comments must not be null"),
+          // Incorrect quotaSource type
+          Arguments.of(
+              "{\"quotaSource\": \"DEVELOPMENT\", \"amount\": 500, \"comments\": \"Purchased 500 additional samples\"}",
+              "Cannot construct instance of `bio.terra.pipelines.generated.model.ApiQuotaAllocationSource`, problem: Unexpected value 'DEVELOPMENT'"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideInvalidQuotaPayloads")
+    void allocateQuotaMissingRequiredFields(String requestBody, String expectedErrorMessage)
+        throws Exception {
+      MvcResult result =
+          mockMvc
+              .perform(
+                  post(String.format(
+                          "/api/admin/v3/quotas/%s/%s",
+                          PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
+                          TEST_SAM_USER.getEmail()))
+                      .contentType(MediaType.APPLICATION_JSON)
+                      .content(requestBody))
+              .andExpect(status().isBadRequest())
+              .andReturn();
+
+      // verify that the error message contains the expected text
+      String responseContent = result.getResponse().getContentAsString();
+      assertTrue(responseContent.contains(expectedErrorMessage));
+
+      verifyNoInteractions(quotasServiceMock);
+    }
+  }
+
   private String createTestJobPostBody(
       String workspaceBillingProject, String workspaceName, String toolVersion, Boolean isHidden)
       throws JsonProcessingException {
@@ -603,5 +832,16 @@ class AdminApiControllerTest {
     ApiUpdateQuotaLimitRequestBody apiUpdateQuotaLimitRequestBody =
         new ApiUpdateQuotaLimitRequestBody().quotaLimit(quotaLimit);
     return MockMvcUtils.convertToJsonString(apiUpdateQuotaLimitRequestBody);
+  }
+
+  private String createTestAllocateQuotaPostBody(
+      ApiQuotaAllocationSource quotaSource, int amount, String comments)
+      throws JsonProcessingException {
+    ApiAdminAllocateQuotaRequestBody requestBody =
+        new ApiAdminAllocateQuotaRequestBody()
+            .quotaSource(quotaSource)
+            .amount(amount)
+            .comments(comments);
+    return MockMvcUtils.convertToJsonString(requestBody);
   }
 }

@@ -1,0 +1,43 @@
+# rename user_quota_allocations to quota_allocations and add a partial unique index
+# enforcing at most one DEFAULT_FREE allocation per user/pipeline
+databaseChangeLog:
+  - changeSet:
+      id: rename-user-quota-allocations_table-and-add-unique-index
+      author: sshah
+      changes:
+        - renameTable:
+            oldTableName: user_quota_allocations
+            newTableName: quota_allocations
+
+        - sql:
+            dbms: 'postgresql'
+            sql: >
+              ALTER TABLE quota_allocations                                                                                                                                       
+              RENAME CONSTRAINT user_quota_allocations_pkey TO quota_allocations_pkey;
+
+        - sql:
+            dbms: 'postgresql'
+            sql: >
+              ALTER INDEX idx_user_quota_allocations_pipeline_name_user_id
+              RENAME TO idx_quota_allocations_pipeline_name_user_id;
+
+        - sql:
+            dbms: 'postgresql'
+            sql: >
+              ALTER FUNCTION public.user_quota_allocations_updated_timestamp()
+              RENAME TO quota_allocations_updated_timestamp;
+
+        - sql:
+            dbms: 'postgresql'
+            sql: >
+              ALTER TRIGGER user_quota_allocations_updated_trigger
+              ON public.quota_allocations
+              RENAME TO quota_allocations_updated_trigger;
+
+        # Partial unique index: a user can have at most one DEFAULT_FREE allocation per pipeline
+        - sql:
+            dbms: 'postgresql'
+            sql: >
+              CREATE UNIQUE INDEX idx_quota_allocations_unique_default_free_per_user_pipeline
+              ON public.quota_allocations (user_id, pipeline_name)
+              WHERE quota_source = 'DEFAULT_FREE';

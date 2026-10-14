@@ -186,7 +186,7 @@ class SamServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void getUserIdFromEmailOk() throws ApiException {
+  void getUserIdFromEmailAdminOk() throws ApiException {
     AdminApi adminApi = mock(AdminApi.class);
 
     String adminToken = "adminToken";
@@ -204,13 +204,13 @@ class SamServiceTest extends BaseEmbeddedDbTest {
 
     SamUser adminUser =
         new SamUser("rocketraccoon@gmail.com", "admin-subject-id", new BearerToken(adminToken));
-    String actualUserId = samService.getUserIdFromEmail(adminUser, targetUserEmail);
+    String actualUserId = samService.getUserIdFromEmailAdmin(adminUser, targetUserEmail);
 
     assertEquals(expectedUserId, actualUserId);
   }
 
   @Test
-  void getUserIdFromEmailUserNotFound() throws ApiException {
+  void getUserIdFromEmailUserNotFoundAdmin() throws ApiException {
     AdminApi adminApi = mock(AdminApi.class);
 
     String adminToken = "adminToken";
@@ -224,6 +224,7 @@ class SamServiceTest extends BaseEmbeddedDbTest {
         new SamUser("rocketraccoon@gmail.com", "admin-subject-id", new BearerToken(adminToken));
 
     assertThrows(
-        NotFoundException.class, () -> samService.getUserIdFromEmail(adminUser, targetUserEmail));
+        NotFoundException.class,
+        () -> samService.getUserIdFromEmailAdmin(adminUser, targetUserEmail));
   }
 }

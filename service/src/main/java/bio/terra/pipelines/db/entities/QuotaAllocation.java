@@ -16,8 +16,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "user_quota_allocations")
-public class UserQuotaAllocation {
+@Table(name = "quota_allocations")
+public class QuotaAllocation {
   @Id
   @Column(name = "id", nullable = false)
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -49,10 +49,13 @@ public class UserQuotaAllocation {
   @UpdateTimestamp(source = SourceType.DB)
   private Instant updated;
 
+  // Note: `comments` column is nullable at the DB/entity level, but `comments` is required
+  // for the admin POST endpoint. This is to support not needing comments for all allocations,
+  // especially those that are system generated like DEFAULT_FREE allocations.
   @Column(name = "comments")
   private String comments;
 
-  public UserQuotaAllocation(
+  public QuotaAllocation(
       PipelinesEnum pipelineName,
       String userId,
       QuotaAllocationSourceEnum quotaSource,
