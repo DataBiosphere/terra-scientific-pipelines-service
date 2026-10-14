@@ -1,7 +1,6 @@
 package bio.terra.pipelines.app.controller;
 
 import bio.terra.common.exception.BadRequestException;
-import bio.terra.common.exception.NotFoundException;
 import bio.terra.common.iam.SamUser;
 import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
@@ -109,7 +108,7 @@ public class AdminApiController implements AdminApi {
 
     // get userId from Sam using the email address and throw not found error
     // if the user doesn't exist in Sam
-    String userId = getUserId(userEmail, authedUser);
+    String userId = samService.getUserIdFromEmail(authedUser, userEmail);
 
     // check if row exists for this user and pipeline. If user does not have a quota row,
     // create one with default quota limit and return it
@@ -132,7 +131,7 @@ public class AdminApiController implements AdminApi {
 
     // get userId from Sam using the email address and throw not found error
     // if the user doesn't exist in Sam
-    String userId = getUserId(userEmail, authedUser);
+    String userId = samService.getUserIdFromEmail(authedUser, userEmail);
 
     // check if row exists for this user and pipeline. If user does not have a quota row,
     // create one with default quota limit
@@ -174,7 +173,7 @@ public class AdminApiController implements AdminApi {
 
     // get userId from Sam using the email address and throw not found error
     // if the user doesn't exist in Sam
-    String userId = getUserId(userEmail, authedUser);
+    String userId = samService.getUserIdFromEmail(authedUser, userEmail);
 
     // validate the amount
     int amount = body.getAmount();
@@ -211,23 +210,6 @@ public class AdminApiController implements AdminApi {
         .workspaceGoogleProject(pipeline.getWorkspaceGoogleProject())
         .toolVersion(pipeline.getToolVersion())
         .updated(pipeline.getUpdated().toString());
-  }
-
-  /**
-   * Get user ID (subject ID) from user email address via Sam admin API.
-   *
-   * @param authedUser Authenticated Sam user with admin privileges
-   * @param userEmail Email address of the user to look up
-   * @return User's subject ID
-   * @throws bio.terra.common.exception.NotFoundException if user doesn't exist in Sam
-   */
-  private String getUserId(String userEmail, SamUser authedUser) {
-    try {
-      return samService.getUserIdFromEmail(authedUser, userEmail);
-    } catch (bio.terra.common.exception.NotFoundException e) {
-      throw new NotFoundException(
-          String.format("User with email '%s' not found in SAM", userEmail), e);
-    }
   }
 
   private ApiAdminQuotaV2 userQuotaToApiAdminQuotaV2(UserQuota userQuota, String userEmail) {
