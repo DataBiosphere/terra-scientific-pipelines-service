@@ -436,10 +436,10 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     // EXTERNAL_PAID allocations for the same pipeline
     QuotaAllocation first =
         quotasService.allocateQuotaForUserAndPipeline(
-            userId, pipeline, QuotaAllocationSourceEnum.FRIENDS_AND_FAMILY_FREE, 500, null);
+            userId, pipeline, QuotaAllocationSourceEnum.EXTERNAL_PAID, 500, "first purchase");
     QuotaAllocation second =
         quotasService.allocateQuotaForUserAndPipeline(
-            userId, pipeline, QuotaAllocationSourceEnum.EXTERNAL_PAID, 300, "first purchase");
+            userId, pipeline, QuotaAllocationSourceEnum.EXTERNAL_PAID, 300, "second purchase");
 
     assertNotEquals(first.getId(), second.getId());
 

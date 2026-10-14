@@ -108,7 +108,7 @@ public class AdminApiController implements AdminApi {
 
     // get userId from Sam using the email address and throw not found error
     // if the user doesn't exist in Sam
-    String userId = samService.getUserIdFromEmail(authedUser, userEmail);
+    String userId = samService.getUserIdFromEmailAdmin(authedUser, userEmail);
 
     // check if row exists for this user and pipeline. If user does not have a quota row,
     // create one with default quota limit and return it
@@ -131,7 +131,7 @@ public class AdminApiController implements AdminApi {
 
     // get userId from Sam using the email address and throw not found error
     // if the user doesn't exist in Sam
-    String userId = samService.getUserIdFromEmail(authedUser, userEmail);
+    String userId = samService.getUserIdFromEmailAdmin(authedUser, userEmail);
 
     // check if row exists for this user and pipeline. If user does not have a quota row,
     // create one with default quota limit
@@ -173,7 +173,7 @@ public class AdminApiController implements AdminApi {
 
     // get userId from Sam using the email address and throw not found error
     // if the user doesn't exist in Sam
-    String userId = samService.getUserIdFromEmail(authedUser, userEmail);
+    String userId = samService.getUserIdFromEmailAdmin(authedUser, userEmail);
 
     // validate the amount
     int amount = body.getAmount();

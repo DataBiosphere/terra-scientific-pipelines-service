@@ -769,12 +769,12 @@ components:
       required: [ quotaSource, amount, comments ]
       properties:
         quotaSource:
-          $ref: "#/components/schemas/QuotaAllocationSource"
+          $ref: '#/components/schemas/QuotaAllocationSource'
         amount:
           description: Amount of quota to allocate
           type: integer
         comments:
-          $ref: "#/components/schemas/QuotaComments"
+          $ref: '#/components/schemas/QuotaComments'
 
     AdminAllocateQuotaResponse:
       description: |
@@ -784,22 +784,22 @@ components:
       required: [ userEmail, userId, pipelineName, quotaLimit, quotaConsumed, quotaRemaining, allocations ]
       properties:
         userEmail:
-          $ref: "#/components/schemas/UserEmail"
+          $ref: '#/components/schemas/UserEmail'
         userId:
-          $ref: "#/components/schemas/UserId"
+          $ref: '#/components/schemas/UserId'
         pipelineName:
-          $ref: "#/components/schemas/PipelineName"
+          $ref: '#/components/schemas/PipelineName'
         quotaLimit:
-          $ref: "#/components/schemas/QuotaLimit"
+          $ref: '#/components/schemas/QuotaLimit'
         quotaConsumed:
-          $ref: "#/components/schemas/QuotaConsumed"
+          $ref: '#/components/schemas/QuotaConsumed'
         quotaRemaining:
           $ref: '#/components/schemas/QuotaRemaining'
         allocations:
           description: List of allocations created or modified during this update
           type: array
           items:
-            $ref: "#/components/schemas/QuotaAllocation"
+            $ref: '#/components/schemas/QuotaAllocation'
 
     AdminPipeline:
       description: |
@@ -1416,18 +1416,18 @@ components:
           type: integer
           format: int64
         quotaSource:
-          $ref: "#/components/schemas/QuotaAllocationSource"
+          $ref: '#/components/schemas/QuotaAllocationSource'
         quotaAllocated:
           description: Quota allocated to the user and pipeline
           type: integer
         quotaConsumed:
-          $ref: "#/components/schemas/QuotaConsumed"
+          $ref: '#/components/schemas/QuotaConsumed'
         quotaStatus:
           description: The status of the quota allocation
           type: string
           enum: [ 'ACTIVE', 'EXHAUSTED' ]
         comments:
-          $ref: "#/components/schemas/QuotaComments"
+          $ref: '#/components/schemas/QuotaComments'
         created:
           description: timestamp when the allocation was created; in ISO-8601 format
           type: string

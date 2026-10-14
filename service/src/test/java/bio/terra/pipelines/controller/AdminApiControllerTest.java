@@ -327,7 +327,7 @@ class AdminApiControllerTest {
     @Test
     void getUserQuotaOk() throws Exception {
       String userEmail = TEST_SAM_USER.getEmail();
-      when(samServiceMock.getUserIdFromEmail(testUser, userEmail))
+      when(samServiceMock.getUserIdFromEmailAdmin(testUser, userEmail))
           .thenReturn(TEST_SAM_USER.getSubjectId());
       when(quotasServiceMock.getOrCreateQuotaForUserAndPipeline(
               TEST_SAM_USER.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
@@ -373,7 +373,7 @@ class AdminApiControllerTest {
     @Test
     void getAdminQuotaUserNotFoundInSam() throws Exception {
       String userEmail = "nonexistent@example.com";
-      when(samServiceMock.getUserIdFromEmail(testUser, userEmail))
+      when(samServiceMock.getUserIdFromEmailAdmin(testUser, userEmail))
           .thenThrow(new NotFoundException("User not found in SAM"));
 
       mockMvc
@@ -388,7 +388,7 @@ class AdminApiControllerTest {
     @Test
     void getAdminQuotaUserQuotaDoesntExist() throws Exception {
       String userEmail = TEST_SAM_USER.getEmail();
-      when(samServiceMock.getUserIdFromEmail(testUser, userEmail))
+      when(samServiceMock.getUserIdFromEmailAdmin(testUser, userEmail))
           .thenReturn(TEST_SAM_USER.getSubjectId());
 
       // this is to simulate creation of new row in database for a user
@@ -436,7 +436,7 @@ class AdminApiControllerTest {
       UserQuota updatedUserQuota =
           new UserQuota(PipelinesEnum.ARRAY_IMPUTATION, TEST_SAM_USER.getSubjectId(), 800, 0);
 
-      when(samServiceMock.getUserIdFromEmail(testUser, userEmail))
+      when(samServiceMock.getUserIdFromEmailAdmin(testUser, userEmail))
           .thenReturn(TEST_SAM_USER.getSubjectId());
       when(quotasServiceMock.getOrCreateQuotaForUserAndPipeline(
               TEST_SAM_USER.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
@@ -520,7 +520,7 @@ class AdminApiControllerTest {
     @Test
     void updateAdminQuotaUserNotFoundInSam() throws Exception {
       String userEmail = "nonexistent@example.com";
-      when(samServiceMock.getUserIdFromEmail(testUser, userEmail))
+      when(samServiceMock.getUserIdFromEmailAdmin(testUser, userEmail))
           .thenThrow(new NotFoundException("User not found in SAM"));
 
       mockMvc
@@ -542,7 +542,7 @@ class AdminApiControllerTest {
     @Test
     void updateAdminQuotaUserQuotaDoesntExist() throws Exception {
       String userEmail = TEST_SAM_USER.getEmail();
-      when(samServiceMock.getUserIdFromEmail(testUser, userEmail))
+      when(samServiceMock.getUserIdFromEmailAdmin(testUser, userEmail))
           .thenReturn(TEST_SAM_USER.getSubjectId());
 
       // this is to simulate creation of new row in database for a user
@@ -599,6 +599,8 @@ class AdminApiControllerTest {
   @DisplayName("allocateQuotaForPipelineAndUser tests")
   class AllocateAdminQuotaTests {
 
+    final String mockComments = "test comments";
+
     private QuotaAllocation buildTestAllocation(
         QuotaAllocationSourceEnum quotaSource, int amount, String comments) {
       QuotaAllocation allocation =
@@ -621,18 +623,17 @@ class AdminApiControllerTest {
     void allocateQuotaOk() throws Exception {
       String userEmail = TEST_SAM_USER.getEmail();
       QuotaAllocation newAllocation =
-          buildTestAllocation(
-              QuotaAllocationSourceEnum.EXTERNAL_PAID, 500, "Purchased 500 additional samples");
+          buildTestAllocation(QuotaAllocationSourceEnum.EXTERNAL_PAID, 500, mockComments);
       UserQuotaTotals quotaTotals = new UserQuotaTotals(4000, 3200);
 
-      when(samServiceMock.getUserIdFromEmail(testUser, userEmail))
+      when(samServiceMock.getUserIdFromEmailAdmin(testUser, userEmail))
           .thenReturn(TEST_SAM_USER.getSubjectId());
       when(quotasServiceMock.allocateQuotaForUserAndPipeline(
               TEST_SAM_USER.getSubjectId(),
               PipelinesEnum.ARRAY_IMPUTATION,
               QuotaAllocationSourceEnum.EXTERNAL_PAID,
               500,
-              "test comments"))
+              mockComments))
           .thenReturn(newAllocation);
       when(quotasServiceMock.getQuotaTotalsForUserAndPipeline(
               TEST_SAM_USER.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
@@ -647,7 +648,7 @@ class AdminApiControllerTest {
                       .contentType(MediaType.APPLICATION_JSON)
                       .content(
                           createTestAllocateQuotaPostBody(
-                              ApiQuotaAllocationSource.EXTERNAL_PAID, 500)))
+                              ApiQuotaAllocationSource.EXTERNAL_PAID, 500, mockComments)))
               .andExpect(status().isOk())
               .andExpect(content().contentType(MediaType.APPLICATION_JSON))
               .andReturn();
@@ -671,7 +672,7 @@ class AdminApiControllerTest {
       assertEquals(500, allocationResponse.getQuotaAllocated());
       assertEquals(0, allocationResponse.getQuotaConsumed());
       assertEquals(ApiQuotaAllocation.QuotaStatusEnum.ACTIVE, allocationResponse.getQuotaStatus());
-      assertEquals("Purchased 500 additional samples", allocationResponse.getComments());
+      assertEquals(mockComments, allocationResponse.getComments());
       assertNotNull(allocationResponse.getCreated());
       assertNotNull(allocationResponse.getUpdated());
     }
@@ -689,7 +690,8 @@ class AdminApiControllerTest {
                       PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(), TEST_SAM_USER.getEmail()))
                   .contentType(MediaType.APPLICATION_JSON)
                   .content(
-                      createTestAllocateQuotaPostBody(ApiQuotaAllocationSource.EXTERNAL_PAID, 500)))
+                      createTestAllocateQuotaPostBody(
+                          ApiQuotaAllocationSource.EXTERNAL_PAID, 500, mockComments)))
           .andExpect(status().isForbidden());
 
       verifyNoInteractions(quotasServiceMock);
@@ -698,7 +700,7 @@ class AdminApiControllerTest {
     @Test
     void allocateQuotaUserNotFoundInSam() throws Exception {
       String userEmail = "nonexistent@example.com";
-      when(samServiceMock.getUserIdFromEmail(testUser, userEmail))
+      when(samServiceMock.getUserIdFromEmailAdmin(testUser, userEmail))
           .thenThrow(new NotFoundException("User not found in SAM"));
 
       mockMvc
@@ -708,7 +710,8 @@ class AdminApiControllerTest {
                       PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(), userEmail))
                   .contentType(MediaType.APPLICATION_JSON)
                   .content(
-                      createTestAllocateQuotaPostBody(ApiQuotaAllocationSource.EXTERNAL_PAID, 500)))
+                      createTestAllocateQuotaPostBody(
+                          ApiQuotaAllocationSource.EXTERNAL_PAID, 500, mockComments)))
           .andExpect(status().isNotFound());
 
       verifyNoInteractions(quotasServiceMock);
@@ -717,7 +720,7 @@ class AdminApiControllerTest {
     @Test
     void allocateQuotaAmountMustBePositive() throws Exception {
       String userEmail = TEST_SAM_USER.getEmail();
-      when(samServiceMock.getUserIdFromEmail(testUser, userEmail))
+      when(samServiceMock.getUserIdFromEmailAdmin(testUser, userEmail))
           .thenReturn(TEST_SAM_USER.getSubjectId());
 
       MvcResult result =
@@ -729,7 +732,7 @@ class AdminApiControllerTest {
                       .contentType(MediaType.APPLICATION_JSON)
                       .content(
                           createTestAllocateQuotaPostBody(
-                              ApiQuotaAllocationSource.DEVELOPMENT_FREE, 0)))
+                              ApiQuotaAllocationSource.DEVELOPMENT_FREE, 0, mockComments)))
               .andExpect(status().isBadRequest())
               .andReturn();
 
@@ -744,14 +747,14 @@ class AdminApiControllerTest {
     @Test
     void allocateQuotaDefaultFreeAlreadyExists() throws Exception {
       String userEmail = TEST_SAM_USER.getEmail();
-      when(samServiceMock.getUserIdFromEmail(testUser, userEmail))
+      when(samServiceMock.getUserIdFromEmailAdmin(testUser, userEmail))
           .thenReturn(TEST_SAM_USER.getSubjectId());
       when(quotasServiceMock.allocateQuotaForUserAndPipeline(
               TEST_SAM_USER.getSubjectId(),
               PipelinesEnum.ARRAY_IMPUTATION,
               QuotaAllocationSourceEnum.DEFAULT_FREE,
               2000,
-              "test comments"))
+              mockComments))
           .thenThrow(
               new BadRequestException(
                   "User already has a DEFAULT_FREE quota allocation for pipeline array_imputation"));
@@ -763,7 +766,8 @@ class AdminApiControllerTest {
                       PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(), userEmail))
                   .contentType(MediaType.APPLICATION_JSON)
                   .content(
-                      createTestAllocateQuotaPostBody(ApiQuotaAllocationSource.DEFAULT_FREE, 2000)))
+                      createTestAllocateQuotaPostBody(
+                          ApiQuotaAllocationSource.DEFAULT_FREE, 2000, mockComments)))
           .andExpect(status().isBadRequest());
 
       verify(quotasServiceMock, never()).getQuotaTotalsForUserAndPipeline(any(), any());
@@ -830,13 +834,14 @@ class AdminApiControllerTest {
     return MockMvcUtils.convertToJsonString(apiUpdateQuotaLimitRequestBody);
   }
 
-  private String createTestAllocateQuotaPostBody(ApiQuotaAllocationSource quotaSource, int amount)
+  private String createTestAllocateQuotaPostBody(
+      ApiQuotaAllocationSource quotaSource, int amount, String comments)
       throws JsonProcessingException {
     ApiAdminAllocateQuotaRequestBody requestBody =
         new ApiAdminAllocateQuotaRequestBody()
             .quotaSource(quotaSource)
             .amount(amount)
-            .comments("test comments");
+            .comments(comments);
     return MockMvcUtils.convertToJsonString(requestBody);
   }
 }

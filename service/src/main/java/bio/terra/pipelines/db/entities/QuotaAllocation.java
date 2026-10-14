@@ -49,6 +49,9 @@ public class QuotaAllocation {
   @UpdateTimestamp(source = SourceType.DB)
   private Instant updated;
 
+  // Note: `comments` column is nullable at the DB/entity level, but `comments` is required
+  // for the admin POST endpoint. This is to support not needing comments for all allocations,
+  // especially those that are system generated like DEFAULT_FREE allocations.
   @Column(name = "comments")
   private String comments;
 

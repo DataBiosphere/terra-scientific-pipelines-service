@@ -144,7 +144,7 @@ public class SamService implements HealthCheck {
    * @return User's subject ID
    * @throws bio.terra.common.exception.NotFoundException if user doesn't exist in Sam
    */
-  public String getUserIdFromEmail(SamUser authenticatedUser, String userEmail) {
+  public String getUserIdFromEmailAdmin(SamUser authenticatedUser, String userEmail) {
     try {
       return executeWithSamRetry(
           () -> {
@@ -156,7 +156,7 @@ public class SamService implements HealthCheck {
           });
     } catch (NotFoundException e) {
       throw new NotFoundException(
-          String.format("User with email '%s' not found in SAM", userEmail), e);
+          String.format("User with email '%s' not found in Sam", userEmail), e);
     }
   }
 }
