@@ -42,6 +42,7 @@
   <include file="changesets/20260915_add_pipeline_runtime_metadata_updated_trigger.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20261006_add_user_quota_allocations_table.yaml" relativeToChangelogFile="true"/>
   <include file="changesets/20261008_rename_user_quota_allocations_and_add_unique_index.yaml" relativeToChangelogFile="true"/>
+  <include file="changesets/20261008_add_quota_allocation_deductions_table.yaml" relativeToChangelogFile="true"/>
 
   <include file="changesets/testdata.yaml" relativeToChangelogFile="true"/>
 
