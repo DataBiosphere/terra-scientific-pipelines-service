@@ -228,9 +228,10 @@ public class QuotasService {
   }
 
   /**
-   * This method consumes quota for a given user and pipeline. It will throw an exception if the
-   * user does not have enough quota to consume the requested amount. It will return a list of
-   * QuotaConsumptionRecord, one for each allocation that was consumed from.
+   * This method consumes quota for a given user and pipeline (only from quota_allocations table).
+   * It will throw an exception if the user does not have enough quota to consume the requested
+   * amount. It will return a list of QuotaConsumptionRecord, one for each allocation that was
+   * consumed from.
    *
    * <p>Note: This method is annotated with @Transactional to ensure that all quota consumption
    * operations are atomic and consistent. If any part of the operation fails, the entire
@@ -242,7 +243,7 @@ public class QuotasService {
    * @return - a list of QuotaConsumptionRecord objects
    */
   @Transactional
-  public List<QuotaConsumptionRecord> consumeQuotaForUserAndPipeline(
+  public List<QuotaConsumptionRecord> consumeQuotaFromAllocationsForUserAndPipeline(
       String userId, PipelinesEnum pipelineName, int amount) {
     // this should never happen, but if it does, throw an exception
     if (amount <= 0) {

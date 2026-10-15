@@ -538,7 +538,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
         assertThrows(
             BadRequestException.class,
             () ->
-                quotasService.consumeQuotaForUserAndPipeline(
+                quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
                     "i-am-groot", PipelinesEnum.ARRAY_IMPUTATION, 0));
     assertEquals("Amount to consume must be greater than 0, got 0", exception.getMessage());
   }
@@ -549,7 +549,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
         assertThrows(
             BadRequestException.class,
             () ->
-                quotasService.consumeQuotaForUserAndPipeline(
+                quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
                     "i-am-groot", PipelinesEnum.ARRAY_IMPUTATION, -5));
     assertEquals("Amount to consume must be greater than 0, got -5", exception.getMessage());
   }
@@ -560,7 +560,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
         assertThrows(
             BadRequestException.class,
             () ->
-                quotasService.consumeQuotaForUserAndPipeline(
+                quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
                     "no-allocations-user", PipelinesEnum.ARRAY_IMPUTATION, 100));
     assertEquals(
         "Insufficient quota available to consume for user no-allocations-user and pipeline ARRAY_IMPUTATION. Requested: 100, available: 0",
@@ -579,7 +579,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     assertEquals(0, allocation.getQuotaConsumed());
 
     List<QuotaConsumptionRecord> records =
-        quotasService.consumeQuotaForUserAndPipeline(userId, pipeline, 400);
+        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(userId, pipeline, 400);
 
     assertEquals(1, records.size());
     assertEquals(allocation.getId(), records.get(0).quotaAllocationId());
@@ -601,7 +601,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     assertEquals(0, allocation.getQuotaConsumed());
 
     List<QuotaConsumptionRecord> records =
-        quotasService.consumeQuotaForUserAndPipeline(userId, pipeline, 1000);
+        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(userId, pipeline, 1000);
 
     assertEquals(1, records.size());
     assertEquals(1000, records.get(0).amountConsumed());
@@ -631,7 +631,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     assertEquals(0, third.getQuotaConsumed());
 
     List<QuotaConsumptionRecord> records =
-        quotasService.consumeQuotaForUserAndPipeline(userId, pipeline, 600);
+        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(userId, pipeline, 600);
 
     // first fully consumed (300), second partially consumed (300), third untouched
     assertEquals(2, records.size());
@@ -672,7 +672,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     QuotaAllocation exhaustedUpdated1 = quotaAllocationsRepository.save(exhausted);
 
     List<QuotaConsumptionRecord> records =
-        quotasService.consumeQuotaForUserAndPipeline(userId, pipeline, 50);
+        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(userId, pipeline, 50);
 
     assertEquals(1, records.size());
     assertEquals(active.getId(), records.get(0).quotaAllocationId());
@@ -711,7 +711,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
             "rocket-raccoon", pipeline, QuotaAllocationSourceEnum.DEFAULT_FREE, 500, null);
 
     List<QuotaConsumptionRecord> records =
-        quotasService.consumeQuotaForUserAndPipeline(userId, pipeline, 200);
+        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(userId, pipeline, 200);
 
     assertEquals(1, records.size());
     assertEquals(targetArrayAllocation.getId(), records.get(0).quotaAllocationId());
@@ -741,7 +741,8 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     BadRequestException exception =
         assertThrows(
             BadRequestException.class,
-            () -> quotasService.consumeQuotaForUserAndPipeline(userId, pipeline, 600));
+            () ->
+                quotasService.consumeQuotaFromAllocationsForUserAndPipeline(userId, pipeline, 600));
     assertEquals(
         "Insufficient quota available to consume for user i-am-groot and pipeline ARRAY_IMPUTATION. Requested: 600, available: 500",
         exception.getMessage());
@@ -778,7 +779,8 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     InternalServerErrorException exception =
         assertThrows(
             InternalServerErrorException.class,
-            () -> quotasService.consumeQuotaForUserAndPipeline(userId, pipeline, 600));
+            () ->
+                quotasService.consumeQuotaFromAllocationsForUserAndPipeline(userId, pipeline, 600));
 
     assertTrue(
         exception
@@ -813,7 +815,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
             userId, pipeline, QuotaAllocationSourceEnum.EXTERNAL_PAID, 500, null);
 
     List<QuotaConsumptionRecord> records =
-        quotasService.consumeQuotaForUserAndPipeline(userId, pipeline, 300);
+        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(userId, pipeline, 300);
 
     assertEquals(1, records.size());
     assertEquals(firstAllocation.getId(), records.get(0).quotaAllocationId());
@@ -853,7 +855,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
           executor.submit(
               () -> {
                 startLatch.await();
-                quotasService.consumeQuotaForUserAndPipeline(userId, pipeline, 100);
+                quotasService.consumeQuotaFromAllocationsForUserAndPipeline(userId, pipeline, 100);
                 successCount.incrementAndGet();
                 return null;
               }));
@@ -895,7 +897,8 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
           executor.submit(
               () -> {
                 startLatch.await();
-                return quotasService.consumeQuotaForUserAndPipeline(userId, pipeline, 100);
+                return quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
+                    userId, pipeline, 100);
               }));
     }
 
@@ -949,7 +952,8 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
           executor.submit(
               () -> {
                 startLatch.await();
-                return quotasService.consumeQuotaForUserAndPipeline(userId, pipeline, 100);
+                return quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
+                    userId, pipeline, 100);
               }));
     }
 
