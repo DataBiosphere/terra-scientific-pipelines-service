@@ -14,6 +14,8 @@ import bio.terra.pipelines.db.repositories.UserQuotasRepository;
 import bio.terra.pipelines.model.PipelineQuota;
 import bio.terra.pipelines.model.QuotaConsumptionRecord;
 import bio.terra.pipelines.model.UserQuotaTotals;
+import io.sentry.Sentry;
+import io.sentry.SentryLevel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -251,8 +253,8 @@ public class QuotasService {
 
     // find all active allocations for user/pipeline, ordered by created date (oldest first)
     List<QuotaAllocation> allocations =
-        quotaAllocationsRepository.findByUserIdAndPipelineNameAndQuotaStatusOrderByCreatedAsc(
-            userId, pipelineName, QuotaAllocationStatusEnum.ACTIVE);
+        quotaAllocationsRepository.findActiveAllocationsByUserIdAndPipelineNameOrderByCreatedAsc(
+            userId, pipelineName);
 
     List<QuotaConsumptionRecord> consumptionRecords = new ArrayList<>();
     int remainingToConsume = amount;
@@ -304,15 +306,18 @@ public class QuotasService {
   private int consumeQuotaFromAllocation(QuotaAllocation allocation, int amountNeeded) {
     int quotaAvailable = allocation.getQuotaAllocated() - allocation.getQuotaConsumed();
 
-    // this should never happen, but if it does, mark the allocation as EXHAUSTED,
-    // and continue to the next one
+    // this should never happen, but if it does, log an error and throw an exception
     if (quotaAvailable <= 0) {
-      logger.warn(
-          "Allocation {} has 0 or negative quota remaining but is still in ACTIVE status. Marking it as EXHAUSTED.",
-          allocation.getId());
-      allocation.setQuotaStatus(QuotaAllocationStatusEnum.EXHAUSTED);
-      quotaAllocationsRepository.save(allocation);
-      return 0;
+      String errorMessage =
+          "Data integrity issue: allocation %d for user %s pipeline %s is ACTIVE but has 0 or negative quota remaining (%d). Aborting quota consumption."
+              .formatted(
+                  allocation.getId(),
+                  allocation.getUserId(),
+                  allocation.getPipelineName(),
+                  quotaAvailable);
+      logger.error(errorMessage);
+      Sentry.captureMessage("Error consuming quota. %s".formatted(errorMessage), SentryLevel.ERROR);
+      throw new InternalServerErrorException(errorMessage);
     }
 
     int amountToConsume = Math.min(quotaAvailable, amountNeeded);
