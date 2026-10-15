@@ -19,8 +19,8 @@ public class QuotaAllocationDeduction {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(name = "user_quota_allocation_id", nullable = false)
-  private Long userQuotaAllocationId;
+  @Column(name = "quota_allocation_id", nullable = false)
+  private Long quotaAllocationId;
 
   @Column(name = "pipeline_run_id")
   private Long pipelineRunId;
@@ -36,8 +36,8 @@ public class QuotaAllocationDeduction {
   private Instant created;
 
   public QuotaAllocationDeduction(
-      Long userQuotaAllocationId, Long pipelineRunId, int amount, String comments) {
-    this.userQuotaAllocationId = userQuotaAllocationId;
+      Long quotaAllocationId, Long pipelineRunId, int amount, String comments) {
+    this.quotaAllocationId = quotaAllocationId;
     this.pipelineRunId = pipelineRunId;
     this.amount = amount;
     this.comments = comments;

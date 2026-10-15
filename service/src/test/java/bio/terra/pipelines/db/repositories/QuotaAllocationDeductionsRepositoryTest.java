@@ -6,8 +6,8 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaAllocationSourceEnum;
 import bio.terra.pipelines.common.utils.QuotaAllocationStatusEnum;
 import bio.terra.pipelines.db.entities.PipelineRun;
+import bio.terra.pipelines.db.entities.QuotaAllocation;
 import bio.terra.pipelines.db.entities.QuotaAllocationDeduction;
-import bio.terra.pipelines.db.entities.UserQuotaAllocation;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.TestUtils;
 import java.util.UUID;
@@ -18,13 +18,13 @@ import org.springframework.dao.DataIntegrityViolationException;
 class QuotaAllocationDeductionsRepositoryTest extends BaseEmbeddedDbTest {
 
   @Autowired private QuotaAllocationDeductionsRepository deductionsRepository;
-  @Autowired private UserQuotaAllocationsRepository allocationsRepository;
+  @Autowired private QuotaAllocationsRepository allocationsRepository;
   @Autowired private PipelineRunsRepository pipelineRunsRepository;
 
   private Long savedAllocationId() {
     return allocationsRepository
         .save(
-            new UserQuotaAllocation(
+            new QuotaAllocation(
                 PipelinesEnum.ARRAY_IMPUTATION,
                 "groot-user-id-123",
                 QuotaAllocationSourceEnum.DEFAULT_FREE,
@@ -49,7 +49,7 @@ class QuotaAllocationDeductionsRepositoryTest extends BaseEmbeddedDbTest {
             .getId();
 
     QuotaAllocationDeduction found = deductionsRepository.findById(id).orElseThrow();
-    assertEquals(allocationId, found.getUserQuotaAllocationId());
+    assertEquals(allocationId, found.getQuotaAllocationId());
     assertEquals(pipelineRun.getId(), found.getPipelineRunId());
     assertEquals(100, found.getAmount());
     assertEquals("run consumed quota", found.getComments());
