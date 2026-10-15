@@ -267,6 +267,7 @@ public class QuotasService {
       }
 
       // consume as much as we can from this allocation, up to the remaining amount needed
+      // and update the allocation's consumed quota and status as necessary
       int amountConsumedFromAllocation = consumeQuotaFromAllocation(allocation, remainingToConsume);
 
       // record the consumption in the list of consumption records to return

@@ -25,8 +25,8 @@ public interface QuotaAllocationsRepository extends CrudRepository<QuotaAllocati
 
   // Locking is required to avoid race conditions when multiple threads are trying to
   // allocate quota for the same user and pipeline. This allows rows to be selected and locked for
-  // update,
-  // preventing other transactions from modifying them until the current transaction is complete.
+  // update, preventing other transactions from modifying them until the current transaction
+  // is complete.
   // Note: Must be called within an active transaction for the lock to take effect
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query(

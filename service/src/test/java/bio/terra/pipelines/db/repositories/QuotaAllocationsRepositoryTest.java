@@ -36,9 +36,9 @@ class QuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
 
   // This method is used to set the created timestamp of a QuotaAllocation entity in the database.
   // This method allows for testing purposes to ensure that the created timestamps of different
-  // allocations
-  // can be manipulated to test ordering and filtering logic. It uses a native SQL query to update
-  // the created timestamp directly in the database, bypassing any JPA entity management.
+  // allocations can be manipulated to test ordering and filtering logic. It uses a native
+  // SQL query to update the created timestamp directly in the database, bypassing any
+  // JPA entity management
   private void setCreated(QuotaAllocation allocation, Instant created) {
     entityManager
         .createNativeQuery("UPDATE quota_allocations SET created = :created WHERE id = :id")
