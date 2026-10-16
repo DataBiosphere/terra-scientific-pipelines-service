@@ -12,13 +12,18 @@ import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.db.repositories.QuotaAllocationsRepository;
 import bio.terra.pipelines.db.repositories.UserQuotasRepository;
 import bio.terra.pipelines.model.PipelineQuota;
+import bio.terra.pipelines.model.QuotaConsumptionRecord;
 import bio.terra.pipelines.model.UserQuotaTotals;
+import io.sentry.Sentry;
+import io.sentry.SentryLevel;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /** This Service handles logic around user quotas and pipeline quotas* */
 @Service
@@ -235,6 +240,114 @@ public class QuotasService {
       String userId, PipelinesEnum pipelineName) {
     return quotaAllocationsRepository.findByUserIdAndPipelineNameOrderByCreatedDesc(
         userId, pipelineName);
+  }
+
+  /**
+   * This method consumes quota for a given user and pipeline (only from quota_allocations table).
+   * It will throw an exception if the user does not have enough quota to consume the requested
+   * amount. It will return a list of QuotaConsumptionRecord, one for each allocation that was
+   * consumed from.
+   *
+   * <p>Note: This method is annotated with @Transactional to ensure that all quota consumption
+   * operations are atomic and consistent. If any part of the operation fails, the entire
+   * transaction will be rolled back, preventing partial consumption of quota.
+   *
+   * @param userId - the user id
+   * @param pipelineName - the pipeline name
+   * @param amount - the amount of quota to consume
+   * @return - a list of QuotaConsumptionRecord objects
+   */
+  @Transactional
+  public List<QuotaConsumptionRecord> consumeQuotaFromAllocationsForUserAndPipeline(
+      String userId, PipelinesEnum pipelineName, int amount) {
+    // this should never happen, but if it does, throw an exception
+    if (amount <= 0) {
+      logger.warn("Received request to consume non-positive amount of quota: {}", amount);
+      throw new BadRequestException(
+          "Amount to consume must be greater than 0, got %d".formatted(amount));
+    }
+
+    // find all active allocations for user/pipeline, ordered by created date (oldest first)
+    List<QuotaAllocation> allocations =
+        quotaAllocationsRepository.findByUserIdAndPipelineNameAndQuotaStatusOrderByCreatedAsc(
+            userId, pipelineName, QuotaAllocationStatusEnum.ACTIVE);
+
+    List<QuotaConsumptionRecord> consumptionRecords = new ArrayList<>();
+    int remainingToConsume = amount;
+
+    // do FIFO walk through allocations, consuming quota until the requested amount is consumed
+    for (QuotaAllocation allocation : allocations) {
+      // if we have consumed the requested amount, break out of the loop
+      if (remainingToConsume == 0) {
+        break;
+      }
+
+      // consume as much as we can from this allocation, up to the remaining amount needed
+      // and update the allocation's consumed quota and status as necessary
+      int amountConsumedFromAllocation = consumeQuotaFromAllocation(allocation, remainingToConsume);
+
+      // record the consumption in the list of consumption records to return
+      consumptionRecords.add(
+          new QuotaConsumptionRecord(allocation.getId(), amountConsumedFromAllocation));
+      remainingToConsume -= amountConsumedFromAllocation;
+    }
+
+    // this should never happen since it should have been verified that user has enough quota for
+    // running the job, but if it does, throw an exception
+    if (remainingToConsume > 0) {
+      throw new BadRequestException(
+          "Insufficient quota available to consume for user %s and pipeline %s. Requested: %d, available: %d"
+              .formatted(userId, pipelineName, amount, amount - remainingToConsume));
+    }
+
+    logger.info(
+        "Successfully consumed {} quota for user {} and pipeline {} across {} allocation(s). Allocation(s) consumed: {}",
+        amount,
+        userId,
+        pipelineName,
+        consumptionRecords.size(),
+        consumptionRecords.stream().map(QuotaConsumptionRecord::quotaAllocationId).toList());
+
+    return consumptionRecords;
+  }
+
+  /**
+   * This method consumes quota from a single allocation, up to the amount needed. It updates the
+   * allocation's consumed quota and status as necessary, and saves the changes to the database. It
+   * returns the amount of quota actually consumed from this allocation.
+   *
+   * @param allocation - the quota allocation to consume from
+   * @param amountNeeded - the amount of quota needed to consume
+   * @return - the amount of quota actually consumed from this allocation
+   */
+  private int consumeQuotaFromAllocation(QuotaAllocation allocation, int amountNeeded) {
+    int quotaAvailable = allocation.getQuotaAllocated() - allocation.getQuotaConsumed();
+
+    // this should never happen, but if it does, log an error and throw an exception
+    if (quotaAvailable <= 0) {
+      String errorMessage =
+          "Data integrity issue: allocation %d for user %s pipeline %s is ACTIVE but has 0 or negative quota remaining (%d). Aborting quota consumption."
+              .formatted(
+                  allocation.getId(),
+                  allocation.getUserId(),
+                  allocation.getPipelineName(),
+                  quotaAvailable);
+      logger.error(errorMessage);
+      Sentry.captureMessage("Error consuming quota. %s".formatted(errorMessage), SentryLevel.ERROR);
+      throw new InternalServerErrorException(errorMessage);
+    }
+
+    int amountToConsume = Math.min(quotaAvailable, amountNeeded);
+    allocation.setQuotaConsumed(allocation.getQuotaConsumed() + amountToConsume);
+
+    // if there is no remaining quota in that allocation, mark it as EXHAUSTED
+    if (allocation.getQuotaConsumed() == allocation.getQuotaAllocated()) {
+      allocation.setQuotaStatus(QuotaAllocationStatusEnum.EXHAUSTED);
+    }
+
+    quotaAllocationsRepository.save(allocation);
+
+    return amountToConsume;
   }
 
   /**
