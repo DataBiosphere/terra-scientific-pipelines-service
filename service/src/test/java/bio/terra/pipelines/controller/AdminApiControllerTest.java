@@ -1,9 +1,7 @@
 package bio.terra.pipelines.controller;
 
 import static bio.terra.pipelines.testutils.MockMvcUtils.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -39,6 +37,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -596,34 +596,230 @@ class AdminApiControllerTest {
   }
 
   @Nested
+  @DisplayName("getQuotaForPipelineAndUser V3 tests")
+  class GetAdminQuotaV3Tests {
+
+    @Test
+    void getUserQuotaV3Ok() throws Exception {
+      String userEmail = TEST_SAM_USER.getEmail();
+      QuotaAllocation allocation =
+          buildTestAllocation(
+              QuotaAllocationSourceEnum.DEFAULT_FREE, 2500, 100, "default allocation");
+      UserQuotaTotals quotaTotals = new UserQuotaTotals(2500, 100);
+
+      when(samServiceMock.getUserIdFromEmailAdmin(testUser, userEmail))
+          .thenReturn(TEST_SAM_USER.getSubjectId());
+      when(quotasServiceMock.getAllQuotaAllocationsForUserAndPipeline(
+              TEST_SAM_USER.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
+          .thenReturn(List.of(allocation));
+      when(quotasServiceMock.getQuotaTotalsForUserAndPipeline(
+              TEST_SAM_USER.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
+          .thenReturn(quotaTotals);
+
+      MvcResult result =
+          mockMvc
+              .perform(
+                  get(
+                      String.format(
+                          "/api/admin/v3/quotas/%s/%s",
+                          PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(), userEmail)))
+              .andExpect(status().isOk())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiAdminGetQuotaResponseV3 response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiAdminGetQuotaResponseV3.class);
+
+      // verify response has email, userId, allocations, and correct quota values
+      assertEquals(PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(), response.getPipelineName());
+      assertEquals(TEST_SAM_USER.getSubjectId(), response.getUserId());
+      assertEquals(userEmail, response.getUserEmail());
+      assertEquals(2500, response.getQuotaLimit());
+      assertEquals(100, response.getQuotaConsumed());
+      assertEquals(2400, response.getQuotaRemaining());
+      assertEquals(1, response.getAllocations().size());
+
+      ApiQuotaAllocation allocationResponse = response.getAllocations().get(0);
+      assertEquals(101L, allocationResponse.getAllocationId());
+      assertEquals(ApiQuotaAllocationSource.DEFAULT_FREE, allocationResponse.getQuotaSource());
+      assertEquals(2500, allocationResponse.getQuotaAllocated());
+      assertEquals(100, allocationResponse.getQuotaConsumed());
+      assertEquals(ApiQuotaAllocation.QuotaStatusEnum.ACTIVE, allocationResponse.getQuotaStatus());
+      assertEquals("default allocation", allocationResponse.getComments());
+      assertNotNull(allocationResponse.getCreated());
+      assertNotNull(allocationResponse.getUpdated());
+    }
+
+    @Test
+    void getUserQuotaV3NoAllocationsReturnsOk() throws Exception {
+      String userEmail = TEST_SAM_USER.getEmail();
+
+      when(samServiceMock.getUserIdFromEmailAdmin(testUser, userEmail))
+          .thenReturn(TEST_SAM_USER.getSubjectId());
+      when(quotasServiceMock.getAllQuotaAllocationsForUserAndPipeline(
+              TEST_SAM_USER.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
+          .thenReturn(List.of());
+
+      MvcResult result =
+          mockMvc
+              .perform(
+                  get(
+                      String.format(
+                          "/api/admin/v3/quotas/%s/%s",
+                          PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(), userEmail)))
+              .andExpect(status().isOk())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiAdminGetQuotaResponseV3 response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiAdminGetQuotaResponseV3.class);
+
+      // verify response has email and userId, but no allocations and zero quota values
+      assertEquals(userEmail, response.getUserEmail());
+      assertEquals(TEST_SAM_USER.getSubjectId(), response.getUserId());
+      assertEquals(PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(), response.getPipelineName());
+      assertEquals(0, response.getQuotaLimit());
+      assertEquals(0, response.getQuotaConsumed());
+      assertEquals(0, response.getQuotaRemaining());
+      assertTrue(response.getAllocations().isEmpty());
+
+      // getQuotaTotalsForUserAndPipeline should not be called when there are no allocations
+      verify(quotasServiceMock, never()).getQuotaTotalsForUserAndPipeline(any(), any());
+    }
+
+    @Test
+    void getUserQuotaV3MultipleAllocations() throws Exception {
+      String userEmail = TEST_SAM_USER.getEmail();
+      QuotaAllocation first =
+          buildTestAllocation(QuotaAllocationSourceEnum.DEFAULT_FREE, 2500, 2500, null);
+      first.setQuotaStatus(QuotaAllocationStatusEnum.EXHAUSTED);
+      QuotaAllocation second =
+          buildTestAllocation(
+              QuotaAllocationSourceEnum.EXTERNAL_PAID, 500, 0, "additional purchase");
+      second.setId(201L); // set a different ID for the second allocation
+      second.setCreated(
+          Instant.now()
+              .plus(
+                  5, ChronoUnit.MINUTES)); // set a different created time for the second allocation
+      UserQuotaTotals quotaTotals = new UserQuotaTotals(3000, 2500);
+
+      when(samServiceMock.getUserIdFromEmailAdmin(testUser, userEmail))
+          .thenReturn(TEST_SAM_USER.getSubjectId());
+      when(quotasServiceMock.getAllQuotaAllocationsForUserAndPipeline(
+              TEST_SAM_USER.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
+          .thenReturn(List.of(second, first));
+      when(quotasServiceMock.getQuotaTotalsForUserAndPipeline(
+              TEST_SAM_USER.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
+          .thenReturn(quotaTotals);
+
+      MvcResult result =
+          mockMvc
+              .perform(
+                  get(
+                      String.format(
+                          "/api/admin/v3/quotas/%s/%s",
+                          PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(), userEmail)))
+              .andExpect(status().isOk())
+              .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+              .andReturn();
+
+      ApiAdminGetQuotaResponseV3 response =
+          new ObjectMapper()
+              .readValue(
+                  result.getResponse().getContentAsString(), ApiAdminGetQuotaResponseV3.class);
+
+      assertEquals(3000, response.getQuotaLimit());
+      assertEquals(2500, response.getQuotaConsumed());
+      assertEquals(500, response.getQuotaRemaining());
+      assertEquals(2, response.getAllocations().size());
+
+      // verify allocation details for both allocations
+      // (the order of allocations in the response should match the order returned by the service)
+      ApiQuotaAllocation allocation1 = response.getAllocations().get(0);
+      assertEquals(201L, allocation1.getAllocationId());
+      assertEquals(ApiQuotaAllocationSource.EXTERNAL_PAID, allocation1.getQuotaSource());
+      assertEquals(500, allocation1.getQuotaAllocated());
+      assertEquals(0, allocation1.getQuotaConsumed());
+      assertEquals(ApiQuotaAllocation.QuotaStatusEnum.ACTIVE, allocation1.getQuotaStatus());
+      assertEquals("additional purchase", allocation1.getComments());
+      assertNotNull(allocation1.getCreated());
+      assertNotNull(allocation1.getUpdated());
+
+      ApiQuotaAllocation allocation2 = response.getAllocations().get(1);
+      assertEquals(101L, allocation2.getAllocationId());
+      assertEquals(ApiQuotaAllocationSource.DEFAULT_FREE, allocation2.getQuotaSource());
+      assertEquals(2500, allocation2.getQuotaAllocated());
+      assertEquals(2500, allocation2.getQuotaConsumed());
+      assertEquals(ApiQuotaAllocation.QuotaStatusEnum.EXHAUSTED, allocation2.getQuotaStatus());
+      assertNull(allocation2.getComments());
+      assertNotNull(allocation2.getCreated());
+      assertNotNull(allocation2.getUpdated());
+    }
+
+    @Test
+    void getUserQuotaV3NotAdminUser() throws Exception {
+      doThrow(new ForbiddenException("Not an admin error"))
+          .when(samServiceMock)
+          .checkAdminAuthz(testUser);
+
+      mockMvc
+          .perform(
+              get(
+                  String.format(
+                      "/api/admin/v3/quotas/%s/%s",
+                      PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(),
+                      TEST_SAM_USER.getEmail())))
+          .andExpect(status().isForbidden());
+
+      verifyNoInteractions(quotasServiceMock);
+    }
+
+    @Test
+    void getUserQuotaV3UserNotFoundInSam() throws Exception {
+      String userEmail = "nonexistent@example.com";
+      when(samServiceMock.getUserIdFromEmailAdmin(testUser, userEmail))
+          .thenThrow(new NotFoundException("User not found in SAM"));
+
+      mockMvc
+          .perform(
+              get(
+                  String.format(
+                      "/api/admin/v3/quotas/%s/%s",
+                      PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(), userEmail)))
+          .andExpect(status().isNotFound());
+
+      verifyNoInteractions(quotasServiceMock);
+    }
+
+    @Test
+    void getUserQuotaV3InvalidPipelineName() throws Exception {
+      mockMvc
+          .perform(
+              get(
+                  String.format(
+                      "/api/admin/v3/quotas/%s/%s",
+                      "groot-scientific-pipeline", TEST_SAM_USER.getEmail())))
+          .andExpect(status().isBadRequest());
+
+      verify(samServiceMock, never()).getUserIdFromEmailAdmin(any(), any());
+      verifyNoInteractions(quotasServiceMock);
+    }
+  }
+
+  @Nested
   @DisplayName("allocateQuotaForPipelineAndUser tests")
   class AllocateAdminQuotaTests {
-
     final String mockComments = "test comments";
-
-    private QuotaAllocation buildTestAllocation(
-        QuotaAllocationSourceEnum quotaSource, int amount, String comments) {
-      QuotaAllocation allocation =
-          new QuotaAllocation(
-              PipelinesEnum.ARRAY_IMPUTATION,
-              TEST_SAM_USER.getSubjectId(),
-              quotaSource,
-              amount,
-              0,
-              QuotaAllocationStatusEnum.ACTIVE,
-              comments);
-      allocation.setId(101L);
-      // set created and updated timestamps to now for testing purposes
-      allocation.setCreated(Instant.now());
-      allocation.setUpdated(Instant.now());
-      return allocation;
-    }
 
     @Test
     void allocateQuotaOk() throws Exception {
       String userEmail = TEST_SAM_USER.getEmail();
       QuotaAllocation newAllocation =
-          buildTestAllocation(QuotaAllocationSourceEnum.EXTERNAL_PAID, 500, mockComments);
+          buildTestAllocation(QuotaAllocationSourceEnum.EXTERNAL_PAID, 500, 0, mockComments);
       UserQuotaTotals quotaTotals = new UserQuotaTotals(4000, 3200);
 
       when(samServiceMock.getUserIdFromEmailAdmin(testUser, userEmail))
@@ -843,5 +1039,23 @@ class AdminApiControllerTest {
             .amount(amount)
             .comments(comments);
     return MockMvcUtils.convertToJsonString(requestBody);
+  }
+
+  private QuotaAllocation buildTestAllocation(
+      QuotaAllocationSourceEnum quotaSource, int amount, int consumed, String comments) {
+    QuotaAllocation allocation =
+        new QuotaAllocation(
+            PipelinesEnum.ARRAY_IMPUTATION,
+            TEST_SAM_USER.getSubjectId(),
+            quotaSource,
+            amount,
+            consumed,
+            QuotaAllocationStatusEnum.ACTIVE,
+            comments);
+    allocation.setId(101L);
+    // set created and updated timestamps to now for testing purposes
+    allocation.setCreated(Instant.now());
+    allocation.setUpdated(Instant.now());
+    return allocation;
   }
 }
