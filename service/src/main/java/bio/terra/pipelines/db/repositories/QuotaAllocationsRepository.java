@@ -3,6 +3,7 @@ package bio.terra.pipelines.db.repositories;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.QuotaAllocation;
 import bio.terra.pipelines.model.UserQuotaTotals;
+import java.util.List;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -19,4 +20,7 @@ public interface QuotaAllocationsRepository extends CrudRepository<QuotaAllocati
           + "FROM QuotaAllocation a WHERE a.userId = :userId AND a.pipelineName = :pipelineName")
   UserQuotaTotals sumQuotaTotalsByUserIdAndPipelineName(
       @Param("userId") String userId, @Param("pipelineName") PipelinesEnum pipelineName);
+
+  List<QuotaAllocation> findByUserIdAndPipelineNameOrderByCreatedDesc(
+      String userId, PipelinesEnum pipelineName);
 }

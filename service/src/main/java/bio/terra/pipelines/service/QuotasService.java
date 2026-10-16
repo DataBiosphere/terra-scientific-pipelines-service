@@ -13,6 +13,7 @@ import bio.terra.pipelines.db.repositories.QuotaAllocationsRepository;
 import bio.terra.pipelines.db.repositories.UserQuotasRepository;
 import bio.terra.pipelines.model.PipelineQuota;
 import bio.terra.pipelines.model.UserQuotaTotals;
+import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -219,6 +220,20 @@ public class QuotasService {
   public UserQuotaTotals getQuotaTotalsForUserAndPipeline(
       String userId, PipelinesEnum pipelineName) {
     return quotaAllocationsRepository.sumQuotaTotalsByUserIdAndPipelineName(userId, pipelineName);
+  }
+
+  /**
+   * This method returns all quota allocations for a given user and pipeline, ordered by created
+   * timestamp descending.
+   *
+   * @param userId - the user id
+   * @param pipelineName - the pipeline name
+   * @return - the list of quota allocations for the user and pipeline
+   */
+  public List<QuotaAllocation> getQuotaAllocationsForUserAndPipeline(
+      String userId, PipelinesEnum pipelineName) {
+    return quotaAllocationsRepository.findByUserIdAndPipelineNameOrderByCreatedDesc(
+        userId, pipelineName);
   }
 
   /**
