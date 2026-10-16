@@ -224,13 +224,14 @@ public class QuotasService {
 
   /**
    * This method returns all quota allocations for a given user and pipeline, ordered by created
-   * timestamp descending.
+   * timestamp descending. It will return an empty list if the user has no allocations for the given
+   * pipeline.
    *
    * @param userId - the user id
    * @param pipelineName - the pipeline name
    * @return - the list of quota allocations for the user and pipeline
    */
-  public List<QuotaAllocation> getQuotaAllocationsForUserAndPipeline(
+  public List<QuotaAllocation> getAllQuotaAllocationsForUserAndPipeline(
       String userId, PipelinesEnum pipelineName) {
     return quotaAllocationsRepository.findByUserIdAndPipelineNameOrderByCreatedDesc(
         userId, pipelineName);

@@ -176,12 +176,17 @@ public class AdminApiController implements AdminApi {
     // if the user doesn't exist in Sam
     String userId = samService.getUserIdFromEmailAdmin(authedUser, userEmail);
 
-    // TODO - Saloni possibly consider returning empty response instead of this
     List<QuotaAllocation> allocations =
-        quotasService.getQuotaAllocationsForUserAndPipeline(userId, validatedPipelineName);
+        quotasService.getAllQuotaAllocationsForUserAndPipeline(userId, validatedPipelineName);
 
-    UserQuotaTotals quotaTotals =
-        quotasService.getQuotaTotalsForUserAndPipeline(userId, validatedPipelineName);
+    // if no allocations exist for this user/pipeline, create an empty QuotaTotals object
+    // otherwise, fetch the user's quota totals for that pipeline
+    UserQuotaTotals quotaTotals;
+    if (allocations.isEmpty()) {
+      quotaTotals = new UserQuotaTotals(0, 0);
+    } else {
+      quotaTotals = quotasService.getQuotaTotalsForUserAndPipeline(userId, validatedPipelineName);
+    }
 
     return new ResponseEntity<>(
         toApiAdminGetQuotaResponseV3(
