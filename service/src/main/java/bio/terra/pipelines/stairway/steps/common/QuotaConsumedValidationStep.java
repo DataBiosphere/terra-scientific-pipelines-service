@@ -86,7 +86,7 @@ public class QuotaConsumedValidationStep implements Step {
           rawQuotaConsumed);
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new InternalStepException("No valid input files found, please check your input."));
+          new InternalStepException("No valid input files found; please check your input."));
     }
 
     PipelineQuota pipelineQuota = quotasService.getPipelineQuota(pipelineName);

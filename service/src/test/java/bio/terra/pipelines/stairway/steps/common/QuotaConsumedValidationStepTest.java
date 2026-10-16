@@ -250,7 +250,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     // make sure the step was a failure
     assertEquals(StepStatus.STEP_RESULT_FAILURE_FATAL, result.getStepStatus());
     assertEquals(
-        "An error occurred while running the job. No valid input files found, please check your input. Please contact support for help.",
+        "An error occurred while running the job. No valid input files found; please check your input. Please contact support for help.",
         result.getException().get().getMessage());
   }
 
