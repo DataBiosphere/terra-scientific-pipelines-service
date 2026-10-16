@@ -1,6 +1,7 @@
 package bio.terra.pipelines.db.repositories;
 
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.common.utils.QuotaAllocationStatusEnum;
 import bio.terra.pipelines.db.entities.QuotaAllocation;
 import bio.terra.pipelines.model.UserQuotaTotals;
 import jakarta.persistence.LockModeType;
@@ -29,10 +30,6 @@ public interface QuotaAllocationsRepository extends CrudRepository<QuotaAllocati
   // is complete.
   // Note: Must be called within an active transaction for the lock to take effect
   @Lock(LockModeType.PESSIMISTIC_WRITE)
-  @Query(
-      "FROM QuotaAllocation a WHERE a.userId = :userId AND a.pipelineName = :pipelineName "
-          + "AND a.quotaStatus = bio.terra.pipelines.common.utils.QuotaAllocationStatusEnum.ACTIVE "
-          + "ORDER BY a.created ASC")
-  List<QuotaAllocation> findActiveAllocationsByUserIdAndPipelineNameOrderByCreatedAsc(
-      @Param("userId") String userId, @Param("pipelineName") PipelinesEnum pipelineName);
+  List<QuotaAllocation> findByUserIdAndPipelineNameAndQuotaStatusOrderByCreatedAsc(
+      String userId, PipelinesEnum pipelineName, QuotaAllocationStatusEnum statusEnum);
 }

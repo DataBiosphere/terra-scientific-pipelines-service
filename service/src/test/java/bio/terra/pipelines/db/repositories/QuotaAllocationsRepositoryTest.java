@@ -190,17 +190,16 @@ class QuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
     assertThrows(
         InvalidDataAccessApiUsageException.class,
         () ->
-            quotaAllocationsRepository
-                .findActiveAllocationsByUserIdAndPipelineNameOrderByCreatedAsc(
-                    "i-am-groot", PipelinesEnum.ARRAY_IMPUTATION));
+            quotaAllocationsRepository.findByUserIdAndPipelineNameAndQuotaStatusOrderByCreatedAsc(
+                "i-am-groot", PipelinesEnum.ARRAY_IMPUTATION, QuotaAllocationStatusEnum.ACTIVE));
   }
 
   @Test
   @Transactional
   void findAllActiveAllocationsReturnsEmptyListOnNoMatch() {
     List<QuotaAllocation> result =
-        quotaAllocationsRepository.findActiveAllocationsByUserIdAndPipelineNameOrderByCreatedAsc(
-            "user-doesnt-exist", PipelinesEnum.ARRAY_IMPUTATION);
+        quotaAllocationsRepository.findByUserIdAndPipelineNameAndQuotaStatusOrderByCreatedAsc(
+            "user-doesnt-exist", PipelinesEnum.ARRAY_IMPUTATION, QuotaAllocationStatusEnum.ACTIVE);
 
     assertTrue(result.isEmpty());
   }
@@ -234,8 +233,8 @@ class QuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
     entityManager.clear();
 
     List<QuotaAllocation> result =
-        quotaAllocationsRepository.findActiveAllocationsByUserIdAndPipelineNameOrderByCreatedAsc(
-            userId, PipelinesEnum.ARRAY_IMPUTATION);
+        quotaAllocationsRepository.findByUserIdAndPipelineNameAndQuotaStatusOrderByCreatedAsc(
+            userId, PipelinesEnum.ARRAY_IMPUTATION, QuotaAllocationStatusEnum.ACTIVE);
 
     // verify that the allocations are returned in chronological order
     assertEquals(3, result.size());
@@ -273,8 +272,8 @@ class QuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
     entityManager.clear();
 
     List<QuotaAllocation> result =
-        quotaAllocationsRepository.findActiveAllocationsByUserIdAndPipelineNameOrderByCreatedAsc(
-            userId, PipelinesEnum.ARRAY_IMPUTATION);
+        quotaAllocationsRepository.findByUserIdAndPipelineNameAndQuotaStatusOrderByCreatedAsc(
+            userId, PipelinesEnum.ARRAY_IMPUTATION, QuotaAllocationStatusEnum.ACTIVE);
 
     // exhausted row is excluded and the remaining rows are still in chronological order
     assertEquals(2, result.size());
@@ -298,8 +297,8 @@ class QuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
     quotaAllocationsRepository.save(exhaustedAllocation);
 
     List<QuotaAllocation> result =
-        quotaAllocationsRepository.findActiveAllocationsByUserIdAndPipelineNameOrderByCreatedAsc(
-            userId, PipelinesEnum.ARRAY_IMPUTATION);
+        quotaAllocationsRepository.findByUserIdAndPipelineNameAndQuotaStatusOrderByCreatedAsc(
+            userId, PipelinesEnum.ARRAY_IMPUTATION, QuotaAllocationStatusEnum.ACTIVE);
 
     assertEquals(1, result.size());
     assertEquals(activeAllocation.getId(), result.get(0).getId());
@@ -341,8 +340,8 @@ class QuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
     quotaAllocationsRepository.save(racoonArrayAllocation);
 
     List<QuotaAllocation> result =
-        quotaAllocationsRepository.findActiveAllocationsByUserIdAndPipelineNameOrderByCreatedAsc(
-            userId, PipelinesEnum.ARRAY_IMPUTATION);
+        quotaAllocationsRepository.findByUserIdAndPipelineNameAndQuotaStatusOrderByCreatedAsc(
+            userId, PipelinesEnum.ARRAY_IMPUTATION, QuotaAllocationStatusEnum.ACTIVE);
 
     assertEquals(1, result.size());
     assertEquals(userId, result.get(0).getUserId());

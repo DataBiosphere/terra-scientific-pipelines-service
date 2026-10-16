@@ -254,8 +254,8 @@ public class QuotasService {
 
     // find all active allocations for user/pipeline, ordered by created date (oldest first)
     List<QuotaAllocation> allocations =
-        quotaAllocationsRepository.findActiveAllocationsByUserIdAndPipelineNameOrderByCreatedAsc(
-            userId, pipelineName);
+        quotaAllocationsRepository.findByUserIdAndPipelineNameAndQuotaStatusOrderByCreatedAsc(
+            userId, pipelineName, QuotaAllocationStatusEnum.ACTIVE);
 
     List<QuotaConsumptionRecord> consumptionRecords = new ArrayList<>();
     int remainingToConsume = amount;
