@@ -475,6 +475,12 @@ configurations:
             defaultValue: "0.0"
             minValue: 0.0
             maxValue: 1.0
+          - name: rafCensoringThreshold
+            wdlVariableName: raf_censoring_threshold
+            type: FLOAT
+            isRequired: true
+            userProvided: false
+            defaultValue: "0.000019"
           - name: contigs
             wdlVariableName: contigs
             type: STRING_ARRAY
@@ -565,6 +571,12 @@ configurations:
             defaultValue: "0.0"
             minValue: 0.0
             maxValue: 1.0
+          - name: rafCensoringThreshold
+            wdlVariableName: raf_censoring_threshold
+            type: FLOAT
+            isRequired: true
+            userProvided: false
+            defaultValue: "0.000797"
           - name: preprocessPanelBubbleSplitSitesOnlyVcf
             wdlVariableName: preprocess_panel_bubble_split_sites_only_vcf
             type: FILE
