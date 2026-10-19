@@ -102,7 +102,7 @@ paths:
       - $ref: '#/components/parameters/PipelineName'
       - $ref: '#/components/parameters/UserEmail'
     get:
-      summary: Get quota for a given pipeline and user identified by email, including details of all allocations
+      summary: Get quota and allocations history (ordered by newest first) for a pipeline and user identified by email
       tags: [ admin ]
       operationId: getQuotaForPipelineAndUserV3
       responses:
