@@ -73,7 +73,7 @@ jobs:
             -Djib.console=plain
 
       - name: Run Trivy vulnerability scanner
-        uses: broadinstitute/dsp-appsec-trivy-action@v1
+        uses: broadinstitute/dsp-appsec-trivy-action@v2
         with:
           image: ${{ steps.image-name.outputs.name }}
 
