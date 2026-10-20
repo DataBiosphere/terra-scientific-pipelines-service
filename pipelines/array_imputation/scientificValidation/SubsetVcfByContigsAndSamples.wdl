@@ -9,7 +9,7 @@ workflow SubsetVcfByContigsAndSamples {
         File ref_fasta_dict
         Array[String] contigs
         File sample_names_file
-        String output_basename = "subsetted_samples"
+        String output_basename
 
         Int preemptible = 0
     }
@@ -60,7 +60,7 @@ task SubsetVcfByContig {
         Int preemptible = 0
     }
 
-    String output_vcf_name = output_basename + ".vcf.gz"
+    String output_vcf_name = output_basename + "." + contig + ".vcf.gz"
 
     command <<<
         set -euo pipefail
@@ -102,7 +102,7 @@ task ConcatenateVcfs {
         Int preemptible = 0
     }
 
-    String output_vcf_name = output_basename + ".subsetted.vcf.gz"
+    String output_vcf_name = output_basename + ".vcf.gz"
 
     command <<<
         set -euo pipefail
