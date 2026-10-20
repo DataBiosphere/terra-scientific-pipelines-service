@@ -83,10 +83,11 @@ def main():
 
     failures = []
     for i, row in enumerate(rows, start=2):  # line 1 is the header
-        label = f"line {i}: {row['user_email']} {row['pipeline_name']} {row['quota_source']} {read_int(row['amount'])}"
+        label = f"line {i}: {row['user_email']} {row['pipeline_name']} {row['quota_source']} {row['amount']}"
         try:
             if not all(row[c] for c in REQUIRED_COLUMNS):
                 raise ValueError("empty required field")
+            read_int(row["amount"])
             comments = row.get("comments") or args.comments
             if args.dry_run:
                 print(f"DRY RUN  {label}")
