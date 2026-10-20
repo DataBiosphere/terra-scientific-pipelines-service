@@ -103,7 +103,7 @@ workflow GatkConcordanceValidation {
         if (run_chromosomes) {
             call ConcatenateTsvs as ConcatenateChrSpecificCorrelationTsvs_sampled {
                 input:
-                    input_tsvs = ConcatenateChrSpecificCorrelationTsvs_batch.output_file,
+                    input_tsvs = select_all(ConcatenateChrSpecificCorrelationTsvs_batch.output_file),
                     output_filename = output_basename + ".chr_specific_correlations",
                     preemptible = preemptible
             }
@@ -112,7 +112,7 @@ workflow GatkConcordanceValidation {
         if (run_full_genome) {
             call ConcatenateTsvs as ConcatenateWholeGenomeCorrelations_sampled {
                 input:
-                    input_tsvs = AddConstantColumn_whole_genome_batch.output_file,
+                    input_tsvs = select_all(AddConstantColumn_whole_genome_batch.output_file),
                     output_filename = output_basename + ".whole_genome_correlations",
                     preemptible = preemptible
             }
@@ -259,13 +259,12 @@ task PearsonCorrelationByAF {
         Int preemptible = 3
     }
 
-    Int disk_size = ceil(size([evalVcf, truthVcf, af_resource, sample_to_ancestry_af_annotation], "GB") + 20)
+    Int disk_size = ceil((2 * size(evalVcf, "GB")) + size([truthVcf, af_resource, sample_to_ancestry_af_annotation], "GB") + 20)
 
     command <<<
         set -xeuo pipefail
 
         EVAL_VCF="~{evalVcf}"
-        TRUTH_VCF="~{truthVcf}"
 
         if [ -n "~{sample_list}" ]; then
             set --
@@ -281,18 +280,12 @@ task PearsonCorrelationByAF {
                 -O "~{output_basename}.eval_subset.vcf.gz" \
                 "$@"
 
-            gatk SelectVariants \
-                -V "$TRUTH_VCF" \
-                -O "~{output_basename}.truth_subset.vcf.gz" \
-                "$@"
-
             EVAL_VCF="~{output_basename}.eval_subset.vcf.gz"
-            TRUTH_VCF="~{output_basename}.truth_subset.vcf.gz"
         fi
 
         gatk --java-options "-Xmx~{mem_gb - 2}G" EvaluateGenotypingPerformance \
         -eval "$EVAL_VCF" \
-        -truth "$TRUTH_VCF" \
+        -truth ~{truthVcf} \
         --arguments_file ~{sample_to_ancestry_af_annotation} \
         --resource ~{af_resource} \
         ~{"--ids " + sites} \
