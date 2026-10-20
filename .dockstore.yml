@@ -247,6 +247,13 @@ workflows:
         email: teaspoons-developers@broadinstitute.org
 
   - subclass: WDL
+    name: SubsetVcfByContigsAndSamples
+    primaryDescriptorPath: /pipelines/array_imputation/scientificValidation/SubsetVcfByContigsAndSamples.wdl
+    authors:
+      - name: Terra Scientific Services
+        email: teaspoons-developers@broadinstitute.org
+
+  - subclass: WDL
     name: UpdateVcfDictionaryHeader
     primaryDescriptorPath: /pipelines/array_imputation/scientificValidation/UpdateVcfDictionaryHeader.wdl
     authors:
