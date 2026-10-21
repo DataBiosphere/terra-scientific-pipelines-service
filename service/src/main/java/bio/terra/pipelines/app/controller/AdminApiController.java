@@ -96,6 +96,7 @@ public class AdminApiController implements AdminApi {
     return new ResponseEntity<>(pipelineToApiAdminPipeline(updatedPipeline), HttpStatus.OK);
   }
 
+  // Note: This will be removed in https://broadworkbench.atlassian.net/browse/TSPS-1244
   @Override
   public ResponseEntity<ApiAdminQuotaV2> getQuotaForPipelineAndUserV2(
       String pipelineName, String userEmail) {
@@ -159,6 +160,38 @@ public class AdminApiController implements AdminApi {
 
     return new ResponseEntity<>(
         userQuotaToApiAdminQuotaV2(updatedUserQuota, userEmail), HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiAdminGetQuotaResponseV3> getQuotaForPipelineAndUserV3(
+      String pipelineName, String userEmail) {
+    // check if user is an admin
+    final SamUser authedUser = getAuthenticatedInfo();
+    samService.checkAdminAuthz(authedUser);
+
+    PipelinesEnum validatedPipelineName =
+        PipelineApiUtils.validatePipelineName(pipelineName, logger);
+
+    // get userId from Sam using the email address and throw not found error
+    // if the user doesn't exist in Sam
+    String userId = samService.getUserIdFromEmailAdmin(authedUser, userEmail);
+
+    List<QuotaAllocation> allocations =
+        quotasService.getAllQuotaAllocationsForUserAndPipeline(userId, validatedPipelineName);
+
+    // if no allocations exist for this user/pipeline, create an empty QuotaTotals object
+    // otherwise, fetch the user's quota totals for that pipeline
+    UserQuotaTotals quotaTotals;
+    if (allocations.isEmpty()) {
+      quotaTotals = new UserQuotaTotals(0, 0);
+    } else {
+      quotaTotals = quotasService.getQuotaTotalsForUserAndPipeline(userId, validatedPipelineName);
+    }
+
+    return new ResponseEntity<>(
+        toApiAdminGetQuotaResponseV3(
+            userId, userEmail, validatedPipelineName, quotaTotals, allocations),
+        HttpStatus.OK);
   }
 
   @Override
@@ -258,5 +291,22 @@ public class AdminApiController implements AdminApi {
         .comments(allocation.getComments())
         .created(allocation.getCreated().toString())
         .updated(allocation.getUpdated().toString());
+  }
+
+  /** Convert user and quota information to an ApiAdminGetQuotaResponseV3 object. */
+  private ApiAdminGetQuotaResponseV3 toApiAdminGetQuotaResponseV3(
+      String userId,
+      String userEmail,
+      PipelinesEnum pipelineName,
+      UserQuotaTotals quotaTotals,
+      List<QuotaAllocation> allocations) {
+    return new ApiAdminGetQuotaResponseV3()
+        .userEmail(userEmail)
+        .userId(userId)
+        .pipelineName(pipelineName.getLowerCaseValue())
+        .quotaLimit(quotaTotals.totalAllocated())
+        .quotaConsumed(quotaTotals.totalConsumed())
+        .quotaRemaining(quotaTotals.totalAllocated() - quotaTotals.totalConsumed())
+        .allocations(allocations.stream().map(this::toApiQuotaAllocation).toList());
   }
 }

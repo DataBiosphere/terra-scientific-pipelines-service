@@ -228,6 +228,21 @@ public class QuotasService {
   }
 
   /**
+   * This method returns all quota allocations for a given user and pipeline, ordered by created
+   * timestamp descending. It will return an empty list if the user has no allocations for the given
+   * pipeline.
+   *
+   * @param userId - the user id
+   * @param pipelineName - the pipeline name
+   * @return - the list of quota allocations for the user and pipeline
+   */
+  public List<QuotaAllocation> getAllQuotaAllocationsForUserAndPipeline(
+      String userId, PipelinesEnum pipelineName) {
+    return quotaAllocationsRepository.findByUserIdAndPipelineNameOrderByCreatedDesc(
+        userId, pipelineName);
+  }
+
+  /**
    * This method consumes quota for a given user and pipeline (only from quota_allocations table).
    * It will throw an exception if the user does not have enough quota to consume the requested
    * amount. It will return a list of QuotaConsumptionRecord, one for each allocation that was

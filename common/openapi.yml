@@ -101,6 +101,23 @@ paths:
     parameters:
       - $ref: '#/components/parameters/PipelineName'
       - $ref: '#/components/parameters/UserEmail'
+    get:
+      summary: Get quota and allocations history (ordered by newest first) for a pipeline and user identified by email
+      tags: [ admin ]
+      operationId: getQuotaForPipelineAndUserV3
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminGetQuotaResponseV3'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        403:
+          $ref: '#/components/responses/PermissionDenied'
+        500:
+          $ref: '#/components/responses/ServerError'
     post:
       summary: Allocate quota for a given pipeline and user identified by email
       tags: [ admin ]
@@ -797,6 +814,31 @@ components:
           $ref: '#/components/schemas/QuotaRemaining'
         allocations:
           description: List of allocations created or modified during this update
+          type: array
+          items:
+            $ref: '#/components/schemas/QuotaAllocation'
+
+    AdminGetQuotaResponseV3:
+      description: |
+        Result of a admin quota retrieval for a user and pipeline. Contains the user's aggregate quota
+        limit, consumed and remaining quota, and the list of allocations for the user and pipeline.
+      type: object
+      required: [ userEmail, userId, pipelineName, quotaLimit, quotaConsumed, quotaRemaining, allocations ]
+      properties:
+        userEmail:
+          $ref: '#/components/schemas/UserEmail'
+        userId:
+          $ref: '#/components/schemas/UserId'
+        pipelineName:
+          $ref: '#/components/schemas/PipelineName'
+        quotaLimit:
+          $ref: '#/components/schemas/QuotaLimit'
+        quotaConsumed:
+          $ref: '#/components/schemas/QuotaConsumed'
+        quotaRemaining:
+          $ref: '#/components/schemas/QuotaRemaining'
+        allocations:
+          description: List of allocations for the user and pipeline
           type: array
           items:
             $ref: '#/components/schemas/QuotaAllocation'

@@ -32,4 +32,7 @@ public interface QuotaAllocationsRepository extends CrudRepository<QuotaAllocati
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   List<QuotaAllocation> findByUserIdAndPipelineNameAndQuotaStatusOrderByCreatedAsc(
       String userId, PipelinesEnum pipelineName, QuotaAllocationStatusEnum statusEnum);
+
+  List<QuotaAllocation> findByUserIdAndPipelineNameOrderByCreatedDesc(
+      String userId, PipelinesEnum pipelineName);
 }
