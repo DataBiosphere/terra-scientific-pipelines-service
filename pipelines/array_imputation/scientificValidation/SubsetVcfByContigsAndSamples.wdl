@@ -15,7 +15,7 @@ workflow SubsetVcfByContigsAndSamples {
     }
 
     scatter (contig in contigs) {
-        call SubsetVcfByContig {
+        call SubsetVcfBySampleNameAndContig {
             input:
                 input_vcf = input_vcf,
                 input_vcf_index = input_vcf_index,
@@ -31,7 +31,8 @@ workflow SubsetVcfByContigsAndSamples {
 
     call ConcatenateVcfs {
         input:
-            input_vcfs = SubsetVcfByContig.output_vcf,
+            input_vcfs = SubsetVcfBySampleNameAndContig.output_vcf,
+            input_vcf_indexes = SubsetVcfBySampleNameAndContig.output_vcf_index,
             output_basename = output_basename,
             preemptible = preemptible
     }
@@ -43,7 +44,7 @@ workflow SubsetVcfByContigsAndSamples {
 }
 
 # Subset the VCF down to the requested samples and one chromosome at a time.
-task SubsetVcfByContig {
+task SubsetVcfBySampleNameAndContig {
     input {
         File input_vcf
         File input_vcf_index
@@ -94,6 +95,8 @@ task SubsetVcfByContig {
 task ConcatenateVcfs {
     input {
         Array[File] input_vcfs
+        Array[File] input_vcf_indexes
+
         String output_basename
 
         Int disk_size_gb = ceil(2 * size(input_vcfs, "GiB") + 10)
