@@ -26,9 +26,17 @@ workflow SubsetVcfInfoAnnotations {
         }
     }
 
+    call ConcatenateVcfs {
+        input:
+            input_vcfs = KeepAllowedInfoAnnotations.output_vcf,
+            input_vcf_indexes = KeepAllowedInfoAnnotations.output_vcf_index,
+            output_basename = output_basename,
+            preemptible = preemptible
+    }
+
     output {
-        Array[File] filtered_vcfs = KeepAllowedInfoAnnotations.output_vcf
-        Array[File] filtered_vcf_indexes = KeepAllowedInfoAnnotations.output_vcf_index
+        File merged_vcf = ConcatenateVcfs.output_vcf
+        File merged_vcf_index = ConcatenateVcfs.output_vcf_index
     }
 }
 
@@ -74,6 +82,42 @@ task KeepAllowedInfoAnnotations {
     }
 }
 
+# Combine the filtered per-file VCFs back into a single merged file.
+task ConcatenateVcfs {
+    input {
+        Array[File] input_vcfs
+        Array[File] input_vcf_indexes
+
+        String output_basename
+
+        Int disk_size_gb = ceil(2.4 * size(input_vcfs, "GiB") + 10)
+        Int cpu = 1
+        Int memory_mb = 6000
+        Int preemptible = 0
+    }
+
+    String output_vcf_name = output_basename + ".vcf.gz"
+
+    command <<<
+        set -euo pipefail
+
+        bcftools concat -a -Oz --write-index=tbi -o "~{output_vcf_name}" ~{sep=' ' input_vcfs}
+    >>>
+
+    runtime {
+        docker: "us.gcr.io/broad-gotc-prod/bcftools-vcftools:2.0.0-1.24-0.1.17-1784569943"
+        disks: "local-disk " + disk_size_gb + " HDD"
+        memory: memory_mb + " MiB"
+        cpu: cpu
+        preemptible: preemptible
+    }
+
+    output {
+        File output_vcf = output_vcf_name
+        File output_vcf_index = output_vcf_name + ".tbi"
+    }
+}
+
 # Guard against mismatched list lengths. This is a runtime failure, not a WDL validation issue.
 task FailOnMismatchedInputs {
     input {
@@ -91,4 +135,3 @@ task FailOnMismatchedInputs {
         preemptible: preemptible
     }
 }
-
