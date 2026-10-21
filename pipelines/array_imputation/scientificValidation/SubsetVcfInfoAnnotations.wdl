@@ -1,0 +1,94 @@
+version 1.0
+
+workflow SubsetVcfInfoAnnotations {
+    input {
+        Array[File] input_vcfs
+        Array[File] input_vcf_indexes
+        String output_basename
+        Int preemptible = 0
+    }
+
+    if (length(input_vcfs) != length(input_vcf_indexes)) {
+        call FailOnMismatchedInputs {
+            input:
+                output_basename = output_basename,
+                preemptible = preemptible
+        }
+    }
+
+    scatter (i in range(length(input_vcfs))) {
+        call KeepAllowedInfoAnnotations {
+            input:
+                input_vcf = input_vcfs[i],
+                input_vcf_index = input_vcf_indexes[i],
+                output_basename = output_basename + "." + basename(input_vcfs[i], ".vcf.gz"),
+                preemptible = preemptible
+        }
+    }
+
+    output {
+        Array[File] filtered_vcfs = KeepAllowedInfoAnnotations.output_vcf
+        Array[File] filtered_vcf_indexes = KeepAllowedInfoAnnotations.output_vcf_index
+    }
+}
+
+# Keep only the requested INFO annotations and drop everything else.
+# This preserves the VCF structure while removing all non-whitelisted INFO fields.
+task KeepAllowedInfoAnnotations {
+    input {
+        File input_vcf
+        File input_vcf_index
+        String output_basename
+
+        Int disk_size_gb = ceil(2 * size(input_vcf, "GiB") + 20)
+        Int cpu = 1
+        Int memory_mb = 6000
+        Int preemptible = 0
+    }
+
+    String output_vcf_name = output_basename + ".filtered.vcf.gz"
+    String info_exclude_regex = "INFO/^(?!AF_afr$|AF_ami$|AF_amr$|AF_asj$|AF_eas$|AF_fin$|AF_mid$|AF_nfe$|AF_raw$|AF_remaining$|AF_sas$).*"
+
+    command <<<
+        set -euo pipefail
+
+        bcftools annotate \
+            -x '~{info_exclude_regex}' \
+            -Oz \
+            --write-index=tbi \
+            -o "~{output_vcf_name}" \
+            "~{input_vcf}"
+    >>>
+
+    runtime {
+        docker: "us.gcr.io/broad-gotc-prod/bcftools-vcftools:2.0.0-1.24-0.1.17-1784569943"
+        disks: "local-disk " + disk_size_gb + " HDD"
+        memory: memory_mb + " MiB"
+        cpu: cpu
+        preemptible: preemptible
+    }
+
+    output {
+        File output_vcf = output_vcf_name
+        File output_vcf_index = output_vcf_name + ".tbi"
+    }
+}
+
+# Guard against mismatched list lengths. This is a runtime failure, not a WDL validation issue.
+task FailOnMismatchedInputs {
+    input {
+        String output_basename
+        Int preemptible = 0
+    }
+
+    command <<<
+        echo "The VCF and VCF index arrays must be the same length." >&2
+        exit 1
+    >>>
+
+    runtime {
+        docker: "ubuntu:22.04"
+        preemptible: preemptible
+    }
+}
+
