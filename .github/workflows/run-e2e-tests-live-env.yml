@@ -14,13 +14,9 @@ on:
         type: string
 
 jobs:
-  write-inputs-to-summary:
+  log-workflow-inputs:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
       - name: Write inputs to job summary
         uses: Databiosphere/github-actions/actions/write-json-to-job-summary@sps_new_write_inputs_action
         with:
