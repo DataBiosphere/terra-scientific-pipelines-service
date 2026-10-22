@@ -49,7 +49,7 @@ def post_quota(base_url, token, row, comments):
         },
     )
     with urllib.request.urlopen(req, timeout=60) as resp:
-        return resp.status, resp.read().decode()
+        return resp.status
 
 
 def main():
@@ -92,7 +92,7 @@ def main():
             if args.dry_run:
                 print(f"DRY RUN  {label}")
                 continue
-            status, _ = post_quota(args.base_url, token, row, comments)
+            status = post_quota(args.base_url, token, row, comments)
             print(f"OK ({status})  {label}")
         except urllib.error.HTTPError as e:
             detail = e.read().decode(errors="replace")
