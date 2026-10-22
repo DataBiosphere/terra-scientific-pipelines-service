@@ -185,12 +185,12 @@ workflow GatkConcordanceValidation {
     output {
         File? correlations_chr_concatenated = select_first([
             ConcatenateChrSpecificCorrelationTsvs_sampled.output_file,
-            ConcatenateChrSpecificCorrelationTsvs.output_file
+            ConcatenateChrSpecificCorrelationTsvs.output_file, "gs://not_a_real_file"
         ])
 
         File? correlations_whole_genome = select_first([
             ConcatenateWholeGenomeCorrelations_sampled.output_file,
-            AddConstantColumn_whole_genome.output_file
+            AddConstantColumn_whole_genome.output_file, "gs://not_a_real_file"
         ])
     }
 }
