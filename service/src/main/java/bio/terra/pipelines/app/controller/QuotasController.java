@@ -5,9 +5,9 @@ import bio.terra.common.iam.SamUserFactory;
 import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
-import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.generated.api.QuotasApi;
 import bio.terra.pipelines.generated.model.ApiQuotaWithDetails;
+import bio.terra.pipelines.model.UserQuotaTotals;
 import bio.terra.pipelines.service.QuotasService;
 import io.swagger.annotations.Api;
 import jakarta.servlet.http.HttpServletRequest;
@@ -49,21 +49,23 @@ public class QuotasController implements QuotasApi {
     SamUser user = getAuthenticatedInfo();
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
-    UserQuota userQuota =
-        quotasService.getOrCreateQuotaForUserAndPipeline(
+    UserQuotaTotals userQuotaTotals =
+        quotasService.getOrCreateDefaultQuotaForUserAndPipeline(
             user.getSubjectId(), validatedPipelineName);
     QuotaUnitsEnum quotaUnits = quotasService.getQuotaUnitsForPipeline(validatedPipelineName);
 
-    return new ResponseEntity<>(quotasToApiQuotaWithDetails(userQuota, quotaUnits), HttpStatus.OK);
+    return new ResponseEntity<>(
+        quotasToApiQuotaWithDetails(userQuotaTotals, quotaUnits, validatedPipelineName),
+        HttpStatus.OK);
   }
 
   static ApiQuotaWithDetails quotasToApiQuotaWithDetails(
-      UserQuota userQuota, QuotaUnitsEnum quotaUnits) {
+      UserQuotaTotals userQuotaTotals, QuotaUnitsEnum quotaUnits, PipelinesEnum pipelineName) {
 
     return new ApiQuotaWithDetails()
-        .pipelineName(userQuota.getPipelineName().getLowerCaseValue())
-        .quotaConsumed(userQuota.getQuotaConsumed())
-        .quotaLimit(userQuota.getQuota())
+        .pipelineName(pipelineName.getLowerCaseValue())
+        .quotaConsumed(userQuotaTotals.totalConsumed())
+        .quotaLimit(userQuotaTotals.totalAllocated())
         .quotaUnits(quotaUnits.getValue());
   }
 }
