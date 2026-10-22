@@ -55,17 +55,24 @@ task KeepAllowedInfoAnnotations {
     }
 
     String output_vcf_name = output_basename + ".filtered.vcf.gz"
-    String info_exclude_regex = "INFO/^(?!AF_afr$|AF_ami$|AF_amr$|AF_asj$|AF_eas$|AF_fin$|AF_mid$|AF_nfe$|AF_raw$|AF_remaining$|AF_sas$).*"
 
     command <<<
         set -euo pipefail
 
-        bcftools annotate \
-            -x '~{info_exclude_regex}' \
-            -Oz \
-            --write-index=tbi \
-            -o "~{output_vcf_name}" \
-            "~{input_vcf}"
+        all_info_ids=$(bcftools view -h "~{input_vcf}" | awk -F'[=,]' '/^##INFO=<ID=/{print $3}' | sort -u | paste -sd, -)
+        remove_info_ids=$(printf '%s\n' "$all_info_ids" | tr ',' '\n' | grep -vE -x 'AF_afr|AF_ami|AF_amr|AF_asj|AF_eas|AF_fin|AF_mid|AF_nfe|AF_raw|AF_remaining|AF_sas' | paste -sd, -)
+
+        if [ -n "$remove_info_ids" ]; then
+            remove_info_id_list=$(printf '%s\n' "$remove_info_ids" | tr ',' '\n' | sed 's/^/INFO\//g' | paste -sd, -)
+            bcftools annotate \
+                -x "$remove_info_id_list" \
+                -Oz \
+                --write-index=tbi \
+                -o "~{output_vcf_name}" \
+                "~{input_vcf}"
+        else
+            bcftools view -Oz --write-index=tbi -o "~{output_vcf_name}" "~{input_vcf}"
+        fi
     >>>
 
     runtime {
