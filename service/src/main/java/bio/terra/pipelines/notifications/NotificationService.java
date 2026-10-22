@@ -77,9 +77,8 @@ public class NotificationService {
     String pipelineDisplayName = pipeline.getDisplayName();
 
     // a quota allocation is guaranteed to exist for a user and pipeline because it is created when
-    // the
-    // prepare API is called, which is before the flight is started. So we can safely
-    // call getActiveQuotaTotalsForUserAndPipeline here
+    // the prepare API is called, which is before the flight is started. So we can safely
+    // call getQuotaTotalsForUserAndPipeline here
     UserQuotaTotals userQuotaTotals =
         quotasService.getQuotaTotalsForUserAndPipeline(userId, pipeline.getName());
     String quotaRemaining =

@@ -164,7 +164,7 @@ public class QuotasService {
    */
   public void validateUserHasEnoughQuota(String userId, PipelinesEnum pipelineName) {
     UserQuotaTotals userQuotaTotals =
-        getOrCreateDefaultQuotaForUserAndPipeline(userId, pipelineName);
+        getOrInitializeQuotaTotalsForUserAndPipeline(userId, pipelineName);
     int minQuotaNeededByPipeline = getPipelineQuota(pipelineName).getMinQuotaConsumed();
     int availableUserQuota = userQuotaTotals.totalAllocated() - userQuotaTotals.totalConsumed();
 
@@ -253,7 +253,7 @@ public class QuotasService {
    * @param pipelineName - the pipeline name
    * @return - the user's total quota allocated and consumed for the pipeline
    */
-  public UserQuotaTotals getOrCreateDefaultQuotaForUserAndPipeline(
+  public UserQuotaTotals getOrInitializeQuotaTotalsForUserAndPipeline(
       String userId, PipelinesEnum pipelineName) {
     UserQuotaTotals quotaTotals = getQuotaTotalsForUserAndPipeline(userId, pipelineName);
 
