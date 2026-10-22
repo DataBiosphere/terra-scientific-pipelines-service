@@ -28,7 +28,9 @@ workflow GatkConcordanceValidation {
         Int preemptible = 0
     }
 
-    if (defined(sample_list)) {
+    Boolean has_sample_list = defined(sample_list)
+
+    if (has_sample_list) {
         call SplitSampleListIntoBatches as SplitSamples {
             input:
                 sample_list = select_first([sample_list]),
@@ -119,7 +121,7 @@ workflow GatkConcordanceValidation {
         }
     }
 
-    if (!defined(sample_list)) {
+    if (!has_sample_list) {
         if (run_chromosomes) {
             scatter(chr in chromosomes) {
                 call PearsonCorrelationByAF as PearsonByAF_chr {
@@ -184,13 +186,15 @@ workflow GatkConcordanceValidation {
 
     output {
         File? correlations_chr_concatenated = select_first([
-            ConcatenateChrSpecificCorrelationTsvs_sampled.output_file,
-            ConcatenateChrSpecificCorrelationTsvs.output_file, "gs://not_a_real_file"
+            if (run_chromosomes && has_sample_list) then ConcatenateChrSpecificCorrelationTsvs_sampled.output_file else "gs://not_a_real_file",
+            if (run_chromosomes && !has_sample_list) then ConcatenateChrSpecificCorrelationTsvs.output_file else "gs://not_a_real_file",
+            "gs://not_a_real_file"
         ])
 
         File? correlations_whole_genome = select_first([
-            ConcatenateWholeGenomeCorrelations_sampled.output_file,
-            AddConstantColumn_whole_genome.output_file, "gs://not_a_real_file"
+            if (run_full_genome && has_sample_list) then ConcatenateWholeGenomeCorrelations_sampled.output_file else "gs://not_a_real_file",
+            if (run_full_genome && !has_sample_list) then AddConstantColumn_whole_genome.output_file else "gs://not_a_real_file",
+            "gs://not_a_real_file"
         ])
     }
 }
