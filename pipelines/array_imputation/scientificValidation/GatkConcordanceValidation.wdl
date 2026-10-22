@@ -217,7 +217,7 @@ if not samples:
 batch_size = ~{batch_size}
 for batch_index, start in enumerate(range(0, len(samples), batch_size), start=1):
     batch = samples[start:start + batch_size]
-    batch_file = f"sample_batch_{batch_index}.txt"
+    batch_file = f"sample_batch_{batch_index:03d}.txt"
     with open(batch_file, "w") as fh:
         fh.write("\n".join(batch) + "\n")
 PY
