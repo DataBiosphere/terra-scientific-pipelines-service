@@ -5,7 +5,7 @@ workflow QuotaConsumed {
         # user provided inputs
         String output_basename
         File cram_manifest
-        Float? info_filter_for_inclusion
+        Float info_filter_for_inclusion = 0.0
 
         # service provided inputs
         Array[String] contigs
@@ -13,6 +13,7 @@ workflow QuotaConsumed {
         File fasta
         File fasta_index
         File ref_dict
+        Float raf_censoring_threshold = 0.0
 
         # optional additional header line to add to the output VCF
         String? pipeline_header_line
