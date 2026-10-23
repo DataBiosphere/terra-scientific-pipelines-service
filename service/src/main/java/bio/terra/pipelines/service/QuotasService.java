@@ -246,8 +246,7 @@ public class QuotasService {
   /**
    * This method returns the total quota allocated and total quota consumed for a given user and
    * pipeline. If the user has no allocations for the given pipeline, it will create a default
-   * allocation (if the pipeline has a default quota greater than 0) and return the totals for that
-   * allocation.
+   * allocation (if the pipeline has a default quota greater than 0) and return the totals.
    *
    * @param userId - the user id
    * @param pipelineName - the pipeline name
@@ -273,11 +272,13 @@ public class QuotasService {
           // another thread may have created the default allocation between our check and insert
           // fetch the quota totals again
           logger.info(
-              "Race condition detected while creating default quota allocation for user {} and pipeline {}. Fetching existing record.",
+              "Race condition detected while creating default quota allocation for user {} and pipeline {}. Fetching existing record instead.",
               userId,
               pipelineName);
-          quotaTotals = getQuotaTotalsForUserAndPipeline(userId, pipelineName);
         }
+
+        // fetch the quota totals again after potentially creating a default allocation
+        quotaTotals = getQuotaTotalsForUserAndPipeline(userId, pipelineName);
       }
     }
 
