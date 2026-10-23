@@ -13,14 +13,13 @@ import bio.terra.pipelines.app.configuration.internal.NotificationConfiguration;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.CommonPipelineRunStatusEnum;
 import bio.terra.pipelines.db.entities.PipelineRun;
-import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.db.repositories.PipelineRunsRepository;
 import bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException;
 import bio.terra.pipelines.model.Pipeline;
+import bio.terra.pipelines.model.UserQuotaTotals;
 import bio.terra.pipelines.notifications.model.TeaspoonsJobFailedNotification;
 import bio.terra.pipelines.notifications.model.TeaspoonsJobSucceededNotification;
 import bio.terra.pipelines.notifications.model.TeaspoonsUserQuotaChangedNotification;
-import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
 import bio.terra.pipelines.service.QuotasService;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
@@ -40,7 +39,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class NotificationServiceTest extends BaseEmbeddedDbTest {
   @InjectMocks @Autowired NotificationService notificationService;
-  @Autowired PipelineRunsService pipelineRunsService;
   @Autowired PipelineRunsRepository pipelineRunsRepository;
   @Autowired PipelinesService pipelinesService;
   @Autowired QuotasService quotasService;
@@ -72,11 +70,9 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
         createCompletedPipelineRunInDb(pipeline, CommonPipelineRunStatusEnum.SUCCEEDED);
 
     // initialize and set user quota
-    UserQuota userQuota =
-        quotasService.getOrCreateQuotaForUserAndPipeline(testUserId, pipeline.getName());
-    UserQuota updatedUserQuota =
-        quotasService.updateQuotaConsumed(userQuota, testQuotaConsumedByJob);
-    int expectedQuotaRemaining = updatedUserQuota.getQuota() - updatedUserQuota.getQuotaConsumed();
+    UserQuotaTotals userQuotaTotals =
+        quotasService.getOrInitializeQuotaTotalsForUserAndPipeline(testUserId, pipeline.getName());
+    int expectedQuotaRemaining = userQuotaTotals.totalAllocated() - userQuotaTotals.totalConsumed();
 
     String stringifiedJobSucceededNotification =
         objectMapper.writeValueAsString(
@@ -130,60 +126,10 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
     PipelineRun writtenPipelineRun =
         createCompletedPipelineRunInDb(pipeline, CommonPipelineRunStatusEnum.FAILED);
 
-    // initialize and set a custom user quota value. this is not quota consumed by the job.
-    int customQuotaConsumed = 2000;
-    UserQuota userQuota =
-        quotasService.getOrCreateQuotaForUserAndPipeline(testUserId, pipeline.getName());
-    UserQuota updatedUserQuota = quotasService.updateQuotaConsumed(userQuota, customQuotaConsumed);
-    int expectedQuotaRemaining = updatedUserQuota.getQuota() - updatedUserQuota.getQuotaConsumed();
-
-    when(flightContext.getFlightId()).thenReturn(testJobId.toString());
-    RawlsServiceApiException rawlsServiceApiException =
-        new RawlsServiceApiException(testErrorMessage);
-    StepResult stepResultFailedWithException =
-        new StepResult(StepStatus.STEP_RESULT_FAILURE_FATAL, rawlsServiceApiException);
-    when(flightContext.getResult()).thenReturn(stepResultFailedWithException);
-
-    String stringifiedJobFailedNotification =
-        objectMapper.writeValueAsString(
-            new TeaspoonsJobFailedNotification(
-                testUserId,
-                pipeline.getDisplayName(),
-                testJobId.toString(),
-                testErrorMessage,
-                notificationService.formatInstantToReadableString(writtenPipelineRun.getCreated()),
-                notificationService.formatInstantToReadableString(writtenPipelineRun.getUpdated()),
-                String.valueOf(expectedQuotaRemaining),
-                testUserDescription));
-    // success is a void method
-    doNothing()
-        .when(pubsubService)
-        .publishMessage(
-            notificationConfiguration.projectId(),
-            notificationConfiguration.topicId(),
-            stringifiedJobFailedNotification);
-
-    notificationService.configureAndSendPipelineRunFailedNotification(
-        testJobId, testUserId, flightContext);
-
-    // verify that the pubsub method was called
-    verify(pubsubService, times(1))
-        .publishMessage(
-            notificationConfiguration.projectId(),
-            notificationConfiguration.topicId(),
-            stringifiedJobFailedNotification);
-  }
-
-  @Test
-  void configureAndSendPipelineRunFailedNotificationNoUserQuota() throws IOException {
-    Pipeline pipeline =
-        pipelinesService.getPipelineByPipelineKey(TestUtils.TEST_PIPELINE_KEY_1, true);
-    PipelineRun writtenPipelineRun =
-        createCompletedPipelineRunInDb(pipeline, CommonPipelineRunStatusEnum.FAILED);
-
-    // don't initialize user in user_quota table
-    int expectedQuotaRemaining =
-        quotasService.getPipelineQuota(pipeline.getName()).getDefaultQuota();
+    // initialize and set user quota
+    UserQuotaTotals userQuotaTotals =
+        quotasService.getOrInitializeQuotaTotalsForUserAndPipeline(testUserId, pipeline.getName());
+    int expectedQuotaRemaining = userQuotaTotals.totalAllocated() - userQuotaTotals.totalConsumed();
 
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
     RawlsServiceApiException rawlsServiceApiException =
@@ -229,9 +175,11 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
     PipelineRun writtenPipelineRun =
         createCompletedPipelineRunInDb(pipeline, CommonPipelineRunStatusEnum.FAILED);
 
-    // don't initialize user in user_quota table
-    int expectedQuotaRemaining =
-        quotasService.getPipelineQuota(pipeline.getName()).getDefaultQuota();
+    // initialize and set user quota (quota allocation is guaranteed to exist before it reached this
+    // step)
+    UserQuotaTotals userQuotaTotals =
+        quotasService.getOrInitializeQuotaTotalsForUserAndPipeline(testUserId, pipeline.getName());
+    int expectedQuotaRemaining = userQuotaTotals.totalAllocated() - userQuotaTotals.totalConsumed();
 
     when(flightContext.getFlightId()).thenReturn(testJobId.toString());
     StepResult stepResultFailedWithoutException =
