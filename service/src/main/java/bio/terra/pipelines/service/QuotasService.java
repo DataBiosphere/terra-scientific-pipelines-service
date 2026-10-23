@@ -245,8 +245,9 @@ public class QuotasService {
 
   /**
    * This method returns the total quota allocated and total quota consumed for a given user and
-   * pipeline. If the user has no allocations for the given pipeline, it will create a default
-   * allocation (if the pipeline has a default quota greater than 0) and return the totals.
+   * pipeline. If the user has no allocations for the given pipeline AND if the pipeline has a
+   * default quota greater than 0, it will create a default allocation for the user/pipeline, and
+   * return the totals.
    *
    * @param userId - the user id
    * @param pipelineName - the pipeline name
@@ -256,8 +257,8 @@ public class QuotasService {
       String userId, PipelinesEnum pipelineName) {
     UserQuotaTotals quotaTotals = getQuotaTotalsForUserAndPipeline(userId, pipelineName);
 
-    // if user doesn’t have any quota, create a default allocation (if pipeline has a default quota
-    // greater than 0)
+    // if user doesn’t have any quota AND if pipeline has a default quota greater than 0,
+    // create a DEFAULT_FREE allocation
     if (quotaTotals.totalAllocated() == 0) {
       PipelineQuota pipelineQuota = getPipelineQuota(pipelineName);
       if (pipelineQuota.getDefaultQuota() > 0) {
@@ -270,9 +271,9 @@ public class QuotasService {
               null);
         } catch (BadRequestException e) {
           // another thread may have created the default allocation between our check and insert
-          // fetch the quota totals again
           logger.info(
-              "Race condition detected while creating default quota allocation for user {} and pipeline {}. Fetching existing record instead.",
+              "Race condition detected while creating default quota allocation for user {} and pipeline {}. "
+                  + "Fetching existing record instead.",
               userId,
               pipelineName);
         }
