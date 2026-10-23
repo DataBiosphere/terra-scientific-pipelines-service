@@ -72,8 +72,6 @@ task SubsetVcfBySampleNameAndContig {
             -V "~{input_vcf}" \
             -sn "~{sample_names_file}" \
             -L "~{contig}" \
-            --exclude-non-variants \
-            --remove-unused-alternates \
             -O "~{output_vcf_name}"
     >>>
 
