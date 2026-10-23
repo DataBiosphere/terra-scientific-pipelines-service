@@ -50,6 +50,14 @@ env:
   GOOGLE_PROJECT: dsp-artifact-registry
 
 jobs:
+  log-workflow-inputs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write inputs to job summary
+        uses: databiosphere/github-actions/actions/write-json-to-job-summary@write-json-to-job-summary-0.1.0
+        with:
+          inputs-json: ${{ toJSON(inputs) }}
+
   bump-check:
     runs-on: ubuntu-latest
     outputs:
