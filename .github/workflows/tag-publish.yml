@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Write inputs to job summary
-        uses: Databiosphere/github-actions/actions/write-json-to-job-summary@sps_new_write_inputs_action
+        uses: Databiosphere/github-actions/actions/write-json-to-job-summary@master
         with:
           inputs-json: ${{ toJSON(inputs) }}
 
