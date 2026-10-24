@@ -108,7 +108,7 @@ task ConcatenateVcfs {
     command <<<
         set -euo pipefail
 
-        bcftools concat -a -Oz --write-index=tbi -o "~{output_vcf_name}" ~{sep=' ' input_vcfs}
+        bcftools concat --naive -Oz --write-index=tbi -o "~{output_vcf_name}" ~{sep=' ' input_vcfs}
     >>>
 
     runtime {
