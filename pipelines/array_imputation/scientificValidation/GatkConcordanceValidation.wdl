@@ -18,7 +18,7 @@ workflow GatkConcordanceValidation {
 
         File? sample_mapping
         File? sample_list
-        Int batch_size = 100
+        Int batch_size = 50
         Int? n_bins
         Float? right_edge_first_bin
 
