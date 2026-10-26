@@ -188,13 +188,13 @@ workflow GatkConcordanceValidation {
         File? correlations_chr_concatenated = select_first([
             if (run_chromosomes && has_sample_list) then ConcatenateChrSpecificCorrelationTsvs_sampled.output_file else "gs://not_a_real_file",
             if (run_chromosomes && !has_sample_list) then ConcatenateChrSpecificCorrelationTsvs.output_file else "gs://not_a_real_file",
-            "gs://not_a_real_file"
+            "gs://not_a_real_bucket/not_a_real_file.txt"
         ])
 
         File? correlations_whole_genome = select_first([
             if (run_full_genome && has_sample_list) then ConcatenateWholeGenomeCorrelations_sampled.output_file else "gs://not_a_real_file",
             if (run_full_genome && !has_sample_list) then AddConstantColumn_whole_genome.output_file else "gs://not_a_real_file",
-            "gs://not_a_real_file"
+            "gs://not_a_real_bucket/not_a_real_file.txt"
         ])
     }
 }
