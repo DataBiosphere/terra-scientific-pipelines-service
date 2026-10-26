@@ -46,6 +46,20 @@ dependencyManagement {
             entry 'micrometer-registry-prometheus'
         }
 
+        // micrometer-registry-prometheus 1.17.x requires prometheus client 1.7.x, but the Spring Boot BOM pins it to
+        // 1.3.x, which causes a NoSuchMethodError on startup (PrometheusMeterRegistry). Keep this in sync with the
+        // io.prometheus version micrometer-registry-prometheus declares.
+        dependencySet(group: 'io.prometheus', version: '1.7.0') {
+            entry 'prometheus-metrics-config'
+            entry 'prometheus-metrics-core'
+            entry 'prometheus-metrics-exporter-common'
+            entry 'prometheus-metrics-exporter-httpserver'
+            entry 'prometheus-metrics-exposition-formats'
+            entry 'prometheus-metrics-exposition-textformats'
+            entry 'prometheus-metrics-model'
+            entry 'prometheus-metrics-tracer-common'
+        }
+
         // Spring Boot BOM pins spring-data-commons to 3.5.11; override to 3.5.12 for a
         // denial-of-service security fix. An explicit entry here takes precedence over the
         // imported BOM's version.
