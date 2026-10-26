@@ -38,6 +38,7 @@ dependencyManagement {
         // More recently, dependabot has updated this version to 1.17.2. To get a more recent version via Spring Boot
         // BOM would require upgrading Spring to 4.x, which is a larger refactor that is difficult to do with current
         // Terra dependencies.
+        // Anytime this updates, check the associated io.prometheus compatibility, pinned separately below.
         dependencySet(group: 'io.micrometer', version: '1.17.2') {
             entry 'micrometer-core'
             entry 'micrometer-commons'
