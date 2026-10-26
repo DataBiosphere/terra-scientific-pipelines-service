@@ -17,7 +17,6 @@ workflow GatkConcordanceValidation {
         String output_basename
 
         File? sample_mapping
-        File? sample_list
         Int batch_size = 50
         Int? n_bins
         Float? right_edge_first_bin
@@ -28,103 +27,22 @@ workflow GatkConcordanceValidation {
         Int preemptible = 0
     }
 
-    Boolean has_sample_list = defined(sample_list)
-
-    if (has_sample_list) {
-        call SplitSampleListIntoBatches as SplitSamples {
-            input:
-                sample_list = select_first([sample_list]),
-                batch_size = batch_size
-        }
-
-        scatter (sample_batch in SplitSamples.sample_batches) {
-            if (run_chromosomes) {
-                scatter(chr in chromosomes) {
-                    call PearsonCorrelationByAF as PearsonByAF_chr_batch {
-                        input:
-                            evalVcf = eval_vcf,
-                            evalVcfIndex = eval_vcf_index,
-                            af_resource = af_annotation_vcf,
-                            af_resource_index = af_annotation_vcf_index,
-                            sample_to_ancestry_af_annotation = sample_to_ancestry_af_annotation,
-                            truthVcf = truth_vcf,
-                            truthVcfIndex = truth_vcf_index,
-                            intervals = chr,
-                            output_basename = output_basename + "." + chr + ".batch_" + basename(sample_batch),
-                            sample_list = sample_batch,
-                            n_bins = n_bins,
-                            sample_mapping = sample_mapping,
-                            right_edge_first_bin = right_edge_first_bin,
-                            preemptible = preemptible
-                    }
-
-                    call AddConstantColumn as AddConstantColumn_chr_batch {
-                        input:
-                            input_tsv = PearsonByAF_chr_batch.correlations,
-                            constant_value = chr,
-                            column_name = "CHROMOSOME",
-                            output_filename = output_basename + "." + chr + ".batch_" + basename(sample_batch) + ".correlations"
-                    }
-                }
-                call ConcatenateTsvs as ConcatenateChrSpecificCorrelationTsvs_batch {
-                    input:
-                        input_tsvs = AddConstantColumn_chr_batch.output_file,
-                        output_filename = output_basename + ".chr_specific_correlations.batch_" + basename(sample_batch),
-                        preemptible = preemptible
-                }
-            }
-
-            if (run_full_genome) {
-                call PearsonCorrelationByAF as PearsonByAF_WholeGenome_batch {
-                    input:
-                        evalVcf = eval_vcf,
-                        evalVcfIndex = eval_vcf_index,
-                        af_resource = af_annotation_vcf,
-                        af_resource_index = af_annotation_vcf_index,
-                        sample_to_ancestry_af_annotation = sample_to_ancestry_af_annotation,
-                        truthVcf = truth_vcf,
-                        truthVcfIndex = truth_vcf_index,
-                        output_basename = output_basename + ".batch_" + basename(sample_batch),
-                        sample_list = sample_batch,
-                        n_bins = n_bins,
-                        sample_mapping = sample_mapping,
-                        right_edge_first_bin = right_edge_first_bin,
-                        preemptible = preemptible
-                }
-
-                call AddConstantColumn as AddConstantColumn_whole_genome_batch {
-                    input:
-                        input_tsv = PearsonByAF_WholeGenome_batch.correlations,
-                        constant_value = "WholeGenome",
-                        column_name = "CHROMOSOME",
-                        output_filename = output_basename + ".batch_" + basename(sample_batch) + ".whole_genome_correlations"
-                }
-            }
-        }
-
-        if (run_chromosomes) {
-            call ConcatenateTsvs as ConcatenateChrSpecificCorrelationTsvs_sampled {
-                input:
-                    input_tsvs = select_all(ConcatenateChrSpecificCorrelationTsvs_batch.output_file),
-                    output_filename = output_basename + ".chr_specific_correlations",
-                    preemptible = preemptible
-            }
-        }
-
-        if (run_full_genome) {
-            call ConcatenateTsvs as ConcatenateWholeGenomeCorrelations_sampled {
-                input:
-                    input_tsvs = select_all(AddConstantColumn_whole_genome_batch.output_file),
-                    output_filename = output_basename + ".whole_genome_correlations",
-                    preemptible = preemptible
-            }
-        }
+    call GetSamplesFromVcf as EvalVcfSamples {
+        input:
+            vcf = eval_vcf
     }
 
-    if (!has_sample_list) {
+    # Always batch by samples present in the eval VCF so every subset is valid for GATK.
+    call SplitSampleListIntoBatches as SplitSamples {
+        input:
+            sample_list = EvalVcfSamples.sample_names_file,
+            batch_size = batch_size
+    }
+
+    scatter (sample_batch in SplitSamples.sample_batches) {
         if (run_chromosomes) {
             scatter(chr in chromosomes) {
-                call PearsonCorrelationByAF as PearsonByAF_chr {
+                call PearsonCorrelationByAF as PearsonByAF_chr_batch {
                     input:
                         evalVcf = eval_vcf,
                         evalVcfIndex = eval_vcf_index,
@@ -134,31 +52,32 @@ workflow GatkConcordanceValidation {
                         truthVcf = truth_vcf,
                         truthVcfIndex = truth_vcf_index,
                         intervals = chr,
-                        output_basename = output_basename + "." + chr,
+                        output_basename = output_basename + "." + chr + ".batch_" + basename(sample_batch),
+                        sample_list = sample_batch,
                         n_bins = n_bins,
                         sample_mapping = sample_mapping,
                         right_edge_first_bin = right_edge_first_bin,
                         preemptible = preemptible
                 }
 
-                call AddConstantColumn as AddConstantColumn_chr {
+                call AddConstantColumn as AddConstantColumn_chr_batch {
                     input:
-                        input_tsv = PearsonByAF_chr.correlations,
+                        input_tsv = PearsonByAF_chr_batch.correlations,
                         constant_value = chr,
                         column_name = "CHROMOSOME",
-                        output_filename = output_basename + "." + chr + ".correlations"
+                        output_filename = output_basename + "." + chr + ".batch_" + basename(sample_batch) + ".correlations"
                 }
             }
-            call ConcatenateTsvs as ConcatenateChrSpecificCorrelationTsvs {
+            call ConcatenateTsvs as ConcatenateChrSpecificCorrelationTsvs_batch {
                 input:
-                    input_tsvs = AddConstantColumn_chr.output_file,
-                    output_filename = output_basename + ".chr_specific_correlations",
+                    input_tsvs = AddConstantColumn_chr_batch.output_file,
+                    output_filename = output_basename + ".chr_specific_correlations.batch_" + basename(sample_batch),
                     preemptible = preemptible
             }
         }
 
         if (run_full_genome) {
-            call PearsonCorrelationByAF as PearsonByAF_WholeGenome {
+            call PearsonCorrelationByAF as PearsonByAF_WholeGenome_batch {
                 input:
                     evalVcf = eval_vcf,
                     evalVcfIndex = eval_vcf_index,
@@ -167,35 +86,71 @@ workflow GatkConcordanceValidation {
                     sample_to_ancestry_af_annotation = sample_to_ancestry_af_annotation,
                     truthVcf = truth_vcf,
                     truthVcfIndex = truth_vcf_index,
-                    output_basename = output_basename,
+                    output_basename = output_basename + ".batch_" + basename(sample_batch),
+                    sample_list = sample_batch,
                     n_bins = n_bins,
                     sample_mapping = sample_mapping,
                     right_edge_first_bin = right_edge_first_bin,
                     preemptible = preemptible
             }
 
-            call AddConstantColumn as AddConstantColumn_whole_genome {
+            call AddConstantColumn as AddConstantColumn_whole_genome_batch {
                 input:
-                    input_tsv = PearsonByAF_WholeGenome.correlations,
+                    input_tsv = PearsonByAF_WholeGenome_batch.correlations,
                     constant_value = "WholeGenome",
                     column_name = "CHROMOSOME",
-                    output_filename = output_basename + ".whole_genome_correlations"
+                    output_filename = output_basename + ".batch_" + basename(sample_batch) + ".whole_genome_correlations"
             }
         }
     }
 
-    output {
-        File? correlations_chr_concatenated = select_first([
-            if (run_chromosomes && has_sample_list) then ConcatenateChrSpecificCorrelationTsvs_sampled.output_file else "gs://not_a_real_bucket/not_a_real_file.txt",
-            if (run_chromosomes && !has_sample_list) then ConcatenateChrSpecificCorrelationTsvs.output_file else "gs://not_a_real_bucket/not_a_real_file.txt",
-            "gs://not_a_real_bucket/not_a_real_file.txt"
-        ])
+    if (run_chromosomes) {
+        call ConcatenateTsvs as ConcatenateChrSpecificCorrelationTsvs_sampled {
+            input:
+                input_tsvs = select_all(ConcatenateChrSpecificCorrelationTsvs_batch.output_file),
+                output_filename = output_basename + ".chr_specific_correlations",
+                preemptible = preemptible
+        }
+    }
 
-        File? correlations_whole_genome = select_first([
-            if (run_full_genome && has_sample_list) then ConcatenateWholeGenomeCorrelations_sampled.output_file else "gs://not_a_real_bucket/not_a_real_file.txt",
-            if (run_full_genome && !has_sample_list) then AddConstantColumn_whole_genome.output_file else "gs://not_a_real_bucket/not_a_real_file.txt",
-            "gs://not_a_real_bucket/not_a_real_file.txt"
-        ])
+    if (run_full_genome) {
+        call ConcatenateTsvs as ConcatenateWholeGenomeCorrelations_sampled {
+            input:
+                input_tsvs = select_all(AddConstantColumn_whole_genome_batch.output_file),
+                output_filename = output_basename + ".whole_genome_correlations",
+                preemptible = preemptible
+        }
+    }
+
+    output {
+        File? correlations_chr_concatenated = ConcatenateChrSpecificCorrelationTsvs_sampled.output_file
+        File? correlations_whole_genome = ConcatenateWholeGenomeCorrelations_sampled.output_file
+    }
+}
+
+task GetSamplesFromVcf {
+    input {
+        File vcf
+    }
+
+    Int disk_size = ceil(size(vcf, "GB") + 10)
+
+    command <<<
+        set -euo pipefail
+
+        bcftools query -l "~{vcf}" > eval_vcf_samples.txt
+    >>>
+
+    runtime {
+        docker: "us.gcr.io/broad-gotc-prod/bcftools-vcftools:2.0.0-1.24-0.1.17-1784569943"
+        memory: "2 GB"
+        cpu: 1
+        disks: "local-disk " + disk_size + " HDD"
+        preemptible: 3
+    }
+
+    output {
+        File sample_names_file = "eval_vcf_samples.txt"
     }
 }
 
@@ -218,9 +173,16 @@ with open(sample_path, "r") as src:
 if not samples:
     raise ValueError("sample_list is empty or contains no valid sample IDs")
 
+seen = set()
+unique_samples = []
+for sample in samples:
+    if sample not in seen:
+        seen.add(sample)
+        unique_samples.append(sample)
+
 batch_size = ~{batch_size}
-for batch_index, start in enumerate(range(0, len(samples), batch_size), start=1):
-    batch = samples[start:start + batch_size]
+for batch_index, start in enumerate(range(0, len(unique_samples), batch_size), start=1):
+    batch = unique_samples[start:start + batch_size]
     batch_file = f"sample_batch_{batch_index:03d}.txt"
     with open(batch_file, "w") as fh:
         fh.write("\n".join(batch) + "\n")
