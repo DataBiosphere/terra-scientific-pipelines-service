@@ -1,0 +1,100 @@
+# migrate legacy user_quotas.quota_consumed values into quota_allocations by consuming
+# quota on the active allocations for the same user + pipeline, oldest-first.
+databaseChangeLog:
+  - changeSet:
+      id: migrate-user-quota-consumed-to-quota-allocations
+      author: sshah
+      changes:
+        - sql:
+            dbms: 'postgresql'
+            sql: >
+              DO $$
+              DECLARE
+                uq_record RECORD;
+                allocation_record RECORD;
+                remaining_to_consume INTEGER;
+                amount_consumed INTEGER;
+              BEGIN
+                FOR uq_record IN
+                  SELECT user_id, pipeline_name, quota_consumed
+                  FROM public.user_quotas
+                  WHERE quota_consumed > 0
+                  ORDER BY user_id, pipeline_name
+                LOOP
+                  remaining_to_consume := uq_record.quota_consumed;
+
+                  FOR allocation_record IN
+                    SELECT id, quota_allocated, quota_consumed, quota_status, created
+                    FROM public.quota_allocations
+                    WHERE user_id = uq_record.user_id
+                      AND pipeline_name = uq_record.pipeline_name
+                      AND quota_status = 'ACTIVE'
+                    ORDER BY created ASC, id ASC
+                  LOOP
+                    EXIT WHEN remaining_to_consume <= 0;
+
+                    IF allocation_record.quota_allocated <= allocation_record.quota_consumed THEN
+                      UPDATE public.quota_allocations
+                      SET quota_status = 'EXHAUSTED'
+                      WHERE id = allocation_record.id;
+                      CONTINUE;
+                    END IF;
+
+                    amount_consumed := LEAST(
+                      allocation_record.quota_allocated - allocation_record.quota_consumed,
+                      remaining_to_consume
+                    );
+
+                    UPDATE public.quota_allocations
+                    SET quota_consumed = quota_consumed + amount_consumed,
+                        quota_status = CASE
+                          WHEN quota_consumed + amount_consumed >= quota_allocated THEN 'EXHAUSTED'
+                          ELSE 'ACTIVE'
+                        END
+                    WHERE id = allocation_record.id;
+
+                    remaining_to_consume := remaining_to_consume - amount_consumed;
+                  END LOOP;
+
+                  IF remaining_to_consume > 0 THEN
+                    RAISE EXCEPTION
+                      'Unable to apply % quota_consumed for user % and pipeline % against quota_allocations. % remains unconsumed.',
+                      uq_record.quota_consumed,
+                      uq_record.user_id,
+                      uq_record.pipeline_name,
+                      remaining_to_consume;
+                  END IF;
+                END LOOP;
+              END $$;
+
+  - changeSet:
+      id: validate-user-quota-consumed-migration
+      author: sshah
+      changes:
+        - sql:
+            dbms: 'postgresql'
+            sql: >
+              DO $$
+              DECLARE
+                mismatch_count INTEGER;
+              BEGIN
+                SELECT COUNT(*) INTO mismatch_count
+                FROM (
+                  SELECT
+                    uq.user_id,
+                    uq.pipeline_name,
+                    uq.quota_consumed,
+                    COALESCE(SUM(qa.quota_consumed), 0) AS allocated_consumed
+                  FROM public.user_quotas uq
+                  LEFT JOIN public.quota_allocations qa
+                    ON qa.user_id = uq.user_id
+                   AND qa.pipeline_name = uq.pipeline_name
+                  GROUP BY uq.user_id, uq.pipeline_name, uq.quota_consumed
+                  HAVING uq.quota_consumed <> COALESCE(SUM(qa.quota_consumed), 0)
+                ) mismatches;
+
+                IF mismatch_count > 0 THEN
+                  RAISE EXCEPTION
+                    'Quota consumption migration validation failed: user_quotas.quota_consumed does not match the sum of quota_allocations.quota_consumed for one or more user/pipeline pairs.';
+                END IF;
+              END $$;

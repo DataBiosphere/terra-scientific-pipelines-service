@@ -1,0 +1,42 @@
+# migrate legacy user_quotas rows into quota_allocations as DEFAULT_FREE residual allocations
+# only when there are existing quota_allocations for the same user + pipeline and the
+# user_quotas quota exceeds the total allocated quota.
+databaseChangeLog:
+  - changeSet:
+      id: migrate-user-quotas-to-quota-allocations
+      author: sshah
+      changes:
+        - sql:
+            dbms: 'postgresql'
+            sql: >
+              INSERT INTO public.quota_allocations (
+                pipeline_name,
+                user_id,
+                quota_source,
+                quota_allocated,
+                quota_consumed,
+                quota_status,
+                comments
+              )
+              SELECT
+                uq.pipeline_name,
+                uq.user_id,
+                'DEFAULT_FREE',
+                uq.quota - COALESCE(SUM(qa.quota_allocated), 0),
+                0,
+                'ACTIVE',
+                'Migrated from user_quotas'
+              FROM public.user_quotas uq
+              LEFT JOIN public.quota_allocations qa
+                ON qa.user_id = uq.user_id
+               AND qa.pipeline_name = uq.pipeline_name
+              WHERE NOT EXISTS (
+                SELECT 1
+                FROM public.quota_allocations qa_default
+                WHERE qa_default.user_id = uq.user_id
+                  AND qa_default.pipeline_name = uq.pipeline_name
+                  AND qa_default.quota_source = 'DEFAULT_FREE'
+              )
+              GROUP BY uq.id, uq.pipeline_name, uq.user_id, uq.quota
+              HAVING COUNT(qa.id) > 0
+                 AND uq.quota > COALESCE(SUM(qa.quota_allocated), 0);
