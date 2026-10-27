@@ -156,61 +156,14 @@ task GetSamplesFromVcf {
         docker: "us.gcr.io/broad-gotc-prod/bcftools-vcftools:2.0.0-1.24-0.1.17-1784569943"
         memory: "2 GB"
         cpu: 1
-        disks: "local-disk " + disk_size + " HDD"
-        preemptible: 3
+        disks: "local-disk " + disk_size + " SSD"
+        preemptible: 0
+        maxRetries: 1
     }
 
     output {
         File sample_names_file = "eval_vcf_samples.txt"
         Int sample_count = read_int("eval_vcf_samples_count.txt")
-    }
-}
-
-task SplitSampleListIntoBatches {
-    input {
-        File sample_list
-        Int batch_size = 100
-    }
-
-    command <<<
-        set -euo pipefail
-
-        python <<'PY'
-import os
-
-sample_path = "~{sample_list}"
-with open(sample_path, "r") as src:
-    samples = [line.strip() for line in src if line.strip() and not line.strip().startswith("#")]
-
-if not samples:
-    raise ValueError("sample_list is empty or contains no valid sample IDs")
-
-seen = set()
-unique_samples = []
-for sample in samples:
-    if sample not in seen:
-        seen.add(sample)
-        unique_samples.append(sample)
-
-batch_size = ~{batch_size}
-for batch_index, start in enumerate(range(0, len(unique_samples), batch_size), start=1):
-    batch = unique_samples[start:start + batch_size]
-    batch_file = f"sample_batch_{batch_index:03d}.txt"
-    with open(batch_file, "w") as fh:
-        fh.write("\n".join(batch) + "\n")
-PY
-    >>>
-
-    runtime {
-        docker: "us.gcr.io/broad-dsde-methods/python-data-slim"
-        memory: "2 GB"
-        cpu: 1
-        disks: "local-disk 10 HDD"
-        preemptible: 3
-    }
-
-    output {
-        Array[File] sample_batches = glob("sample_batch_*.txt")
     }
 }
 
@@ -233,7 +186,7 @@ task PearsonCorrelationByAF {
         Float? min_af_for_accuracy_metrics
         Int? n_calibration_bins
         Int mem_gb = 6
-        Int preemptible = 3
+        Int preemptible = 0
     }
 
     Int disk_size = ceil((2 * size(evalVcf, "GB")) + size([truthVcf, af_resource, sample_to_ancestry_af_annotation], "GB") + 20)
@@ -266,6 +219,7 @@ task PearsonCorrelationByAF {
         disks: "local-disk " + disk_size +" SSD"
         memory: mem_gb + " GB"
         preemptible: preemptible
+        maxRetries: 1
     }
 
     output {
@@ -313,6 +267,7 @@ task AddConstantColumn {
         cpu: 1
         disks: "local-disk " + disk_size + " HDD"
         preemptible: preemptible
+        maxRetries: 1
     }
 
     output {
@@ -353,6 +308,7 @@ task ConcatenateTsvs {
         cpu: 1
         disks: "local-disk " + disk_size + " HDD"
         preemptible: preemptible
+        maxRetries: 1
     }
 
     output {
@@ -395,9 +351,9 @@ task SelectSamplesWithCut {
 
     runtime {
         docker: "us.gcr.io/broad-dsde-methods/bcftools_bgzip:beagle_imputation_v1.0.0"
-        disks: "local-disk " + disk_size_gb + " HDD"
+        disks: "local-disk " + disk_size_gb + " SSD"
         memory: memory_mb + " MiB"
-        preemptible: 3
+        preemptible: 0
         maxRetries: 1
         noAddress: true
         cpu: cpu
