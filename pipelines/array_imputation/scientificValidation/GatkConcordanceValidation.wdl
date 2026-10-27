@@ -32,28 +32,39 @@ workflow GatkConcordanceValidation {
             vcf = eval_vcf
     }
 
-    # Always batch by samples present in the eval VCF so every subset is valid for GATK.
-    call SplitSampleListIntoBatches as SplitSamples {
-        input:
-            sample_list = EvalVcfSamples.sample_names_file,
-            batch_size = batch_size
-    }
+    Float batch_size_float = batch_size
+    Int num_sample_batches = ceil(EvalVcfSamples.sample_count / batch_size_float)
 
-    scatter (sample_batch in SplitSamples.sample_batches) {
+    scatter (batch_index in range(num_sample_batches)) {
+        Int batch_start_field = (batch_index * batch_size) + 10
+        Int batch_end_field = if (((batch_index + 1) * batch_size) >= EvalVcfSamples.sample_count) then EvalVcfSamples.sample_count + 9 else (((batch_index + 1) * batch_size) + 9)
+
+        File batch_eval_vcf = if (num_sample_batches > 1) then SelectEvalVcfBatch.output_vcf else eval_vcf
+        File batch_eval_vcf_index = if (num_sample_batches > 1) then SelectEvalVcfBatch.output_vcf_index else eval_vcf_index
+
+        if (num_sample_batches > 1) {
+            call SelectSamplesWithCut as SelectEvalVcfBatch {
+                input:
+                    vcf = eval_vcf,
+                    cut_start_field = batch_start_field,
+                    cut_end_field = batch_end_field,
+                    basename = output_basename + ".sample_batch_" + batch_index
+            }
+        }
+
         if (run_chromosomes) {
             scatter(chr in chromosomes) {
                 call PearsonCorrelationByAF as PearsonByAF_chr_batch {
                     input:
-                        evalVcf = eval_vcf,
-                        evalVcfIndex = eval_vcf_index,
+                        evalVcf = batch_eval_vcf,
+                        evalVcfIndex = batch_eval_vcf_index,
                         af_resource = af_annotation_vcf,
                         af_resource_index = af_annotation_vcf_index,
                         sample_to_ancestry_af_annotation = sample_to_ancestry_af_annotation,
                         truthVcf = truth_vcf,
                         truthVcfIndex = truth_vcf_index,
                         intervals = chr,
-                        output_basename = output_basename + "." + chr + ".batch_" + basename(sample_batch),
-                        sample_list = sample_batch,
+                        output_basename = output_basename + "." + chr + ".sample_batch_" + batch_index,
                         n_bins = n_bins,
                         sample_mapping = sample_mapping,
                         right_edge_first_bin = right_edge_first_bin,
@@ -65,13 +76,13 @@ workflow GatkConcordanceValidation {
                         input_tsv = PearsonByAF_chr_batch.correlations,
                         constant_value = chr,
                         column_name = "CHROMOSOME",
-                        output_filename = output_basename + "." + chr + ".batch_" + basename(sample_batch) + ".correlations"
+                        output_filename = output_basename + "." + chr + ".sample_batch_" + batch_index + ".correlations"
                 }
             }
             call ConcatenateTsvs as ConcatenateChrSpecificCorrelationTsvs_batch {
                 input:
                     input_tsvs = AddConstantColumn_chr_batch.output_file,
-                    output_filename = output_basename + ".chr_specific_correlations.batch_" + basename(sample_batch),
+                    output_filename = output_basename + ".chr_specific_correlations.sample_batch_" + batch_index,
                     preemptible = preemptible
             }
         }
@@ -79,15 +90,14 @@ workflow GatkConcordanceValidation {
         if (run_full_genome) {
             call PearsonCorrelationByAF as PearsonByAF_WholeGenome_batch {
                 input:
-                    evalVcf = eval_vcf,
-                    evalVcfIndex = eval_vcf_index,
+                    evalVcf = batch_eval_vcf,
+                    evalVcfIndex = batch_eval_vcf_index,
                     af_resource = af_annotation_vcf,
                     af_resource_index = af_annotation_vcf_index,
                     sample_to_ancestry_af_annotation = sample_to_ancestry_af_annotation,
                     truthVcf = truth_vcf,
                     truthVcfIndex = truth_vcf_index,
-                    output_basename = output_basename + ".batch_" + basename(sample_batch),
-                    sample_list = sample_batch,
+                    output_basename = output_basename + ".sample_batch_" + batch_index,
                     n_bins = n_bins,
                     sample_mapping = sample_mapping,
                     right_edge_first_bin = right_edge_first_bin,
@@ -99,7 +109,7 @@ workflow GatkConcordanceValidation {
                     input_tsv = PearsonByAF_WholeGenome_batch.correlations,
                     constant_value = "WholeGenome",
                     column_name = "CHROMOSOME",
-                    output_filename = output_basename + ".batch_" + basename(sample_batch) + ".whole_genome_correlations"
+                    output_filename = output_basename + ".sample_batch_" + batch_index + ".whole_genome_correlations"
             }
         }
     }
@@ -139,6 +149,7 @@ task GetSamplesFromVcf {
         set -euo pipefail
 
         bcftools query -l "~{vcf}" > eval_vcf_samples.txt
+        wc -l < eval_vcf_samples.txt > eval_vcf_samples_count.txt
     >>>
 
     runtime {
@@ -151,6 +162,7 @@ task GetSamplesFromVcf {
 
     output {
         File sample_names_file = "eval_vcf_samples.txt"
+        Int sample_count = read_int("eval_vcf_samples_count.txt")
     }
 }
 
@@ -213,7 +225,6 @@ task PearsonCorrelationByAF {
         File af_resource_index
         File sample_to_ancestry_af_annotation
         File? sample_mapping
-        File? sample_list
         File? sites
         String? intervals
         String? dosage_field
@@ -230,27 +241,8 @@ task PearsonCorrelationByAF {
     command <<<
         set -xeuo pipefail
 
-        EVAL_VCF="~{evalVcf}"
-
-        if [ -n "~{sample_list}" ]; then
-            set --
-            while IFS= read -r sample_id; do
-                sample_id="${sample_id%$'\r'}"
-                if [ -n "$sample_id" ] && [ "${sample_id:0:1}" != "#" ]; then
-                    set -- "$@" --sample-name "$sample_id"
-                fi
-            done < "~{sample_list}"
-
-            gatk SelectVariants \
-                -V "$EVAL_VCF" \
-                -O "~{output_basename}.eval_subset.vcf.gz" \
-                "$@"
-
-            EVAL_VCF="~{output_basename}.eval_subset.vcf.gz"
-        fi
-
         gatk --java-options "-Xmx~{mem_gb - 2}G" EvaluateGenotypingPerformance \
-        -eval "$EVAL_VCF" \
+        -eval "~{evalVcf}" \
         -truth ~{truthVcf} \
         --arguments_file ~{sample_to_ancestry_af_annotation} \
         --resource ~{af_resource} \
@@ -365,5 +357,54 @@ task ConcatenateTsvs {
 
     output {
         File output_file = output_tsv
+    }
+}
+
+task SelectSamplesWithCut {
+    input {
+        File vcf
+
+        Int cut_start_field
+        Int cut_end_field
+        String basename
+
+        Int disk_size_gb = ceil(1.5 * size(vcf, "GiB")) + 10
+        String bcftools_docker = "us.gcr.io/broad-gotc-prod/imputation-bcf-vcf:1.0.7-1.10.2-0.1.16-1669908889"
+        Int cpu = 2
+        Int memory_mb = 6000
+    }
+
+    command <<<
+        set -euo pipefail
+
+        mkfifo fifo_bgzip
+        mkfifo fifo_cut
+
+        bcftools view -h --no-version ~{vcf} | awk '!/^#CHROM/' > header.vcf
+        n_lines=$(wc -l header.vcf | cut -d' ' -f1)
+
+        cat header.vcf
+        echo $n_lines
+
+        bgzip -d ~{vcf} -o fifo_bgzip &
+        tail +$((n_lines)) fifo_bgzip | cut -f 1-9,~{cut_start_field}-~{cut_end_field} > fifo_cut &
+
+        cat header.vcf fifo_cut | bgzip -o ~{basename}.vcf.gz
+        bcftools index -t ~{basename}.vcf.gz
+    >>>
+
+    runtime {
+        docker: "us.gcr.io/broad-dsde-methods/bcftools_bgzip:beagle_imputation_v1.0.0"
+        disks: "local-disk " + disk_size_gb + " HDD"
+        memory: memory_mb + " MiB"
+        preemptible: 3
+        maxRetries: 1
+        noAddress: true
+        cpu: cpu
+    }
+
+    output {
+        File output_vcf = "~{basename}.vcf.gz"
+        File output_vcf_index = "~{basename}.vcf.gz.tbi"
     }
 }
