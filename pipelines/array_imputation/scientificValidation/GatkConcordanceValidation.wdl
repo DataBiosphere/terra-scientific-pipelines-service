@@ -39,9 +39,6 @@ workflow GatkConcordanceValidation {
         Int batch_start_field = (batch_index * batch_size) + 10
         Int batch_end_field = if (((batch_index + 1) * batch_size) >= EvalVcfSamples.sample_count) then EvalVcfSamples.sample_count + 9 else (((batch_index + 1) * batch_size) + 9)
 
-        File batch_eval_vcf = if (num_sample_batches > 1) then SelectEvalVcfBatch.output_vcf else eval_vcf
-        File batch_eval_vcf_index = if (num_sample_batches > 1) then SelectEvalVcfBatch.output_vcf_index else eval_vcf_index
-
         if (num_sample_batches > 1) {
             call SelectSamplesWithCut as SelectEvalVcfBatch {
                 input:
@@ -51,6 +48,9 @@ workflow GatkConcordanceValidation {
                     basename = output_basename + ".sample_batch_" + batch_index
             }
         }
+
+        File batch_eval_vcf = select_first([SelectEvalVcfBatch.output_vcf, eval_vcf])
+        File batch_eval_vcf_index = select_first([SelectEvalVcfBatch.output_vcf_index, eval_vcf_index])
 
         if (run_chromosomes) {
             scatter(chr in chromosomes) {
