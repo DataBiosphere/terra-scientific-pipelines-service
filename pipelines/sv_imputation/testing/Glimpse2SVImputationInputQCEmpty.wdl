@@ -5,7 +5,7 @@ workflow InputQC {
         # user defined inputs
         File gvcf_manifest
         String output_basename
-        Float? info_filter_for_inclusion
+        Float info_filter_for_inclusion = 0.0
 
         # service provided inputs
         File preprocess_panel_bubble_split_sites_only_vcf
@@ -17,6 +17,7 @@ workflow InputQC {
         File chunked_panel_json
         File pop_glimpse2_panel_resources_json
         String? pipeline_header_line
+        Float raf_censoring_threshold = 0.0
     }
 
     call MockValidateInputs
