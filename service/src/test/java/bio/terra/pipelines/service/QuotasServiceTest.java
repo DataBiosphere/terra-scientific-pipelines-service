@@ -245,7 +245,12 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   @Test
   void verifySufficientUserQuotaForPipelineRun() {
     // user has 1000 quota, consumed 0, pipeline needs 500
-    createAndSaveTestUserQuota(TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 500, 1000);
+    quotasService.allocateQuotaForUserAndPipeline(
+        TestUtils.TEST_USER_1_ID,
+        PipelinesEnum.ARRAY_IMPUTATION,
+        QuotaAllocationSourceEnum.DEFAULT_FREE,
+        1000,
+        null);
 
     // should not throw
     quotasService.validateUserHasEnoughQuota(
@@ -253,9 +258,35 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void verifyQuotaForPipelineRunForNewUserWithDefaultAllocation() {
+    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
+
+    // user has no allocations yet
+    assertTrue(
+        quotasService
+            .getAllQuotaAllocationsForUserAndPipeline(TestUtils.TEST_USER_1_ID, pipeline)
+            .isEmpty());
+
+    // should not throw, and should create a default allocation for the user
+    quotasService.validateUserHasEnoughQuota(TestUtils.TEST_USER_1_ID, pipeline);
+
+    List<QuotaAllocation> allocations =
+        quotasService.getAllQuotaAllocationsForUserAndPipeline(TestUtils.TEST_USER_1_ID, pipeline);
+    assertEquals(1, allocations.size());
+    assertEquals(QuotaAllocationSourceEnum.DEFAULT_FREE, allocations.get(0).getQuotaSource());
+  }
+
+  @Test
   void verifyInsufficientUserQuotaForPipelineRun() {
     // user has 1000 quota, consumed 700, pipeline needs 500
-    createAndSaveTestUserQuota(TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 700, 1000);
+    quotasService.allocateQuotaForUserAndPipeline(
+        TestUtils.TEST_USER_1_ID,
+        PipelinesEnum.ARRAY_IMPUTATION,
+        QuotaAllocationSourceEnum.DEFAULT_FREE,
+        1000,
+        null);
+    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
+        TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 700);
 
     // should throw exception
     BadRequestException exception =
@@ -1041,5 +1072,175 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     assertEquals(0, activeResult.getQuotaConsumed());
     assertEquals(QuotaAllocationStatusEnum.ACTIVE, activeResult.getQuotaStatus());
     assertEquals("paid purchase", activeResult.getComments());
+  }
+
+  @Test
+  void getOrInitializeQuotaTotalsCreatesDefaultWhenNoneExists() {
+    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
+    int expectedDefaultQuota = quotasService.getPipelineQuota(pipeline).getDefaultQuota();
+
+    // verify no allocations exist yet
+    assertTrue(
+        quotasService.getAllQuotaAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline).isEmpty());
+
+    UserQuotaTotals totals =
+        quotasService.getOrInitializeQuotaTotalsForUserAndPipeline(GROOT_USER_ID, pipeline);
+
+    assertEquals(expectedDefaultQuota, totals.totalAllocated());
+    assertEquals(0, totals.totalConsumed());
+
+    // verify a DEFAULT_FREE allocation was persisted
+    List<QuotaAllocation> allocations =
+        quotasService.getAllQuotaAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline);
+    assertEquals(1, allocations.size());
+    assertEquals(QuotaAllocationSourceEnum.DEFAULT_FREE, allocations.get(0).getQuotaSource());
+    assertEquals(expectedDefaultQuota, allocations.get(0).getQuotaAllocated());
+  }
+
+  @Test
+  void getOrInitializeQuotaTotalsReturnsExistingTotals() {
+    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
+
+    // pre-existing non-default allocation
+    quotasService.allocateQuotaForUserAndPipeline(
+        GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.EXTERNAL_PAID, 1000, null);
+
+    UserQuotaTotals totals =
+        quotasService.getOrInitializeQuotaTotalsForUserAndPipeline(GROOT_USER_ID, pipeline);
+
+    assertEquals(1000, totals.totalAllocated());
+    assertEquals(0, totals.totalConsumed());
+
+    // only the original allocation should exist; no DEFAULT_FREE allocation created
+    List<QuotaAllocation> allocations =
+        quotasService.getAllQuotaAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline);
+    assertEquals(1, allocations.size());
+    assertEquals(QuotaAllocationSourceEnum.EXTERNAL_PAID, allocations.get(0).getQuotaSource());
+  }
+
+  @Test
+  void getOrInitializeQuotaTotalsDoesNotCreateAllocationWhenDefaultQuotaIsZero() {
+    PipelinesEnum pipeline = PipelinesEnum.SV_IMPUTATION;
+
+    // override the default quota for this pipeline to 0 for this test
+    PipelineConfigurations.PipelineQuotaConfiguration defaultQuotaZeroConfig =
+        new PipelineConfigurations.PipelineQuotaConfiguration();
+    defaultQuotaZeroConfig.setDefaultQuota(0);
+    defaultQuotaZeroConfig.setMinQuotaConsumed(100);
+    defaultQuotaZeroConfig.setMaxQuotaConsumed(1000);
+    defaultQuotaZeroConfig.setQuotaUnits(QuotaUnitsEnum.SAMPLES);
+
+    PipelineConfigurations mockPipelineConfigurations = mock(PipelineConfigurations.class);
+    when(mockPipelineConfigurations.getQuotaForPipeline(pipeline))
+        .thenReturn(defaultQuotaZeroConfig);
+
+    QuotasService serviceWithDefaultQuotaZero =
+        new QuotasService(
+            userQuotasRepository, quotaAllocationsRepository, mockPipelineConfigurations);
+
+    // verify no allocations exist yet
+    assertTrue(
+        serviceWithDefaultQuotaZero
+            .getAllQuotaAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline)
+            .isEmpty());
+
+    UserQuotaTotals totals =
+        serviceWithDefaultQuotaZero.getOrInitializeQuotaTotalsForUserAndPipeline(
+            GROOT_USER_ID, pipeline);
+
+    // no allocation should have been created since default quota is 0
+    assertEquals(0, totals.totalAllocated());
+    assertEquals(0, totals.totalConsumed());
+
+    List<QuotaAllocation> allocations =
+        serviceWithDefaultQuotaZero.getAllQuotaAllocationsForUserAndPipeline(
+            GROOT_USER_ID, pipeline);
+    assertTrue(allocations.isEmpty());
+  }
+
+  @Test
+  void getOrInitializeQuotaTotalsReflectsConsumedAmount() {
+    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
+
+    quotasService.allocateQuotaForUserAndPipeline(
+        GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.DEFAULT_FREE, 1000, null);
+    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 300);
+
+    UserQuotaTotals totals =
+        quotasService.getOrInitializeQuotaTotalsForUserAndPipeline(GROOT_USER_ID, pipeline);
+
+    assertEquals(1000, totals.totalAllocated());
+    assertEquals(300, totals.totalConsumed());
+  }
+
+  /**
+   * This test simulates multiple concurrent threads trying to initialize the default quota
+   * allocation for the same new user and pipeline. This verifies that the DEFAULT_FREE unique index
+   * race is handled correctly: no thread fails, every thread sees the default quota in the totals
+   * it returns, and only one allocation is created.
+   */
+  @Test
+  void testConcurrentQuotaTotalsInitialization() throws Exception {
+    // Use a unique user ID for this test to avoid conflicts with other tests
+    String concurrentUserId = "concurrent-totals-test-user-groot";
+    PipelinesEnum pipelineName = PipelinesEnum.ARRAY_IMPUTATION;
+
+    // Verify no allocations exist for this user
+    assertTrue(
+        quotaAllocationsRepository
+            .findByUserIdAndPipelineNameOrderByCreatedDesc(concurrentUserId, pipelineName)
+            .isEmpty());
+
+    int numberOfThreads = 10;
+    ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads);
+    CountDownLatch startLatch = new CountDownLatch(1);
+    CountDownLatch endLatch = new CountDownLatch(numberOfThreads);
+
+    List<Future<UserQuotaTotals>> futures = new ArrayList<>();
+
+    for (int i = 0; i < numberOfThreads; i++) {
+      Future<UserQuotaTotals> future =
+          executor.submit(
+              () -> {
+                try {
+                  // Wait for all threads to be ready before starting
+                  startLatch.await();
+
+                  // All threads call this method at the same time
+                  return quotasService.getOrInitializeQuotaTotalsForUserAndPipeline(
+                      concurrentUserId, pipelineName);
+                } finally {
+                  endLatch.countDown();
+                }
+              });
+      futures.add(future);
+    }
+
+    // Release all threads at once to maximize chance of race condition
+    startLatch.countDown();
+
+    assertTrue(endLatch.await(10, TimeUnit.SECONDS), "All threads should complete within timeout");
+
+    // Every thread, including those that lost the race, should see the default quota
+    int expectedDefaultQuota = quotasService.getPipelineQuota(pipelineName).getDefaultQuota();
+    for (Future<UserQuotaTotals> future : futures) {
+      UserQuotaTotals totals = future.get(1, TimeUnit.SECONDS);
+      assertEquals(expectedDefaultQuota, totals.totalAllocated());
+      assertEquals(0, totals.totalConsumed());
+    }
+
+    // Verify that only ONE DEFAULT_FREE allocation was created despite concurrent attempts
+    List<QuotaAllocation> allocations =
+        quotaAllocationsRepository.findByUserIdAndPipelineNameOrderByCreatedDesc(
+            concurrentUserId, pipelineName);
+    assertEquals(
+        1,
+        allocations.size(),
+        "Only one allocation should exist in database despite concurrent initialization attempts");
+    assertEquals(QuotaAllocationSourceEnum.DEFAULT_FREE, allocations.get(0).getQuotaSource());
+    assertEquals(expectedDefaultQuota, allocations.get(0).getQuotaAllocated());
+    assertEquals(0, allocations.get(0).getQuotaConsumed());
+
+    executor.shutdown();
   }
 }

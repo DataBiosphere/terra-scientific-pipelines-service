@@ -163,9 +163,10 @@ public class QuotasService {
    * @param pipelineName - the pipeline name
    */
   public void validateUserHasEnoughQuota(String userId, PipelinesEnum pipelineName) {
-    UserQuota userQuota = getOrCreateQuotaForUserAndPipeline(userId, pipelineName);
+    UserQuotaTotals userQuotaTotals =
+        getOrInitializeQuotaTotalsForUserAndPipeline(userId, pipelineName);
     int minQuotaNeededByPipeline = getPipelineQuota(pipelineName).getMinQuotaConsumed();
-    int availableUserQuota = userQuota.getQuota() - userQuota.getQuotaConsumed();
+    int availableUserQuota = userQuotaTotals.totalAllocated() - userQuotaTotals.totalConsumed();
 
     if (availableUserQuota < minQuotaNeededByPipeline) {
       throw new BadRequestException(
@@ -240,6 +241,49 @@ public class QuotasService {
       String userId, PipelinesEnum pipelineName) {
     return quotaAllocationsRepository.findByUserIdAndPipelineNameOrderByCreatedDesc(
         userId, pipelineName);
+  }
+
+  /**
+   * This method returns the total quota allocated and total quota consumed for a given user and
+   * pipeline. If the user has no allocations for the given pipeline AND if the pipeline has a
+   * default quota greater than 0, it will create a default allocation for the user/pipeline, and
+   * return the totals.
+   *
+   * @param userId - the user id
+   * @param pipelineName - the pipeline name
+   * @return - the user's total quota allocated and consumed for the pipeline
+   */
+  public UserQuotaTotals getOrInitializeQuotaTotalsForUserAndPipeline(
+      String userId, PipelinesEnum pipelineName) {
+    UserQuotaTotals quotaTotals = getQuotaTotalsForUserAndPipeline(userId, pipelineName);
+
+    // if user doesn’t have any quota AND if pipeline has a default quota greater than 0,
+    // create a DEFAULT_FREE allocation
+    if (quotaTotals.totalAllocated() == 0) {
+      PipelineQuota pipelineQuota = getPipelineQuota(pipelineName);
+      if (pipelineQuota.getDefaultQuota() > 0) {
+        try {
+          allocateQuotaForUserAndPipeline(
+              userId,
+              pipelineName,
+              QuotaAllocationSourceEnum.DEFAULT_FREE,
+              pipelineQuota.getDefaultQuota(),
+              null);
+        } catch (BadRequestException e) {
+          // another thread may have created the default allocation between our check and insert
+          logger.info(
+              "Race condition detected while creating default quota allocation for user {} and pipeline {}. "
+                  + "Fetching existing record instead.",
+              userId,
+              pipelineName);
+        }
+
+        // fetch the quota totals again after potentially creating a default allocation
+        quotaTotals = getQuotaTotalsForUserAndPipeline(userId, pipelineName);
+      }
+    }
+
+    return quotaTotals;
   }
 
   /**
