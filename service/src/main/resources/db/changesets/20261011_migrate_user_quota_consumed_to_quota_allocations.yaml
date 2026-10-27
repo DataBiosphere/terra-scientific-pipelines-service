@@ -1,5 +1,14 @@
 # migrate legacy user_quotas.quota_consumed values into quota_allocations by consuming
 # quota on the active allocations for the same user + pipeline, oldest-first.
+#
+# SQL behavior:
+# - For each user/pipeline in user_quotas with quota_consumed > 0, walk the active allocations
+#   from oldest to newest.
+# - Apply quota consumption FIFO-style using the same logic as QuotasService.consumeQuotaFromAllocationsForUserAndPipeline.
+# - Increment quota_consumed on the allocation(s) until the legacy user_quotas value is fully applied.
+# - Mark allocations as EXHAUSTED once their quota_allocated is fully consumed.
+# - Fail fast if the active allocations do not have enough quota to cover the legacy consumed value.
+# - Then validate that the sum of quota_allocations.quota_consumed matches each user_quotas.quota_consumed.
 databaseChangeLog:
   - changeSet:
       id: migrate-user-quota-consumed-to-quota-allocations
@@ -9,6 +18,8 @@ databaseChangeLog:
             dbms: 'postgresql'
             splitStatements: false
             sql: >
+              /* For each user/pipeline in user_quotas with quota_consumed > 0,
+                 consume quota from the matching active allocations in oldest-first order. */
               DO $$
               DECLARE
                 uq_record RECORD;
@@ -16,14 +27,17 @@ databaseChangeLog:
                 remaining_to_consume INTEGER;
                 amount_consumed INTEGER;
               BEGIN
+                /* Select the legacy quota consumption to migrate for this user/pipeline. */
                 FOR uq_record IN
                   SELECT user_id, pipeline_name, quota_consumed
                   FROM public.user_quotas
                   WHERE quota_consumed > 0
                   ORDER BY user_id, pipeline_name
                 LOOP
+                  /* Remaining quota still to be applied to this user's allocation set. */
                   remaining_to_consume := uq_record.quota_consumed;
 
+                  /* Walk the active allocations FIFO to match QuotasService.consumeQuotaFromAllocationsForUserAndPipeline. */
                   FOR allocation_record IN
                     SELECT id, quota_allocated, quota_consumed, quota_status, created
                     FROM public.quota_allocations
@@ -34,6 +48,7 @@ databaseChangeLog:
                   LOOP
                     EXIT WHEN remaining_to_consume <= 0;
 
+                    /* Skip already exhausted allocations. */
                     IF allocation_record.quota_allocated <= allocation_record.quota_consumed THEN
                       UPDATE public.quota_allocations
                       SET quota_status = 'EXHAUSTED'
@@ -41,11 +56,13 @@ databaseChangeLog:
                       CONTINUE;
                     END IF;
 
+                    /* Consume only the minimum needed from this allocation to satisfy the remaining amount. */
                     amount_consumed := LEAST(
                       allocation_record.quota_allocated - allocation_record.quota_consumed,
                       remaining_to_consume
                     );
 
+                    /* Increment the allocation's consumed total and mark it exhausted if full. */
                     UPDATE public.quota_allocations
                     SET quota_consumed = quota_consumed + amount_consumed,
                         quota_status = CASE
@@ -57,6 +74,7 @@ databaseChangeLog:
                     remaining_to_consume := remaining_to_consume - amount_consumed;
                   END LOOP;
 
+                  /* Guardrail: if the active allocations do not cover the legacy consumption, abort the migration. */
                   IF remaining_to_consume > 0 THEN
                     RAISE EXCEPTION
                       'Unable to apply % quota_consumed for user % and pipeline % against quota_allocations. % remains unconsumed.',
@@ -76,10 +94,12 @@ databaseChangeLog:
             dbms: 'postgresql'
             splitStatements: false
             sql: >
+              /* Validate that the migration preserved the legacy user_quotas quota_consumed totals. */
               DO $$
               DECLARE
                 mismatch_count INTEGER;
               BEGIN
+                /* Sum quota_consumed across all quota_allocations for each user/pipeline and compare to user_quotas. */
                 SELECT COUNT(*) INTO mismatch_count
                 FROM (
                   SELECT
@@ -95,6 +115,7 @@ databaseChangeLog:
                   HAVING uq.quota_consumed <> COALESCE(SUM(qa.quota_consumed), 0)
                 ) mismatches;
 
+                /* If any user/pipeline totals diverge, fail the migration so the issue is visible immediately. */
                 IF mismatch_count > 0 THEN
                   RAISE EXCEPTION
                     'Quota consumption migration validation failed: user_quotas.quota_consumed does not match the sum of quota_allocations.quota_consumed for one or more user/pipeline pairs.';

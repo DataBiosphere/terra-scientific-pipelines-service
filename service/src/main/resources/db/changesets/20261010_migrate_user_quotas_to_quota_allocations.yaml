@@ -2,6 +2,13 @@
 # If a user/pipeline has no quota_allocations rows yet, create a DEFAULT_FREE allocation at the
 # full user_quotas.quota value. If matching allocations already exist, create only the residual
 # difference between user_quotas.quota and the sum of quota_allocations.quota_allocated.
+#
+# SQL behavior:
+# - For each user/pipeline in user_quotas, look for any existing quota_allocations rows.
+# - If none exist, populate a new DEFAULT_FREE allocation at the full legacy quota amount.
+# - If rows do exist, calculate the residual quota left after all current allocations are summed.
+# - Insert a DEFAULT_FREE allocation only when that residual is positive.
+# - Never create a row when the total allocated quota already covers the legacy quota value.
 databaseChangeLog:
   - changeSet:
       id: migrate-user-quotas-to-quota-allocations
@@ -9,7 +16,11 @@ databaseChangeLog:
       changes:
         - sql:
             dbms: 'postgresql'
+            splitStatements: false
             sql: >
+              /* For each user/pipeline in user_quotas, inspect any existing quota_allocations entries.
+                 If there are none, create a DEFAULT_FREE allocation for the full legacy quota.
+                 If there are existing allocations, create only the remaining positive residual. */
               INSERT INTO public.quota_allocations (
                 pipeline_name,
                 user_id,
@@ -24,7 +35,9 @@ databaseChangeLog:
                 uq.user_id,
                 'DEFAULT_FREE',
                 CASE
+                  /* No matching rows yet: use the full legacy quota value as the default free allocation. */
                   WHEN COUNT(qa.id) = 0 THEN uq.quota
+                  /* Matching rows exist: only add the residual quota that is still uncovered. */
                   ELSE uq.quota - COALESCE(SUM(qa.quota_allocated), 0)
                 END,
                 0,
@@ -35,12 +48,16 @@ databaseChangeLog:
                 ON qa.user_id = uq.user_id
                AND qa.pipeline_name = uq.pipeline_name
               WHERE NOT EXISTS (
+                /* Do not create a new DEFAULT_FREE allocation if this user/pipeline already has one,
+                   because there should be at most one DEFAULT_FREE allocation per user + pipeline. */
                 SELECT 1
                 FROM public.quota_allocations qa_default
                 WHERE qa_default.user_id = uq.user_id
                   AND qa_default.pipeline_name = uq.pipeline_name
                   AND qa_default.quota_source = 'DEFAULT_FREE'
               )
+              AND uq.quota > 0
               GROUP BY uq.id, uq.pipeline_name, uq.user_id, uq.quota
+              /* Include rows with no current allocation or a positive residual over current allocations. */
               HAVING COUNT(qa.id) = 0
                   OR uq.quota > COALESCE(SUM(qa.quota_allocated), 0);
