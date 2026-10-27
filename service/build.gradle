@@ -61,6 +61,13 @@ dependencyManagement {
             entry 'prometheus-metrics-tracer-common'
         }
 
+        // Spring Boot BOM pins logback to 1.5.32; override to 1.6.3 for a security fix (CVE-2026-19880).
+        // See https://broadworkbench.atlassian.net/browse/TSPS-1271
+        dependencySet(group: 'ch.qos.logback', version: '1.6.3') {
+            entry 'logback-classic'
+            entry 'logback-core'
+        }
+
         // Spring Boot BOM pins spring-data-commons to 3.5.11; override to 3.5.12 for a
         // denial-of-service security fix. An explicit entry here takes precedence over the
         // imported BOM's version.
