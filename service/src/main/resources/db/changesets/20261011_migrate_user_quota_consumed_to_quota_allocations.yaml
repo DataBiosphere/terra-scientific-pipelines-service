@@ -3,7 +3,7 @@
 databaseChangeLog:
   - changeSet:
       id: migrate-user-quota-consumed-to-quota-allocations
-      author: sshah
+      author: js
       changes:
         - sql:
             dbms: 'postgresql'
