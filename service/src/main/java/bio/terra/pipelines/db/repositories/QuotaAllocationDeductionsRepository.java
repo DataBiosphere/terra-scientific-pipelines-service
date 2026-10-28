@@ -4,4 +4,7 @@ import bio.terra.pipelines.db.entities.QuotaAllocationDeduction;
 import org.springframework.data.repository.CrudRepository;
 
 public interface QuotaAllocationDeductionsRepository
-    extends CrudRepository<QuotaAllocationDeduction, Long> {}
+    extends CrudRepository<QuotaAllocationDeduction, Long> {
+
+  boolean existsByPipelineRunId(Long pipelineRunId);
+}

@@ -8,7 +8,9 @@ import bio.terra.pipelines.common.utils.QuotaAllocationSourceEnum;
 import bio.terra.pipelines.common.utils.QuotaAllocationStatusEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
 import bio.terra.pipelines.db.entities.QuotaAllocation;
+import bio.terra.pipelines.db.entities.QuotaAllocationDeduction;
 import bio.terra.pipelines.db.entities.UserQuota;
+import bio.terra.pipelines.db.repositories.QuotaAllocationDeductionsRepository;
 import bio.terra.pipelines.db.repositories.QuotaAllocationsRepository;
 import bio.terra.pipelines.db.repositories.UserQuotasRepository;
 import bio.terra.pipelines.model.PipelineQuota;
@@ -18,7 +20,10 @@ import io.sentry.Sentry;
 import io.sentry.SentryLevel;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,15 +38,18 @@ public class QuotasService {
       "idx_quota_allocations_unique_default_free_per_user_pipeline";
   private final UserQuotasRepository userQuotasRepository;
   private final QuotaAllocationsRepository quotaAllocationsRepository;
+  private final QuotaAllocationDeductionsRepository quotaAllocationDeductionsRepository;
   private final PipelineConfigurations pipelineConfigurations;
 
   @Autowired
   QuotasService(
       UserQuotasRepository userQuotasRepository,
       QuotaAllocationsRepository quotaAllocationsRepository,
+      QuotaAllocationDeductionsRepository quotaAllocationDeductionsRepository,
       PipelineConfigurations pipelineConfigurations) {
     this.userQuotasRepository = userQuotasRepository;
     this.quotaAllocationsRepository = quotaAllocationsRepository;
+    this.quotaAllocationDeductionsRepository = quotaAllocationDeductionsRepository;
     this.pipelineConfigurations = pipelineConfigurations;
   }
 
@@ -353,6 +361,112 @@ public class QuotasService {
         consumptionRecords.stream().map(QuotaConsumptionRecord::quotaAllocationId).toList());
 
     return consumptionRecords;
+  }
+
+  /**
+   * This method reverts quota consumption for a list of QuotaConsumptionRecord. It will throw an
+   * exception if any of the allocations are not found or if reverting would result in negative
+   * consumed quota.
+   *
+   * <p>It is annotated with @Transactional to ensure that all quota reversion operations are atomic
+   * and consistent. If any part of the operation fails, the entire transaction will be rolled back,
+   * preventing partial reversion of quota.
+   *
+   * @param consumptionRecords - a list of QuotaConsumptionRecord objects to revert (must not be
+   *     null or empty)
+   */
+  @Transactional
+  public void revertQuotaConsumption(List<QuotaConsumptionRecord> consumptionRecords) {
+    // callers are expected to skip the revert when nothing was consumed, so missing records
+    // indicate a bug upstream
+    if (consumptionRecords == null || consumptionRecords.isEmpty()) {
+      String errorMessage = "No quota consumption records provided to revert.";
+      logger.error(errorMessage);
+      throw new InternalServerErrorException(errorMessage);
+    }
+
+    List<Long> allocationIds =
+        consumptionRecords.stream().map(QuotaConsumptionRecord::quotaAllocationId).toList();
+
+    // fetch all allocations together to avoid potential race conditions
+    Map<Long, QuotaAllocation> allocationsByIdMap =
+        quotaAllocationsRepository.findAllByIdInOrderByCreatedAsc(allocationIds).stream()
+            .collect(Collectors.toMap(QuotaAllocation::getId, Function.identity()));
+
+    // revert the quota consumption for each record
+    for (QuotaConsumptionRecord record : consumptionRecords) {
+      QuotaAllocation allocation = allocationsByIdMap.get(record.quotaAllocationId());
+
+      if (allocation == null) {
+        throw new IllegalStateException(
+            "Quota allocation with ID %d not found while reverting quota consumption."
+                .formatted(record.quotaAllocationId()));
+      }
+
+      int newConsumed = allocation.getQuotaConsumed() - record.amountConsumed();
+      if (newConsumed < 0) {
+        String errorMessage =
+            "Reverting quota consumption would result in negative consumed quota for allocation ID %d."
+                .formatted(record.quotaAllocationId());
+        logger.error(errorMessage);
+        throw new IllegalStateException(errorMessage);
+      }
+
+      allocation.setQuotaConsumed(newConsumed);
+
+      // if the allocation was previously EXHAUSTED and now has remaining quota, mark it as ACTIVE
+      if (allocation.getQuotaStatus() == QuotaAllocationStatusEnum.EXHAUSTED
+          && newConsumed < allocation.getQuotaAllocated()) {
+        allocation.setQuotaStatus(QuotaAllocationStatusEnum.ACTIVE);
+      }
+    }
+
+    quotaAllocationsRepository.saveAll(allocationsByIdMap.values());
+
+    logger.info(
+        "Successfully reverted quota consumption for {} allocation(s). Allocation(s) reverted: {}",
+        consumptionRecords.size(),
+        consumptionRecords.stream().map(QuotaConsumptionRecord::quotaAllocationId).toList());
+  }
+
+  /**
+   * This method records the quota deductions made by a successful pipeline run in the
+   * quota_allocation_deductions table, one row per QuotaConsumptionRecord. If deductions have
+   * already been recorded for the pipeline run (e.g. when the step is re-run), it does nothing.
+   *
+   * @param pipelineRunId - the id of the pipeline run that consumed the quota
+   * @param consumptionRecords - the records of quota consumed from each allocation
+   */
+  public void recordQuotaDeductions(
+      Long pipelineRunId, List<QuotaConsumptionRecord> consumptionRecords) {
+    // a successful run always consumes quota, so missing records indicate a bug upstream
+    if (consumptionRecords == null || consumptionRecords.isEmpty()) {
+      String errorMessage =
+          "No quota consumption records provided to record deductions for pipeline run %d."
+              .formatted(pipelineRunId);
+      logger.error(errorMessage);
+      throw new InternalServerErrorException(errorMessage);
+    }
+
+    if (quotaAllocationDeductionsRepository.existsByPipelineRunId(pipelineRunId)) {
+      logger.info(
+          "Quota deductions already recorded for pipeline run {}. Skipping.", pipelineRunId);
+      return;
+    }
+
+    List<QuotaAllocationDeduction> deductions =
+        consumptionRecords.stream()
+            .map(
+                record ->
+                    new QuotaAllocationDeduction(
+                        record.quotaAllocationId(), pipelineRunId, record.amountConsumed(), null))
+            .toList();
+    quotaAllocationDeductionsRepository.saveAll(deductions);
+
+    logger.info(
+        "Successfully recorded {} quota deduction(s) for pipeline run {}",
+        deductions.size(),
+        pipelineRunId);
   }
 
   /**
