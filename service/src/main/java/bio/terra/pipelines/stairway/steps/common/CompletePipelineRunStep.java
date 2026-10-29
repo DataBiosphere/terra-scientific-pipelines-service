@@ -87,6 +87,9 @@ public class CompletePipelineRunStep implements Step {
     // record the quota deductions for this run in the database
     try {
       quotasService.recordQuotaDeductions(pipelineRun.getId(), quotaConsumptionRecords);
+
+      logger.info(
+          "Marked run {} as a success and wrote job outputs and quota deductions to the db", jobId);
     } catch (RuntimeException e) {
       // the run and its quota consumption are already committed; don't fail a successful run
       // because writing deductions rows failed
@@ -99,10 +102,9 @@ public class CompletePipelineRunStep implements Step {
                   quotaConsumptionRecords);
       logger.error(msg, e);
       Sentry.captureMessage(msg, SentryLevel.ERROR);
-    }
 
-    logger.info(
-        "Marked run {} as a success and wrote job outputs and quota deductions to the db", jobId);
+      logger.info("Marked run {} as a success and wrote job outputs to the db", jobId);
+    }
 
     return StepResult.getStepResultSuccess();
   }

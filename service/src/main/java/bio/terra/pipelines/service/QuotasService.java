@@ -356,8 +356,8 @@ public class QuotasService {
    */
   @Transactional
   public void revertQuotaConsumption(List<QuotaConsumptionRecord> consumptionRecords) {
-    // callers are expected to skip the revert when nothing was consumed, so missing records
-    // indicate a bug upstream
+    // callers are expected to skip the revert when nothing was consumed (which generally
+    // should not happen)
     if (consumptionRecords == null || consumptionRecords.isEmpty()) {
       String errorMessage = "No quota consumption records provided to revert.";
       logger.error(errorMessage);
@@ -376,27 +376,29 @@ public class QuotasService {
     for (QuotaConsumptionRecord record : consumptionRecords) {
       QuotaAllocation allocation = allocationsByIdMap.get(record.quotaAllocationId());
 
+      // this should never happen, but if it does, log an error and throw an exception
       if (allocation == null) {
         throw new IllegalStateException(
             "Quota allocation with ID %d not found while reverting quota consumption."
                 .formatted(record.quotaAllocationId()));
       }
 
+      // revert the quota consumption for this allocation
       revertQuotaFromAllocation(allocation, record.amountConsumed());
     }
 
+    // save all the updated allocations to the database in a single batch operation
     quotaAllocationsRepository.saveAll(allocationsByIdMap.values());
 
     logger.info(
-        "Successfully reverted quota consumption for {} allocation(s). Allocation(s) reverted: {}",
+        "Successfully reverted quota consumption for {} allocation(s). Number of allocation(s) reverted: {}",
         consumptionRecords.size(),
         consumptionRecords.stream().map(QuotaConsumptionRecord::quotaAllocationId).toList());
   }
 
   /**
    * This method records the quota deductions made by a successful pipeline run in the
-   * quota_allocation_deductions table, one row per QuotaConsumptionRecord. If deductions have
-   * already been recorded for the pipeline run (e.g. when the step is re-run), it does nothing.
+   * quota_allocation_deductions table, one row per QuotaConsumptionRecord.
    *
    * @param pipelineRunId - the id of the pipeline run that consumed the quota
    * @param consumptionRecords - the records of quota consumed from each allocation
@@ -420,6 +422,7 @@ public class QuotasService {
       return;
     }
 
+    // create a list of QuotaAllocationDeduction entities from the consumption records
     List<QuotaAllocationDeduction> deductions =
         consumptionRecords.stream()
             .map(
@@ -427,6 +430,8 @@ public class QuotasService {
                     new QuotaAllocationDeduction(
                         record.quotaAllocationId(), pipelineRunId, record.amountConsumed(), null))
             .toList();
+
+    // save all the deductions to the database in a single batch operation
     quotaAllocationDeductionsRepository.saveAll(deductions);
 
     logger.info(
