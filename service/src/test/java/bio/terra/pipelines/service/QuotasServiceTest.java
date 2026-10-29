@@ -1562,34 +1562,32 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
 
   @Test
   void recordQuotaDeductionsRejectsNullRecords() {
-    PipelineRun pipelineRun = savePipelineRun();
+    Long pipelineRunId = savePipelineRun().getId();
 
     InternalServerErrorException exception =
         assertThrows(
             InternalServerErrorException.class,
-            () -> quotasService.recordQuotaDeductions(pipelineRun.getId(), null));
+            () -> quotasService.recordQuotaDeductions(pipelineRunId, null));
     assertEquals(
         "No quota consumption records provided to record deductions for pipeline run %d."
-            .formatted(pipelineRun.getId()),
+            .formatted(pipelineRunId),
         exception.getMessage());
-    assertTrue(
-        quotaAllocationDeductionsRepository.findByPipelineRunId(pipelineRun.getId()).isEmpty());
+    assertTrue(quotaAllocationDeductionsRepository.findByPipelineRunId(pipelineRunId).isEmpty());
   }
 
   @Test
   void recordQuotaDeductionsRejectsEmptyRecords() {
-    PipelineRun pipelineRun = savePipelineRun();
+    Long pipelineRunId = savePipelineRun().getId();
 
     InternalServerErrorException exception =
         assertThrows(
             InternalServerErrorException.class,
-            () -> quotasService.recordQuotaDeductions(pipelineRun.getId(), List.of()));
+            () -> quotasService.recordQuotaDeductions(pipelineRunId, List.of()));
     assertEquals(
         "No quota consumption records provided to record deductions for pipeline run %d."
-            .formatted(pipelineRun.getId()),
+            .formatted(pipelineRunId),
         exception.getMessage());
-    assertTrue(
-        quotaAllocationDeductionsRepository.findByPipelineRunId(pipelineRun.getId()).isEmpty());
+    assertTrue(quotaAllocationDeductionsRepository.findByPipelineRunId(pipelineRunId).isEmpty());
   }
 
   @Test
@@ -1724,7 +1722,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     QuotaAllocation allocation =
         quotasService.allocateQuotaForUserAndPipeline(
             GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.DEFAULT_FREE, 1000, null);
-    PipelineRun pipelineRun = savePipelineRun();
+    Long pipelineRunId = savePipelineRun().getId();
 
     // the first record is valid, the second references an allocation that does not exist
     List<QuotaConsumptionRecord> records =
@@ -1734,10 +1732,9 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
 
     assertThrows(
         DataIntegrityViolationException.class,
-        () -> quotasService.recordQuotaDeductions(pipelineRun.getId(), records));
+        () -> quotasService.recordQuotaDeductions(pipelineRunId, records));
 
     // all or nothing: the valid deduction must not have been saved either
-    assertTrue(
-        quotaAllocationDeductionsRepository.findByPipelineRunId(pipelineRun.getId()).isEmpty());
+    assertTrue(quotaAllocationDeductionsRepository.findByPipelineRunId(pipelineRunId).isEmpty());
   }
 }

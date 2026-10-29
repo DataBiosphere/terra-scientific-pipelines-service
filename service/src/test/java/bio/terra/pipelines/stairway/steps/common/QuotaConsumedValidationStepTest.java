@@ -135,15 +135,15 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
             .get(WdlBasedPipelineJobMapKeys.RAW_QUOTA_CONSUMED, Integer.class));
 
     // assert that the quota consumption records are stored in the working map
-    List<QuotaConsumptionRecord> records =
+    List<QuotaConsumptionRecord> consumptionRecords =
         flightContext
             .getWorkingMap()
             .get(WdlBasedPipelineJobMapKeys.QUOTA_CONSUMPTION_RECORDS, List.class);
 
-    assertEquals(1, records.size());
+    assertEquals(1, consumptionRecords.size());
 
-    QuotaConsumptionRecord record = records.get(0);
-    assertEquals(500, record.amountConsumed());
+    QuotaConsumptionRecord consumptionRecord = consumptionRecords.get(0);
+    assertEquals(500, consumptionRecord.amountConsumed());
   }
 
   @Test
@@ -193,15 +193,15 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
             .get(WdlBasedPipelineJobMapKeys.RAW_QUOTA_CONSUMED, Integer.class));
 
     // assert that the quota consumption records are stored in the working map
-    List<QuotaConsumptionRecord> records =
+    List<QuotaConsumptionRecord> consumptionRecords =
         flightContext
             .getWorkingMap()
             .get(WdlBasedPipelineJobMapKeys.QUOTA_CONSUMPTION_RECORDS, List.class);
 
-    assertEquals(1, records.size());
+    assertEquals(1, consumptionRecords.size());
 
-    QuotaConsumptionRecord record = records.get(0);
-    assertEquals(2000, record.amountConsumed());
+    QuotaConsumptionRecord consumptionRecord = consumptionRecords.get(0);
+    assertEquals(2000, consumptionRecord.amountConsumed());
   }
 
   @Test

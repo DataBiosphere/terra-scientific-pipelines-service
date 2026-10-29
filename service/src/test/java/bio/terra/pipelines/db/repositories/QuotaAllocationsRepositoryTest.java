@@ -448,11 +448,11 @@ class QuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
   @Test
   void findAllByIdInRequiresActiveTransactionForPessimisticLock() {
     // the query uses @Lock(PESSIMISTIC_WRITE), which requires an active transaction
-    Long id = quotaAllocationsRepository.save(newAllocation()).getId();
+    List<Long> ids = List.of(quotaAllocationsRepository.save(newAllocation()).getId());
 
     assertThrows(
         InvalidDataAccessApiUsageException.class,
-        () -> quotaAllocationsRepository.findAllByIdInOrderByCreatedAsc(List.of(id)));
+        () -> quotaAllocationsRepository.findAllByIdInOrderByCreatedAsc(ids));
   }
 
   @Test

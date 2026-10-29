@@ -373,18 +373,18 @@ public class QuotasService {
             .collect(Collectors.toMap(QuotaAllocation::getId, Function.identity()));
 
     // revert the quota consumption for each record
-    for (QuotaConsumptionRecord record : consumptionRecords) {
-      QuotaAllocation allocation = allocationsByIdMap.get(record.quotaAllocationId());
+    for (QuotaConsumptionRecord consumptionRecord : consumptionRecords) {
+      QuotaAllocation allocation = allocationsByIdMap.get(consumptionRecord.quotaAllocationId());
 
       // this should never happen, but if it does, log an error and throw an exception
       if (allocation == null) {
         throw new IllegalStateException(
             "Quota allocation with ID %d not found while reverting quota consumption."
-                .formatted(record.quotaAllocationId()));
+                .formatted(consumptionRecord.quotaAllocationId()));
       }
 
       // revert the quota consumption for this allocation
-      revertQuotaFromAllocation(allocation, record.amountConsumed());
+      revertQuotaFromAllocation(allocation, consumptionRecord.amountConsumed());
     }
 
     // save all the updated allocations to the database in a single batch operation
@@ -426,9 +426,12 @@ public class QuotasService {
     List<QuotaAllocationDeduction> deductions =
         consumptionRecords.stream()
             .map(
-                record ->
+                consumptionRecord ->
                     new QuotaAllocationDeduction(
-                        record.quotaAllocationId(), pipelineRunId, record.amountConsumed(), null))
+                        consumptionRecord.quotaAllocationId(),
+                        pipelineRunId,
+                        consumptionRecord.amountConsumed(),
+                        null))
             .toList();
 
     // save all the deductions to the database in a single batch operation
