@@ -185,37 +185,22 @@ public class QuotaConsumedValidationStep implements Step {
     }
 
     // revert the quota consumed for this job run
-    try {
-      quotasService.revertQuotaConsumption(records);
-    } catch (TransientDataAccessException e) {
-      // the revert runs in a single transaction that has been rolled back, so it is safe to retry
-      logger.warn(
-          "Transient DB error reverting quota for flight {}. Retrying.",
-          flightContext.getFlightId(),
-          e);
-      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
-    } catch (RuntimeException e) {
-      // revertQuotaConsumption can throw if an allocation is missing, if reverting would make
-      // consumed quota negative, or for unexpected DB errors. In all cases the quota consumed by
-      // this job has not been returned, so log the records needed to fix it manually and alert.
-      String errorMessage =
-          "Failed to revert quota consumption for user %s, pipeline %s and flight %s. Quota consumption records: %s"
-              .formatted(
-                  userId, pipelineName.getLowerCaseValue(), flightContext.getFlightId(), records);
-      logger.error(errorMessage, e);
-      Sentry.captureMessage(errorMessage, SentryLevel.ERROR);
-      return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new InternalStepException("Error while updating quota for job."));
-    }
+    return revertQuotaForRecords(records, userId, pipelineName, flightContext.getFlightId());
+  }
 
-    logger.info(
-        "Reverted quota consumption for user {}, pipeline {} and flight {}.",
-        userId,
+  /**
+   * Builds the message returned to the user when they do not have enough quota to run the pipeline.
+   * It is used both when the totals check fails and when the quota runs out while consuming.
+   */
+  private String buildQuotaExceededMessage(
+      PipelinesEnum pipelineName, UserQuotaTotals userQuotaTotals, int quotaUsedForThisRun) {
+    return String.format(
+        "User quota exceeded for pipeline %s. User quota limit: %d, Quota consumed before this run: %d, "
+            + "Quota consumed for this run: %d. Please visit https://services.terra.bio/pipelines/quotas to purchase additional quota.",
         pipelineName.getLowerCaseValue(),
-        flightContext.getFlightId());
-
-    return StepResult.getStepResultSuccess();
+        userQuotaTotals.totalAllocated(),
+        userQuotaTotals.totalConsumed(),
+        quotaUsedForThisRun);
   }
 
   /**
@@ -286,17 +271,46 @@ public class QuotaConsumedValidationStep implements Step {
   }
 
   /**
-   * Builds the message returned to the user when they do not have enough quota to run the pipeline.
-   * It is used both when the totals check fails and when the quota runs out while consuming.
+   * Reverts the quota consumed for this job run, using the QuotaConsumptionRecords stored when the
+   * quota was consumed. If the quota could not be reverted, it returns a failure StepResult.
+   *
+   * @param consumptionRecords - the quota consumption records to revert
+   * @param userId - the user id, used for logging
+   * @param pipelineName - the pipeline name, used for logging
+   * @param flightId - the flight id, used for logging
+   * @return - a success StepResult if the quota was reverted, otherwise a failure StepResult
    */
-  private String buildQuotaExceededMessage(
-      PipelinesEnum pipelineName, UserQuotaTotals userQuotaTotals, int quotaUsedForThisRun) {
-    return String.format(
-        "User quota exceeded for pipeline %s. User quota limit: %d, Quota consumed before this run: %d, "
-            + "Quota consumed for this run: %d. Please visit https://services.terra.bio/pipelines/quotas to purchase additional quota.",
+  private StepResult revertQuotaForRecords(
+      List<QuotaConsumptionRecord> consumptionRecords,
+      String userId,
+      PipelinesEnum pipelineName,
+      String flightId) {
+    try {
+      quotasService.revertQuotaConsumption(consumptionRecords);
+    } catch (TransientDataAccessException e) {
+      // the revert runs in a single transaction that has been rolled back, so it is safe to retry
+      logger.warn("Transient DB error reverting quota for flight {}. Retrying.", flightId, e);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+    } catch (RuntimeException e) {
+      // revertQuotaConsumption can throw if an allocation is missing, if reverting would make
+      // consumed quota negative, or for unexpected DB errors. In all cases the quota consumed by
+      // this job has not been returned, so log the records needed to fix it manually and alert.
+      String errorMessage =
+          "Failed to revert quota consumption for user %s, pipeline %s and flight %s. Quota consumption records: %s"
+              .formatted(userId, pipelineName.getLowerCaseValue(), flightId, consumptionRecords);
+      logger.error(errorMessage, e);
+      Sentry.captureMessage(errorMessage, SentryLevel.ERROR);
+      return new StepResult(
+          StepStatus.STEP_RESULT_FAILURE_FATAL,
+          new InternalStepException("Error while updating quota for job."));
+    }
+
+    logger.info(
+        "Reverted quota consumption for user {}, pipeline {} and flight {}.",
+        userId,
         pipelineName.getLowerCaseValue(),
-        userQuotaTotals.totalAllocated(),
-        userQuotaTotals.totalConsumed(),
-        quotaUsedForThisRun);
+        flightId);
+
+    return StepResult.getStepResultSuccess();
   }
 }

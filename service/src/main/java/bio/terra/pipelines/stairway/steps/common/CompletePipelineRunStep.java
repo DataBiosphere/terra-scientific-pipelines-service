@@ -45,8 +45,12 @@ public class CompletePipelineRunStep implements Step {
   }
 
   @Override
-  @SuppressWarnings("java:S2259") // suppress warning for possible NPE when unboxing quotaConsumed,
-  //  since we do validate that quotaConsumed is not null in `validateRequiredEntries`
+  @SuppressWarnings({
+    "java:S2259", // possible NPE when reading values from the working map, since we validate
+    // that they are not null in `validateRequiredEntries`
+    "unchecked" // the records are stored as a List<QuotaConsumptionRecord>, but read back as a raw
+    // List because Stairway's mapper writes type ids for each element
+  })
   public StepResult doStep(FlightContext flightContext) {
     // validate and extract parameters from input map
     var inputParameters = flightContext.getInputParameters();
