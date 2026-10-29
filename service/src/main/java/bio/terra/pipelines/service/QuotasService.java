@@ -124,27 +124,6 @@ public class QuotasService {
   }
 
   /**
-   * This method updates the quota consumed for a given user and pipeline. It will return the
-   * updated user quota object.
-   *
-   * @param userQuota - the user quota object to update
-   * @param newQuotaConsumed - the quota consumed
-   * @return - the updated user quota object
-   */
-  public UserQuota updateQuotaConsumed(UserQuota userQuota, int newQuotaConsumed) {
-    if (newQuotaConsumed < 0 || newQuotaConsumed > userQuota.getQuota()) {
-      logger.error(
-          "Issue with updating quota consumed: User quota: {}, current quota consumed: {}, new quota consumed {}",
-          userQuota.getQuota(),
-          userQuota.getQuotaConsumed(),
-          newQuotaConsumed);
-      throw new InternalServerErrorException("Internal Error");
-    }
-    userQuota.setQuotaConsumed(newQuotaConsumed);
-    return userQuotasRepository.save(userQuota);
-  }
-
-  /**
    * This method updates the quota limit for a given user quota. This should only be called from the
    * Admin Controller
    *
@@ -403,22 +382,7 @@ public class QuotasService {
                 .formatted(record.quotaAllocationId()));
       }
 
-      int newConsumed = allocation.getQuotaConsumed() - record.amountConsumed();
-      if (newConsumed < 0) {
-        String errorMessage =
-            "Reverting quota consumption would result in negative consumed quota for allocation ID %d."
-                .formatted(record.quotaAllocationId());
-        logger.error(errorMessage);
-        throw new IllegalStateException(errorMessage);
-      }
-
-      allocation.setQuotaConsumed(newConsumed);
-
-      // if the allocation was previously EXHAUSTED and now has remaining quota, mark it as ACTIVE
-      if (allocation.getQuotaStatus() == QuotaAllocationStatusEnum.EXHAUSTED
-          && newConsumed < allocation.getQuotaAllocated()) {
-        allocation.setQuotaStatus(QuotaAllocationStatusEnum.ACTIVE);
-      }
+      revertQuotaFromAllocation(allocation, record.amountConsumed());
     }
 
     quotaAllocationsRepository.saveAll(allocationsByIdMap.values());
@@ -448,6 +412,8 @@ public class QuotasService {
       throw new InternalServerErrorException(errorMessage);
     }
 
+    // this should never happen since we only record deductions for successful runs,
+    // but if it does, log a warning and skip recording deductions to avoid duplicate rows
     if (quotaAllocationDeductionsRepository.existsByPipelineRunId(pipelineRunId)) {
       logger.info(
           "Quota deductions already recorded for pipeline run {}. Skipping.", pipelineRunId);
@@ -506,6 +472,35 @@ public class QuotasService {
     quotaAllocationsRepository.save(allocation);
 
     return amountToConsume;
+  }
+
+  /**
+   * This method reverts quota consumed from a single allocation by the given amount. It updates the
+   * allocation's consumed quota and status as necessary but does not save it; the caller is
+   * responsible for persisting the change.
+   *
+   * @param allocation - the quota allocation to give quota back to
+   * @param amountToRevert - the amount of quota to give back to the allocation
+   */
+  private void revertQuotaFromAllocation(QuotaAllocation allocation, int amountToRevert) {
+    int newConsumed = allocation.getQuotaConsumed() - amountToRevert;
+
+    // this should never happen, but if it does, log an error and throw an exception
+    if (newConsumed < 0) {
+      String errorMessage =
+          "Reverting quota consumption would result in negative consumed quota for allocation ID %d."
+              .formatted(allocation.getId());
+      logger.error(errorMessage);
+      throw new IllegalStateException(errorMessage);
+    }
+
+    allocation.setQuotaConsumed(newConsumed);
+
+    // if the allocation was previously EXHAUSTED and now has remaining quota, mark it as ACTIVE
+    if (allocation.getQuotaStatus() == QuotaAllocationStatusEnum.EXHAUSTED
+        && newConsumed < allocation.getQuotaAllocated()) {
+      allocation.setQuotaStatus(QuotaAllocationStatusEnum.ACTIVE);
+    }
   }
 
   /**

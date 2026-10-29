@@ -128,18 +128,21 @@ public class QuotaConsumedValidationStep implements Step {
         quotasService.getQuotaTotalsForUserAndPipeline(userId, pipelineName);
     int totalQuotaConsumed = userQuotaTotals.totalConsumed() + quotaUsedForThisRun;
 
+    // helper message for quota exceeded error, to be used in both the totals check and the consume
+    // operation
+    String quotaExceededMsg =
+        String.format(
+            "User quota exceeded for pipeline %s. User quota limit: %d, Quota consumed before this run: %d, "
+                + "Quota consumed for this run: %d. Please visit https://services.terra.bio/pipelines/quotas to purchase additional quota.",
+            pipelineName.getLowerCaseValue(),
+            userQuotaTotals.totalAllocated(),
+            userQuotaTotals.totalConsumed(),
+            quotaUsedForThisRun);
+
     // if the total quota consumed exceeds the user's allocated quota, fail the step
     if (totalQuotaConsumed > userQuotaTotals.totalAllocated()) {
       return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new PipelineCheckFailedException(
-              String.format(
-                  "User quota exceeded for pipeline %s. User quota limit: %d, Quota consumed before this run: %d, "
-                      + "Quota consumed for this run: %d. Please visit https://services.terra.bio/pipelines/quotas to purchase additional quota.",
-                  pipelineName.getLowerCaseValue(),
-                  userQuotaTotals.totalAllocated(),
-                  userQuotaTotals.totalConsumed(),
-                  quotaUsedForThisRun)));
+          StepStatus.STEP_RESULT_FAILURE_FATAL, new PipelineCheckFailedException(quotaExceededMsg));
     }
 
     // update the quota for this run from the user's allocations for this pipeline
@@ -151,22 +154,18 @@ public class QuotaConsumedValidationStep implements Step {
     } catch (BadRequestException e) {
       // quota ran out between the totals check and the consume operation (e.g. concurrent job)
       return new StepResult(
-          StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new PipelineCheckFailedException(
-              "User quota exceeded for pipeline … " /* same message as above */));
+          StepStatus.STEP_RESULT_FAILURE_FATAL, new PipelineCheckFailedException(quotaExceededMsg));
     } catch (TransientDataAccessException e) {
       logger.warn("Transient DB error consuming quota for flight {}. Retrying.", flightId, e);
       return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
     } catch (InternalServerErrorException e) {
       // consumeQuotaFromAllocationsForUserAndPipeline can throw this if there is a data integrity
-      // issue in
-      // an allocation record, which should never happen, but if it does, we want to fail the step
-      // and
-      // not proceed with the pipeline run
+      // issue in an allocation record, which should never happen, but if it does, we want to fail
+      // the step and not proceed with the pipeline run
       logger.error("Failed to consume quota for flight {}", flightId, e);
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
-          new InternalStepException("Error while updating quota for job."));
+          new InternalStepException("Error updating quota for job."));
     }
 
     // if no quota consumption records were returned, fail the step

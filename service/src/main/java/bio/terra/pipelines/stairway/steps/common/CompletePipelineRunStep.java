@@ -89,9 +89,9 @@ public class CompletePipelineRunStep implements Step {
       quotasService.recordQuotaDeductions(pipelineRun.getId(), quotaConsumptionRecords);
     } catch (RuntimeException e) {
       // the run and its quota consumption are already committed; don't fail a successful run
-      // because the writing audit rows failed
+      // because writing deductions rows failed
       String msg =
-          "Failed to record quota deductions for user %s, pipeline run %d and flight %s. Records to backfill: %s"
+          "Failed to record quota deductions for user %s, pipeline run %d and flight %s. Quota consumption records: %s"
               .formatted(
                   userId,
                   pipelineRun.getId(),
