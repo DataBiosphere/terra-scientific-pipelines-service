@@ -25,8 +25,10 @@ public class WdlBasedPipelineJobMapKeys {
   public static final String CONTROL_WORKSPACE_BILLING_PROJECT =
       "control_workspace_billing_project";
   public static final String CONTROL_WORKSPACE_NAME = "control_workspace_name";
+
+  // Quota specific keys
   public static final String RAW_QUOTA_CONSUMED = "raw_quota_consumed";
-  public static final String EFFECTIVE_QUOTA_CONSUMED = "effective_quota_consumed";
+  public static final String QUOTA_CONSUMPTION_RECORDS = "quota_consumption_records";
 
   WdlBasedPipelineJobMapKeys() {
     throw new IllegalStateException(

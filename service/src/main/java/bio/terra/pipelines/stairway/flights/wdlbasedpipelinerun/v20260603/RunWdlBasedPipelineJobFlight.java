@@ -170,7 +170,10 @@ public class RunWdlBasedPipelineJobFlight extends Flight {
         new PopulateFileOutputSizeStep(flightBeanBag.getPipelineInputsOutputsService()),
         externalServiceRetryRule);
 
-    addStep(new CompletePipelineRunStep(flightBeanBag.getPipelineRunsService()), dbRetryRule);
+    addStep(
+        new CompletePipelineRunStep(
+            flightBeanBag.getPipelineRunsService(), flightBeanBag.getQuotasService()),
+        dbRetryRule);
 
     addStep(
         new SendJobSucceededNotificationStep(flightBeanBag.getNotificationService()), dbRetryRule);
