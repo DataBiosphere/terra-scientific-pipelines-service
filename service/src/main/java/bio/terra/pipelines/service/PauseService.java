@@ -8,7 +8,8 @@ import org.springframework.stereotype.Service;
 
 /**
  * Single source of truth for whether Teaspoons is paused. State lives in the single-row
- * service_state table so it can be flipped without a deploy.
+ * service_state table so it can be flipped without a deploy. If the row is missing, the service is
+ * treated as unpaused.
  */
 @Service
 public class PauseService {
@@ -40,8 +41,7 @@ public class PauseService {
   }
 
   private ServiceState getServiceState() {
-    return serviceStateRepository
-        .findById(ServiceState.SINGLETON_ID)
-        .orElseThrow(() -> new IllegalStateException("service_state row is missing"));
+    // if the row is missing, default to unpaused (saving it will insert the row)
+    return serviceStateRepository.findById(ServiceState.SINGLETON_ID).orElseGet(ServiceState::new);
   }
 }

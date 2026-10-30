@@ -23,6 +23,18 @@ class PauseServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void missingRowIsTreatedAsUnpaused() {
+    serviceStateRepository.deleteAll();
+
+    assertFalse(pauseService.isPaused());
+
+    // pausing recreates the row
+    pauseService.pauseService();
+    assertTrue(pauseService.isPaused());
+    assertEquals(1, serviceStateRepository.count());
+  }
+
+  @Test
   void pauseAndResumeService() {
     Instant before = serviceStateRepository.findById(ServiceState.SINGLETON_ID).get().getUpdated();
 
