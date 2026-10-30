@@ -504,9 +504,8 @@ public class QuotasService {
 
     allocation.setQuotaConsumed(newConsumed);
 
-    // if the allocation was previously EXHAUSTED and now has remaining quota, mark it as ACTIVE
-    if (allocation.getQuotaStatus() == QuotaAllocationStatusEnum.EXHAUSTED
-        && newConsumed < allocation.getQuotaAllocated()) {
+    // if the allocation was previously EXHAUSTED, mark it as ACTIVE
+    if (allocation.getQuotaStatus() == QuotaAllocationStatusEnum.EXHAUSTED) {
       allocation.setQuotaStatus(QuotaAllocationStatusEnum.ACTIVE);
     }
   }
