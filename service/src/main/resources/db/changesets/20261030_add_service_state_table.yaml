@@ -1,0 +1,41 @@
+# create single-row service_state table holding the shared "Teaspoons is paused" flag
+databaseChangeLog:
+  - changeSet:
+      id: create-service-state-table
+      author: mma
+      changes:
+        - createTable:
+            tableName: service_state
+            remarks: |
+              Single-row table holding service-wide state, e.g. whether Teaspoons is paused
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  remarks: Always 1; enforced by a check constraint so the table can only hold one row
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: paused
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated
+                  type: timestamp with time zone
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+        - sql:
+            sql: ALTER TABLE service_state ADD CONSTRAINT service_state_single_row CHECK (id = 1)
+        - insert:
+            tableName: service_state
+            columns:
+              - column:
+                  name: id
+                  valueNumeric: 1
+              - column:
+                  name: paused
+                  valueBoolean: false
