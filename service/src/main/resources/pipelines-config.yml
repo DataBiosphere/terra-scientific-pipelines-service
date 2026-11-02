@@ -46,7 +46,7 @@ configurations:
     arrayImputation:
       defaultQuota: 2500
       minQuotaConsumed: 500
-      maxQuotaConsumed: 10000
+      maxQuotaConsumed: 70000
       quotaUnits: SAMPLES
     lowPassImputation:
       defaultQuota: 300

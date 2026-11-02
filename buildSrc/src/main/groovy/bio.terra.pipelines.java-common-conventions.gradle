@@ -37,6 +37,13 @@ repositories {
     }
 }
 
+configurations.configureEach {
+    // TCL only uses logback-json-classic for GoogleJsonLayout, which teaspoons does not configure.
+    // Excluding it also drops its transitive old logback-classic. Applied per-configuration because
+    // TCL is declared in more than one project.
+    exclude group: 'ch.qos.logback.contrib', module: 'logback-json-classic'
+}
+
 dependencies {
     compileOnly "com.google.code.findbugs:annotations:3.0.1"
     implementation 'org.slf4j:slf4j-api:2.0.12'
