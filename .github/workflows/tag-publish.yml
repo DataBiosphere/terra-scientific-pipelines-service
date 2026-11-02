@@ -104,7 +104,7 @@ jobs:
 
       - name: Bump the tag to a new version
         # https://github.com/DataBiosphere/github-actions/tree/master/actions/bumper
-        uses: databiosphere/github-actions/actions/bumper@bumper-0.4.0
+        uses: databiosphere/github-actions/actions/bumper@write-json-to-job-summary-0.1.0
         id: tag
         env:
           DEFAULT_BUMP: patch
