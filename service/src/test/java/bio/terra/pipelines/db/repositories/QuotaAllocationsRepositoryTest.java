@@ -444,4 +444,124 @@ class QuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
     assertEquals(GROOT_TEST_USER_ID, result.get(0).getUserId());
     assertEquals(PipelinesEnum.ARRAY_IMPUTATION, result.get(0).getPipelineName());
   }
+
+  @Test
+  void findAllByIdInRequiresActiveTransactionForPessimisticLock() {
+    // the query uses @Lock(PESSIMISTIC_WRITE), which requires an active transaction
+    List<Long> ids = List.of(quotaAllocationsRepository.save(newAllocation()).getId());
+
+    assertThrows(
+        InvalidDataAccessApiUsageException.class,
+        () -> quotaAllocationsRepository.findAllByIdInOrderByCreatedAsc(ids));
+  }
+
+  @Test
+  @Transactional
+  void findAllByIdInReturnsEmptyListOnNoMatch() {
+    List<QuotaAllocation> result =
+        quotaAllocationsRepository.findAllByIdInOrderByCreatedAsc(List.of(2026L, 2027L));
+
+    assertTrue(result.isEmpty());
+  }
+
+  @Test
+  @Transactional // required by setCreated helper method (native update)
+  void findAllByIdInReturnsOldestFirst() {
+    Instant now = Instant.now();
+
+    QuotaAllocation newest = newAllocation();
+    newest.setQuotaSource(QuotaAllocationSourceEnum.EXTERNAL_PAID);
+    quotaAllocationsRepository.save(newest);
+
+    QuotaAllocation oldest = newAllocation();
+    quotaAllocationsRepository.save(oldest);
+
+    QuotaAllocation middle = newAllocation();
+    middle.setQuotaSource(QuotaAllocationSourceEnum.DEVELOPMENT_FREE);
+    quotaAllocationsRepository.save(middle);
+
+    // set created timestamps out of insertion order to verify the query sorts by created
+    setCreated(newest, now.plus(15, ChronoUnit.MINUTES));
+    setCreated(oldest, now);
+    setCreated(middle, now.plus(10, ChronoUnit.MINUTES));
+    entityManager.flush();
+    entityManager.clear();
+
+    // the order of the ids passed in should not affect the order of the results
+    List<QuotaAllocation> result =
+        quotaAllocationsRepository.findAllByIdInOrderByCreatedAsc(
+            List.of(newest.getId(), oldest.getId(), middle.getId()));
+
+    assertEquals(3, result.size());
+    assertEquals(oldest.getId(), result.get(0).getId());
+    assertEquals(middle.getId(), result.get(1).getId());
+    assertEquals(newest.getId(), result.get(2).getId());
+  }
+
+  @Test
+  @Transactional
+  void findAllByIdInOnlyReturnsRequestedAllocations() {
+    QuotaAllocation requested = newAllocation();
+    quotaAllocationsRepository.save(requested);
+
+    // same user and pipeline but not requested - should not be included
+    QuotaAllocation notRequested = newAllocation();
+    notRequested.setQuotaSource(QuotaAllocationSourceEnum.EXTERNAL_PAID);
+    quotaAllocationsRepository.save(notRequested);
+
+    // different user and pipeline but not requested - should not be included
+    QuotaAllocation otherUserAllocation =
+        new QuotaAllocation(
+            PipelinesEnum.LOW_PASS_IMPUTATION,
+            "rocket-raccoon",
+            QuotaAllocationSourceEnum.DEFAULT_FREE,
+            100,
+            0,
+            QuotaAllocationStatusEnum.ACTIVE,
+            null);
+    quotaAllocationsRepository.save(otherUserAllocation);
+
+    List<QuotaAllocation> result =
+        quotaAllocationsRepository.findAllByIdInOrderByCreatedAsc(List.of(requested.getId()));
+
+    assertEquals(1, result.size());
+    assertEquals(requested.getId(), result.get(0).getId());
+  }
+
+  @Test
+  @Transactional
+  void findAllByIdInIncludesAllocationsOfAnyStatus() {
+    // reverting quota needs to find allocations that were exhausted by the consumption
+    QuotaAllocation active = newAllocation();
+    quotaAllocationsRepository.save(active);
+
+    QuotaAllocation exhausted = newAllocation();
+    exhausted.setQuotaSource(QuotaAllocationSourceEnum.DEVELOPMENT_FREE);
+    exhausted.setQuotaStatus(QuotaAllocationStatusEnum.EXHAUSTED);
+    quotaAllocationsRepository.save(exhausted);
+
+    List<QuotaAllocation> result =
+        quotaAllocationsRepository.findAllByIdInOrderByCreatedAsc(
+            List.of(active.getId(), exhausted.getId()));
+
+    assertEquals(2, result.size());
+    assertTrue(
+        result.stream().anyMatch(a -> a.getQuotaStatus() == QuotaAllocationStatusEnum.EXHAUSTED));
+    assertTrue(
+        result.stream().anyMatch(a -> a.getQuotaStatus() == QuotaAllocationStatusEnum.ACTIVE));
+  }
+
+  @Test
+  @Transactional
+  void findAllByIdInReturnsEachAllocationOnceForDuplicateIds() {
+    QuotaAllocation allocation = newAllocation();
+    quotaAllocationsRepository.save(allocation);
+
+    List<QuotaAllocation> result =
+        quotaAllocationsRepository.findAllByIdInOrderByCreatedAsc(
+            List.of(allocation.getId(), allocation.getId()));
+
+    assertEquals(1, result.size());
+    assertEquals(allocation.getId(), result.get(0).getId());
+  }
 }

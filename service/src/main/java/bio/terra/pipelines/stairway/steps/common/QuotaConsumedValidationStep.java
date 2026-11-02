@@ -2,21 +2,28 @@ package bio.terra.pipelines.stairway.steps.common;
 
 import static bio.terra.pipelines.common.utils.PipelineKeyUtils.enumFromPipelineKey;
 
+import bio.terra.common.exception.BadRequestException;
+import bio.terra.common.exception.InternalServerErrorException;
 import bio.terra.pipelines.common.utils.FlightUtils;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.dependencies.stairway.JobMapKeys;
 import bio.terra.pipelines.model.PipelineQuota;
+import bio.terra.pipelines.model.QuotaConsumptionRecord;
+import bio.terra.pipelines.model.UserQuotaTotals;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.QuotasService;
 import bio.terra.pipelines.service.exception.PipelineCheckFailedException;
 import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipelineJobMapKeys;
 import bio.terra.pipelines.stairway.steps.exception.InternalStepException;
 import bio.terra.stairway.*;
+import io.sentry.Sentry;
+import io.sentry.SentryLevel;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.TransientDataAccessException;
 
 /**
  * This step:
@@ -31,8 +38,8 @@ import org.slf4j.LoggerFactory;
  * <p>4. Checks that the effectiveQuotaConsumed for this run does not cause the user to exceed their
  * quota limit
  *
- * <p>If everything passes then this step writes the effective quota consumed for this run to the
- * working map and to the user quotas table.
+ * <p>If everything passes then this step consumes the effectiveQuotaConsumed from the user's quota
+ * allocations for this pipeline and stores the QuotaConsumptionRecords in the working map.
  *
  * <p>This step expects the quota wdl outputs (map{quotaConsumed:value}) to be provided in the
  * working map
@@ -116,37 +123,45 @@ public class QuotaConsumedValidationStep implements Step {
     // pipeline's min quota consumed and the quota consumed for this run
     Integer quotaUsedForThisRun = Math.max(pipelineQuota.getMinQuotaConsumed(), rawQuotaConsumed);
 
-    // check if user quota used plus quota consumed is less than or equal to user quota
-    UserQuota userQuota = quotasService.getOrCreateQuotaForUserAndPipeline(userId, pipelineName);
+    // check if the user has enough quota remaining for this run
+    UserQuotaTotals userQuotaTotals =
+        quotasService.getQuotaTotalsForUserAndPipeline(userId, pipelineName);
+    int totalQuotaConsumed = userQuotaTotals.totalConsumed() + quotaUsedForThisRun;
 
-    // user quota has been exceeded, fail the flight
-    int totalQuotaConsumed = userQuota.getQuotaConsumed() + quotaUsedForThisRun;
-    if (totalQuotaConsumed > userQuota.getQuota()) {
+    // if the total quota consumed exceeds the user's allocated quota, fail the step
+    if (totalQuotaConsumed > userQuotaTotals.totalAllocated()) {
       return new StepResult(
           StepStatus.STEP_RESULT_FAILURE_FATAL,
           new PipelineCheckFailedException(
-              String.format(
-                  "User quota exceeded for pipeline %s. User quota limit: %d, Quota consumed before this run: %d, "
-                      + "Quota consumed for this run: %d. Please visit https://services.terra.bio/pipelines/quotas to purchase additional quota.",
-                  pipelineName.getLowerCaseValue(),
-                  userQuota.getQuota(),
-                  userQuota.getQuotaConsumed(),
-                  quotaUsedForThisRun)));
+              buildQuotaExceededMessage(pipelineName, userQuotaTotals, quotaUsedForThisRun)));
     }
-    // quota has not been exceeded, update user quota consumed
-    quotasService.updateQuotaConsumed(userQuota, totalQuotaConsumed);
 
-    // store the raw and effective quota consumed values in the working map
+    // consume the quota for this run from the user's allocations for this pipeline and store the
+    // quota consumption records in the working map
+    StepResult consumeQuotaResult =
+        consumeQuotaAndStoreRecords(
+            workingMap, userId, pipelineName, quotaUsedForThisRun, userQuotaTotals, flightId);
+
+    // if the quota could not be consumed, return the failure StepResult and do not store
+    // anything in the working map
+    if (!consumeQuotaResult.isSuccess()) {
+      return consumeQuotaResult;
+    }
+
+    // store the raw quota consumed in the working map
     workingMap.put(WdlBasedPipelineJobMapKeys.RAW_QUOTA_CONSUMED, rawQuotaConsumed);
-    workingMap.put(WdlBasedPipelineJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, quotaUsedForThisRun);
 
     return StepResult.getStepResultSuccess();
   }
 
-  // Undo the increase in quota consumed
-  @SuppressWarnings("java:S2259") // suppress warning for possible NPE when calling workingMap.get,
-  // these values should exist if this step succeeded and is getting undone due to a
-  // future step failing.
+  // Undo the quota consumed for this job run
+  @SuppressWarnings({
+    "java:S2259", // suppress warning for possible NPE when calling workingMap.get,
+    // these values should exist if this step succeeded and is getting undone due to a
+    // future step failing.
+    "unchecked" // the records are stored as a List<QuotaConsumptionRecord>, but read back as a raw
+    // List because Stairway's mapper writes type ids for each element
+  })
   @Override
   public StepResult undoStep(FlightContext flightContext) {
     // grab variable needed
@@ -157,14 +172,145 @@ public class QuotaConsumedValidationStep implements Step {
     String userId = inputParameters.get(JobMapKeys.USER_ID, String.class);
     FlightMap workingMap = flightContext.getWorkingMap();
 
-    // update the user quota to be what it was before this run's quota was added
-    Integer quotaUsedForThisRun =
-        workingMap.get(WdlBasedPipelineJobMapKeys.EFFECTIVE_QUOTA_CONSUMED, Integer.class);
+    List<QuotaConsumptionRecord> records =
+        workingMap.get(WdlBasedPipelineJobMapKeys.QUOTA_CONSUMPTION_RECORDS, List.class);
 
-    UserQuota userQuota = quotasService.getOrCreateQuotaForUserAndPipeline(userId, pipelineName);
+    if (records == null || records.isEmpty()) {
+      logger.info(
+          "No quota consumption records found for user {}, pipeline {} and flight {}. Nothing to undo.",
+          userId,
+          pipelineName.getLowerCaseValue(),
+          flightContext.getFlightId());
+      return StepResult.getStepResultSuccess();
+    }
 
-    quotasService.updateQuotaConsumed(
-        userQuota, userQuota.getQuotaConsumed() - quotaUsedForThisRun);
+    // revert the quota consumed for this job run
+    return revertQuotaForRecords(records, userId, pipelineName, flightContext.getFlightId());
+  }
+
+  /**
+   * Builds the message returned to the user when they do not have enough quota to run the pipeline.
+   * It is used both when the totals check fails and when the quota runs out while consuming.
+   */
+  private String buildQuotaExceededMessage(
+      PipelinesEnum pipelineName, UserQuotaTotals userQuotaTotals, int quotaUsedForThisRun) {
+    return String.format(
+        "User quota exceeded for pipeline %s. User quota limit: %d, Quota consumed before this run: %d, "
+            + "Quota consumed for this run: %d. Please visit https://services.terra.bio/pipelines/quotas to purchase additional quota.",
+        pipelineName.getLowerCaseValue(),
+        userQuotaTotals.totalAllocated(),
+        userQuotaTotals.totalConsumed(),
+        quotaUsedForThisRun);
+  }
+
+  /**
+   * Consumes the quota for this run from the user's allocations for this pipeline and stores the
+   * resulting QuotaConsumptionRecords in the working map. If the quota could not be consumed, it
+   * returns a failure StepResult and nothing is stored in the working map.
+   *
+   * @param workingMap - the flight's working map, where the quota consumption records are stored
+   * @param userId - the user id
+   * @param pipelineName - the pipeline name
+   * @param quotaUsedForThisRun - the amount of quota to consume for this run
+   * @param userQuotaTotals - the user's quota totals before this run, used to build the message
+   *     returned to the user if the quota runs out while consuming
+   * @param flightId - the flight id, used for logging
+   * @return - a success StepResult if the quota was consumed and stored, otherwise a failure
+   *     StepResult
+   */
+  private StepResult consumeQuotaAndStoreRecords(
+      FlightMap workingMap,
+      String userId,
+      PipelinesEnum pipelineName,
+      int quotaUsedForThisRun,
+      UserQuotaTotals userQuotaTotals,
+      String flightId) {
+    List<QuotaConsumptionRecord> quotaConsumptionRecords;
+    try {
+      quotaConsumptionRecords =
+          quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
+              userId, pipelineName, quotaUsedForThisRun);
+    } catch (BadRequestException e) {
+      // quota ran out between the totals check and the consume operation (e.g. concurrent job)
+      return new StepResult(
+          StepStatus.STEP_RESULT_FAILURE_FATAL,
+          new PipelineCheckFailedException(
+              buildQuotaExceededMessage(pipelineName, userQuotaTotals, quotaUsedForThisRun)));
+    } catch (TransientDataAccessException e) {
+      // the consume runs in a single transaction that has been rolled back, so it is safe to retry
+      logger.warn("Transient DB error consuming quota for flight {}. Retrying.", flightId, e);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+    } catch (InternalServerErrorException e) {
+      // consumeQuotaFromAllocationsForUserAndPipeline can throw this error if there is a data
+      // integrity issue in an allocation record, which should never happen, but if it does,
+      // we want to fail the step and not proceed with the pipeline run
+      logger.error("Failed to consume quota for flight {}", flightId, e);
+      return new StepResult(
+          StepStatus.STEP_RESULT_FAILURE_FATAL,
+          new InternalStepException("Error updating quota for job."));
+    }
+
+    // if no quota consumption records were returned, fail the step this should never happen,
+    // but if it does, we want to fail the step and not proceed with the pipeline run
+    if (quotaConsumptionRecords == null || quotaConsumptionRecords.isEmpty()) {
+      logger.error(
+          "No quota consumption records returned for user {} and pipeline {} for flight {}.",
+          userId,
+          pipelineName.getLowerCaseValue(),
+          flightId);
+      return new StepResult(
+          StepStatus.STEP_RESULT_FAILURE_FATAL,
+          new InternalStepException(
+              "Something went wrong while updating quota for user %s and pipeline %s for flight %s."
+                  .formatted(userId, pipelineName.getLowerCaseValue(), flightId)));
+    }
+
+    workingMap.put(WdlBasedPipelineJobMapKeys.QUOTA_CONSUMPTION_RECORDS, quotaConsumptionRecords);
+
+    return StepResult.getStepResultSuccess();
+  }
+
+  /**
+   * Reverts the quota consumed for this job run, using the QuotaConsumptionRecords stored when the
+   * quota was consumed. If the quota could not be reverted, it returns a failure StepResult.
+   *
+   * @param consumptionRecords - the quota consumption records to revert
+   * @param userId - the user id, used for logging
+   * @param pipelineName - the pipeline name, used for logging
+   * @param flightId - the flight id, used for logging
+   * @return - a success StepResult if the quota was reverted, otherwise a failure StepResult
+   */
+  private StepResult revertQuotaForRecords(
+      List<QuotaConsumptionRecord> consumptionRecords,
+      String userId,
+      PipelinesEnum pipelineName,
+      String flightId) {
+    try {
+      quotasService.revertQuotaConsumption(consumptionRecords);
+    } catch (TransientDataAccessException e) {
+      // the revert runs in a single transaction that has been rolled back, so it is safe to retry
+      logger.warn("Transient DB error reverting quota for flight {}. Retrying.", flightId, e);
+      return new StepResult(StepStatus.STEP_RESULT_FAILURE_RETRY, e);
+    } catch (RuntimeException e) {
+      // revertQuotaConsumption can throw if an allocation is missing, if reverting would make
+      // consumed quota negative, or for unexpected DB errors. In all cases the quota consumed by
+      // this job has not been returned, so log the records needed to fix it manually and alert.
+      String errorMessage =
+          "Failed to revert quota consumption for user %s, pipeline %s and flight %s. Quota consumption records: %s"
+              .formatted(userId, pipelineName.getLowerCaseValue(), flightId, consumptionRecords);
+      logger.error(errorMessage, e);
+      Sentry.captureMessage(errorMessage, SentryLevel.ERROR);
+      return new StepResult(
+          StepStatus.STEP_RESULT_FAILURE_FATAL,
+          new InternalStepException("Error while updating quota for job."));
+    }
+
+    logger.info(
+        "Reverted quota consumption for user {}, pipeline {} and flight {}.",
+        userId,
+        pipelineName.getLowerCaseValue(),
+        flightId);
+
     return StepResult.getStepResultSuccess();
   }
 }
