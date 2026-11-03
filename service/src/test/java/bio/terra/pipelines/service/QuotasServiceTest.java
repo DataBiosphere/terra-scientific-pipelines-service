@@ -34,6 +34,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.StreamSupport;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -235,7 +236,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
         1000,
         null);
     quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
-        TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 700);
+        TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 700, null);
 
     // should throw exception
     BadRequestException exception =
@@ -535,7 +536,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
             BadRequestException.class,
             () ->
                 quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
-                    GROOT_USER_ID, PipelinesEnum.ARRAY_IMPUTATION, 0));
+                    GROOT_USER_ID, PipelinesEnum.ARRAY_IMPUTATION, 0, null));
     assertEquals("Amount to consume must be greater than 0, got 0", exception.getMessage());
   }
 
@@ -546,7 +547,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
             BadRequestException.class,
             () ->
                 quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
-                    GROOT_USER_ID, PipelinesEnum.ARRAY_IMPUTATION, -5));
+                    GROOT_USER_ID, PipelinesEnum.ARRAY_IMPUTATION, -5, null));
     assertEquals("Amount to consume must be greater than 0, got -5", exception.getMessage());
   }
 
@@ -557,7 +558,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
             BadRequestException.class,
             () ->
                 quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
-                    "no-allocations-user", PipelinesEnum.ARRAY_IMPUTATION, 100));
+                    "no-allocations-user", PipelinesEnum.ARRAY_IMPUTATION, 100, null));
     assertEquals(
         "Insufficient quota available to consume for user no-allocations-user and pipeline ARRAY_IMPUTATION. Requested: 100, available: 0",
         exception.getMessage());
@@ -574,7 +575,8 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     assertEquals(0, allocation.getQuotaConsumed());
 
     List<QuotaConsumptionRecord> records =
-        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 400);
+        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
+            GROOT_USER_ID, pipeline, 400, null);
 
     assertEquals(1, records.size());
     assertEquals(allocation.getId(), records.get(0).quotaAllocationId());
@@ -595,7 +597,8 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     assertEquals(0, allocation.getQuotaConsumed());
 
     List<QuotaConsumptionRecord> records =
-        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 1000);
+        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
+            GROOT_USER_ID, pipeline, 1000, null);
 
     assertEquals(1, records.size());
     assertEquals(1000, records.get(0).amountConsumed());
@@ -624,7 +627,8 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     assertEquals(0, third.getQuotaConsumed());
 
     List<QuotaConsumptionRecord> records =
-        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 600);
+        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
+            GROOT_USER_ID, pipeline, 600, null);
 
     // first fully consumed (300), second partially consumed (300), third untouched
     assertEquals(2, records.size());
@@ -664,7 +668,8 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     QuotaAllocation exhaustedUpdated1 = quotaAllocationsRepository.save(exhausted);
 
     List<QuotaConsumptionRecord> records =
-        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 50);
+        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
+            GROOT_USER_ID, pipeline, 50, null);
 
     assertEquals(1, records.size());
     assertEquals(active.getId(), records.get(0).quotaAllocationId());
@@ -702,7 +707,8 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
             "rocket-raccoon", pipeline, QuotaAllocationSourceEnum.DEFAULT_FREE, 500, null);
 
     List<QuotaConsumptionRecord> records =
-        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 200);
+        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
+            GROOT_USER_ID, pipeline, 200, null);
 
     assertEquals(1, records.size());
     assertEquals(targetArrayAllocation.getId(), records.get(0).quotaAllocationId());
@@ -733,7 +739,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
             BadRequestException.class,
             () ->
                 quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
-                    GROOT_USER_ID, pipeline, 600));
+                    GROOT_USER_ID, pipeline, 600, null));
     assertEquals(
         "Insufficient quota available to consume for user i-am-groot and pipeline ARRAY_IMPUTATION. Requested: 600, available: 500",
         exception.getMessage());
@@ -771,7 +777,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
             InternalServerErrorException.class,
             () ->
                 quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
-                    GROOT_USER_ID, pipeline, 600));
+                    GROOT_USER_ID, pipeline, 600, null));
 
     assertTrue(
         exception
@@ -805,7 +811,8 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
             GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.EXTERNAL_PAID, 500, null);
 
     List<QuotaConsumptionRecord> records =
-        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 300);
+        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
+            GROOT_USER_ID, pipeline, 300, null);
 
     assertEquals(1, records.size());
     assertEquals(firstAllocation.getId(), records.get(0).quotaAllocationId());
@@ -845,7 +852,8 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
           executor.submit(
               () -> {
                 startLatch.await();
-                quotasService.consumeQuotaFromAllocationsForUserAndPipeline(userId, pipeline, 100);
+                quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
+                    userId, pipeline, 100, null);
                 successCount.incrementAndGet();
                 return null;
               }));
@@ -888,7 +896,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
               () -> {
                 startLatch.await();
                 return quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
-                    userId, pipeline, 100);
+                    userId, pipeline, 100, null);
               }));
     }
 
@@ -943,7 +951,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
               () -> {
                 startLatch.await();
                 return quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
-                    userId, pipeline, 100);
+                    userId, pipeline, 100, null);
               }));
     }
 
@@ -967,6 +975,84 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void consumeQuotaWithCommentsSetsItWhenAllocationHasNone() {
+    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
+    QuotaAllocation allocation =
+        quotasService.allocateQuotaForUserAndPipeline(
+            GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.DEFAULT_FREE, 1000, null);
+
+    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
+        GROOT_USER_ID, pipeline, 400, "manual consumption");
+
+    // verify that comments were set on the allocation after consumption
+    QuotaAllocation updated = quotaAllocationsRepository.findById(allocation.getId()).orElseThrow();
+    assertEquals("manual consumption", updated.getComments());
+  }
+
+  @Test
+  void consumeQuotaWithCommentsAppendsToExistingComments() {
+    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
+    QuotaAllocation allocation =
+        quotasService.allocateQuotaForUserAndPipeline(
+            GROOT_USER_ID,
+            pipeline,
+            QuotaAllocationSourceEnum.DEFAULT_FREE,
+            1000,
+            "original comment");
+
+    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
+        GROOT_USER_ID, pipeline, 400, "manual consumption");
+
+    // verify that comments were appended to the allocation after consumption
+    QuotaAllocation updated = quotaAllocationsRepository.findById(allocation.getId()).orElseThrow();
+    assertEquals("original comment; manual consumption", updated.getComments());
+  }
+
+  @Test
+  void consumeQuotaWithNullCommentsLeavesExistingCommentsUnchanged() {
+    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
+    QuotaAllocation allocation =
+        quotasService.allocateQuotaForUserAndPipeline(
+            GROOT_USER_ID,
+            pipeline,
+            QuotaAllocationSourceEnum.DEFAULT_FREE,
+            1000,
+            "original comment");
+
+    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 400, null);
+
+    QuotaAllocation updated = quotaAllocationsRepository.findById(allocation.getId()).orElseThrow();
+    assertEquals("original comment", updated.getComments());
+  }
+
+  @Test
+  void consumeQuotaWithCommentsAppliesToAllAffectedAllocationsOnly() {
+    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
+    QuotaAllocation first =
+        quotasService.allocateQuotaForUserAndPipeline(
+            GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.DEFAULT_FREE, 300, "first");
+    QuotaAllocation second =
+        quotasService.allocateQuotaForUserAndPipeline(
+            GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.DEVELOPMENT_FREE, 500, null);
+    QuotaAllocation third =
+        quotasService.allocateQuotaForUserAndPipeline(
+            GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.INTERNAL_PAID, 500, "third");
+
+    // consumption spans the first two allocations; the third is untouched
+    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
+        GROOT_USER_ID, pipeline, 600, "manual consumption");
+
+    assertEquals(
+        "first; manual consumption",
+        quotaAllocationsRepository.findById(first.getId()).orElseThrow().getComments());
+    assertEquals(
+        "manual consumption",
+        quotaAllocationsRepository.findById(second.getId()).orElseThrow().getComments());
+    assertEquals(
+        "third", quotaAllocationsRepository.findById(third.getId()).orElseThrow().getComments());
+  }
+
+  @Test
   void getAllQuotaAllocationsReturnsEmptyListWhenNoneExist() {
     List<QuotaAllocation> result =
         quotasService.getAllQuotaAllocationsForUserAndPipeline(
@@ -982,7 +1068,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     QuotaAllocation exhausted =
         quotasService.allocateQuotaForUserAndPipeline(
             GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.DEFAULT_FREE, 100, null);
-    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 100);
+    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 100, null);
 
     QuotaAllocation active =
         quotasService.allocateQuotaForUserAndPipeline(
@@ -1119,7 +1205,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
 
     quotasService.allocateQuotaForUserAndPipeline(
         GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.DEFAULT_FREE, 1000, null);
-    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 300);
+    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 300, null);
 
     UserQuotaTotals totals =
         quotasService.getOrInitializeQuotaTotalsForUserAndPipeline(GROOT_USER_ID, pipeline);
@@ -1224,7 +1310,8 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
         quotasService.allocateQuotaForUserAndPipeline(
             GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.DEFAULT_FREE, 1000, null);
     List<QuotaConsumptionRecord> records =
-        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 400);
+        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
+            GROOT_USER_ID, pipeline, 400, null);
 
     quotasService.revertQuotaConsumption(records);
 
@@ -1240,7 +1327,8 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
         quotasService.allocateQuotaForUserAndPipeline(
             GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.DEFAULT_FREE, 1000, null);
     List<QuotaConsumptionRecord> records =
-        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 1000);
+        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
+            GROOT_USER_ID, pipeline, 1000, null);
 
     // verify the consumption exhausted the allocation before reverting
     assertEquals(
@@ -1264,7 +1352,8 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
         quotasService.allocateQuotaForUserAndPipeline(
             GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.EXTERNAL_PAID, 500, null);
     List<QuotaConsumptionRecord> records =
-        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 600);
+        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
+            GROOT_USER_ID, pipeline, 600, null);
 
     // first is exhausted, second is partially consumed
     assertEquals(2, records.size());
@@ -1293,7 +1382,8 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     QuotaAllocation allocation =
         quotasService.allocateQuotaForUserAndPipeline(
             GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.DEFAULT_FREE, 1000, null);
-    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 1000);
+    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
+        GROOT_USER_ID, pipeline, 1000, null);
 
     // verify the consumption exhausted the allocation before reverting
     assertEquals(
@@ -1320,10 +1410,11 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     // two runs consume from the same allocation
     // first run consumes 100
     List<QuotaConsumptionRecord> firstRunRecords =
-        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 100);
+        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
+            GROOT_USER_ID, pipeline, 100, null);
 
     // second run consumes 200
-    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 200);
+    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 200, null);
 
     // verify the consumption before reverting
     QuotaAllocation updatedBeforeRevert =
@@ -1350,8 +1441,9 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
 
     // first run exhausts the first allocation, second run consumes from the second allocation
     List<QuotaConsumptionRecord> firstRunRecords =
-        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 300);
-    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 200);
+        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
+            GROOT_USER_ID, pipeline, 300, null);
+    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 200, null);
 
     // verify the consumption before reverting
     QuotaAllocation updatedFirstBeforeRevert =
@@ -1384,7 +1476,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
         quotasService.allocateQuotaForUserAndPipeline(
             GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.DEFAULT_FREE, 1000, null);
 
-    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 100);
+    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 100, null);
 
     // the valid record is processed before the invalid one
     List<QuotaConsumptionRecord> records =
@@ -1416,7 +1508,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
             GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.EXTERNAL_PAID, 500, null);
 
     // exhausts the first allocation and consumes 100 from the second
-    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 400);
+    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 400, null);
 
     // verify the consumption before reverting
     QuotaAllocation updatedFirstBeforeRevert =
@@ -1470,7 +1562,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     List<List<QuotaConsumptionRecord>> receipts = new ArrayList<>();
     for (int i = 0; i < numberOfThreads; i++) {
       receipts.add(
-          quotasService.consumeQuotaFromAllocationsForUserAndPipeline(userId, pipeline, 100));
+          quotasService.consumeQuotaFromAllocationsForUserAndPipeline(userId, pipeline, 100, null));
     }
 
     QuotaAllocation updatedBeforeRevert =
@@ -1521,7 +1613,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     List<List<QuotaConsumptionRecord>> receipts = new ArrayList<>();
     for (int i = 0; i < 5; i++) {
       receipts.add(
-          quotasService.consumeQuotaFromAllocationsForUserAndPipeline(userId, pipeline, 100));
+          quotasService.consumeQuotaFromAllocationsForUserAndPipeline(userId, pipeline, 100, null));
     }
 
     int numberOfThreads = 10;
@@ -1543,7 +1635,8 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
           executor.submit(
               () -> {
                 startLatch.await();
-                quotasService.consumeQuotaFromAllocationsForUserAndPipeline(userId, pipeline, 100);
+                quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
+                    userId, pipeline, 100, null);
                 return null;
               }));
     }
@@ -1567,22 +1660,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     InternalServerErrorException exception =
         assertThrows(
             InternalServerErrorException.class,
-            () -> quotasService.recordQuotaDeductions(pipelineRunId, null));
-    assertEquals(
-        "No quota consumption records provided to record deductions for pipeline run %d."
-            .formatted(pipelineRunId),
-        exception.getMessage());
-    assertTrue(quotaAllocationDeductionsRepository.findByPipelineRunId(pipelineRunId).isEmpty());
-  }
-
-  @Test
-  void recordQuotaDeductionsRejectsEmptyRecords() {
-    Long pipelineRunId = savePipelineRun().getId();
-
-    InternalServerErrorException exception =
-        assertThrows(
-            InternalServerErrorException.class,
-            () -> quotasService.recordQuotaDeductions(pipelineRunId, List.of()));
+            () -> quotasService.recordQuotaDeductions(pipelineRunId, null, null));
     assertEquals(
         "No quota consumption records provided to record deductions for pipeline run %d."
             .formatted(pipelineRunId),
@@ -1599,7 +1677,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     PipelineRun pipelineRun = savePipelineRun();
 
     quotasService.recordQuotaDeductions(
-        pipelineRun.getId(), List.of(new QuotaConsumptionRecord(allocation.getId(), 400)));
+        pipelineRun.getId(), List.of(new QuotaConsumptionRecord(allocation.getId(), 400)), null);
 
     List<QuotaAllocationDeduction> deductions =
         quotaAllocationDeductionsRepository.findByPipelineRunId(pipelineRun.getId());
@@ -1624,9 +1702,10 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
 
     // use the records returned by a real consumption that spans both allocations
     List<QuotaConsumptionRecord> records =
-        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 600);
+        quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
+            GROOT_USER_ID, pipeline, 600, null);
 
-    quotasService.recordQuotaDeductions(pipelineRun.getId(), records);
+    quotasService.recordQuotaDeductions(pipelineRun.getId(), records, null);
 
     List<QuotaAllocationDeduction> deductions =
         quotaAllocationDeductionsRepository.findByPipelineRunId(pipelineRun.getId());
@@ -1663,10 +1742,10 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     List<QuotaConsumptionRecord> records =
         List.of(new QuotaConsumptionRecord(allocation.getId(), 400));
 
-    quotasService.recordQuotaDeductions(pipelineRun.getId(), records);
+    quotasService.recordQuotaDeductions(pipelineRun.getId(), records, null);
 
     // a re-run of the step tries to record the same deductions again
-    quotasService.recordQuotaDeductions(pipelineRun.getId(), records);
+    quotasService.recordQuotaDeductions(pipelineRun.getId(), records, null);
 
     List<QuotaAllocationDeduction> deductions =
         quotaAllocationDeductionsRepository.findByPipelineRunId(pipelineRun.getId());
@@ -1684,11 +1763,11 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     PipelineRun secondRun = savePipelineRun();
 
     quotasService.recordQuotaDeductions(
-        firstRun.getId(), List.of(new QuotaConsumptionRecord(allocation.getId(), 100)));
+        firstRun.getId(), List.of(new QuotaConsumptionRecord(allocation.getId(), 100)), null);
 
     // deductions already existing for the first run must not stop the second run from recording
     quotasService.recordQuotaDeductions(
-        secondRun.getId(), List.of(new QuotaConsumptionRecord(allocation.getId(), 200)));
+        secondRun.getId(), List.of(new QuotaConsumptionRecord(allocation.getId(), 200)), null);
 
     List<QuotaAllocationDeduction> firstRunDeductions =
         quotaAllocationDeductionsRepository.findByPipelineRunId(firstRun.getId());
@@ -1713,7 +1792,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
 
     assertThrows(
         DataIntegrityViolationException.class,
-        () -> quotasService.recordQuotaDeductions(-1L, records));
+        () -> quotasService.recordQuotaDeductions(-1L, records, null));
   }
 
   @Test
@@ -1732,9 +1811,56 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
 
     assertThrows(
         DataIntegrityViolationException.class,
-        () -> quotasService.recordQuotaDeductions(pipelineRunId, records));
+        () -> quotasService.recordQuotaDeductions(pipelineRunId, records, null));
 
     // all or nothing: the valid deduction must not have been saved either
     assertTrue(quotaAllocationDeductionsRepository.findByPipelineRunId(pipelineRunId).isEmpty());
+  }
+
+  @Test
+  void recordQuotaDeductionsRejectsEmptyRecords() {
+    Long pipelineRunId = savePipelineRun().getId();
+
+    InternalServerErrorException exception =
+        assertThrows(
+            InternalServerErrorException.class,
+            () -> quotasService.recordQuotaDeductions(pipelineRunId, List.of(), null));
+    assertEquals(
+        "No quota consumption records provided to record deductions for pipeline run %d."
+            .formatted(pipelineRunId),
+        exception.getMessage());
+    assertTrue(quotaAllocationDeductionsRepository.findByPipelineRunId(pipelineRunId).isEmpty());
+  }
+
+  @Test
+  void recordQuotaDeductionsStoresCommentsOnEachDeduction() {
+    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
+    QuotaAllocation first =
+        quotasService.allocateQuotaForUserAndPipeline(
+            GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.DEFAULT_FREE, 300, null);
+    QuotaAllocation second =
+        quotasService.allocateQuotaForUserAndPipeline(
+            GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.DEVELOPMENT_FREE, 500, null);
+
+    quotasService.recordQuotaDeductions(
+        null,
+        List.of(
+            new QuotaConsumptionRecord(first.getId(), 300),
+            new QuotaConsumptionRecord(second.getId(), 100)),
+        "manual consumption");
+
+    List<QuotaAllocationDeduction> deductions =
+        StreamSupport.stream(quotaAllocationDeductionsRepository.findAll().spliterator(), false)
+            .filter(
+                d ->
+                    d.getQuotaAllocationId().equals(first.getId())
+                        || d.getQuotaAllocationId().equals(second.getId()))
+            .toList();
+    assertEquals(2, deductions.size());
+    deductions.forEach(
+        d -> {
+          assertNull(d.getPipelineRunId());
+          assertEquals("manual consumption", d.getComments());
+        });
   }
 }

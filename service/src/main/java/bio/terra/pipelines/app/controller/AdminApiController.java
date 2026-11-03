@@ -195,7 +195,7 @@ public class AdminApiController implements AdminApi {
   }
 
   @Override
-  public ResponseEntity<ApiAdminAllocateQuotaResponse> allocateQuotaForPipelineAndUser(
+  public ResponseEntity<ApiAdminUpdateQuotaResponse> allocateQuotaForPipelineAndUser(
       String pipelineName, String userEmail, ApiAdminAllocateQuotaRequestBody body) {
     // check if user is an admin
     final SamUser authedUser = getAuthenticatedInfo();
@@ -227,7 +227,51 @@ public class AdminApiController implements AdminApi {
         quotasService.getQuotaTotalsForUserAndPipeline(userId, validatedPipelineName);
 
     return new ResponseEntity<>(
-        toApiAdminUpdateQuotaResponseV3(userEmail, newAllocation, quotaTotals), HttpStatus.OK);
+        toApiAdminUpdateQuotaResponseV3(
+            userId, userEmail, validatedPipelineName, quotaTotals, List.of(newAllocation)),
+        HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiAdminUpdateQuotaResponse> updateQuotaForPipelineAndUser(
+      String pipelineName, String userEmail, ApiAdminUpdateQuotaRequestBody body) {
+    // check if user is an admin
+    final SamUser authedUser = getAuthenticatedInfo();
+    samService.checkAdminAuthz(authedUser);
+
+    PipelinesEnum validatedPipelineName =
+        PipelineApiUtils.validatePipelineName(pipelineName, logger);
+
+    // get userId from Sam using the email address and throw not found error
+    // if the user doesn't exist in Sam
+    String userId = samService.getUserIdFromEmailAdmin(authedUser, userEmail);
+
+    int amount = body.getAmount();
+
+    // check if user has enough quota remaining to consume the requested amount
+    UserQuotaTotals quotaTotals =
+        quotasService.getQuotaTotalsForUserAndPipeline(userId, validatedPipelineName);
+    int quotaRemaining = quotaTotals.totalAllocated() - quotaTotals.totalConsumed();
+    if (amount > quotaRemaining) {
+      throw new BadRequestException(
+          "Quota amount to consume (%d) exceeds remaining quota (%d) for user %s and pipeline %s"
+              .formatted(
+                  amount, quotaRemaining, userEmail, validatedPipelineName.getLowerCaseValue()));
+    }
+
+    // consume the quota for the user/pipeline and fetch the affected allocations
+    List<QuotaAllocation> affectedAllocations =
+        quotasService.manualQuotaConsumeForUserAndPipeline(
+            userId, validatedPipelineName, amount, body.getComments());
+
+    // fetch the user's updated quota totals for that pipeline
+    UserQuotaTotals updatedQuotaTotals =
+        quotasService.getQuotaTotalsForUserAndPipeline(userId, validatedPipelineName);
+
+    return new ResponseEntity<>(
+        toApiAdminUpdateQuotaResponseV3(
+            userId, userEmail, validatedPipelineName, updatedQuotaTotals, affectedAllocations),
+        HttpStatus.OK);
   }
 
   public ApiAdminPipeline pipelineToApiAdminPipeline(Pipeline pipeline) {
@@ -255,23 +299,30 @@ public class AdminApiController implements AdminApi {
   }
 
   /**
-   * Convert a QuotaAllocation and UserQuotaTotals to an ApiAdminAllocateQuotaResponse object.
+   * Convert quota totals and the allocations affected by an update (allocate or consume) to an
+   * ApiAdminUpdateQuotaResponse object.
    *
-   * @param userEmail The email of the user for whom the quota was updated.
-   * @param allocation The QuotaAllocation object representing the new allocation.
-   * @param quotaTotals The UserQuotaTotals object representing the user's total quota information.
-   * @return An ApiAdminAllocateQuotaResponse object containing the updated quota information.
+   * @param userId The Sam user id of the user whose quota was updated.
+   * @param userEmail The email of the user whose quota was updated.
+   * @param pipelineName The pipeline the quota applies to.
+   * @param quotaTotals The user's aggregate quota totals after the update.
+   * @param allocations The allocations created (POST) or consumed from (PATCH) by the update.
+   * @return An ApiAdminUpdateQuotaResponse containing the updated quota information.
    */
-  private ApiAdminAllocateQuotaResponse toApiAdminUpdateQuotaResponseV3(
-      String userEmail, QuotaAllocation allocation, UserQuotaTotals quotaTotals) {
-    return new ApiAdminAllocateQuotaResponse()
+  private ApiAdminUpdateQuotaResponse toApiAdminUpdateQuotaResponseV3(
+      String userId,
+      String userEmail,
+      PipelinesEnum pipelineName,
+      UserQuotaTotals quotaTotals,
+      List<QuotaAllocation> allocations) {
+    return new ApiAdminUpdateQuotaResponse()
         .userEmail(userEmail)
-        .userId(allocation.getUserId())
-        .pipelineName(allocation.getPipelineName().getLowerCaseValue())
+        .userId(userId)
+        .pipelineName(pipelineName.getLowerCaseValue())
         .quotaLimit(quotaTotals.totalAllocated())
         .quotaConsumed(quotaTotals.totalConsumed())
         .quotaRemaining(quotaTotals.totalAllocated() - quotaTotals.totalConsumed())
-        .allocations(List.of(toApiQuotaAllocation(allocation)));
+        .allocations(allocations.stream().map(this::toApiQuotaAllocation).toList());
   }
 
   /**
