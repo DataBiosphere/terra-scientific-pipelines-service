@@ -810,13 +810,15 @@ components:
         json object containing the admin provided information used to allocate quota
         for a user and pipeline. Creates a new quota allocation for the user and pipeline.
       type: object
-      required: [ quotaSource, amount, comments ]
+      required: [ quotaSource, amount, notifyUser, comments ]
       properties:
         quotaSource:
           $ref: '#/components/schemas/QuotaAllocationSource'
         amount:
           description: Amount of quota to allocate
           type: integer
+        notifyUser:
+          $ref: '#/components/schemas/NotifyUser'
         comments:
           $ref: '#/components/schemas/QuotaComments'
 
@@ -903,9 +905,7 @@ components:
           description: Amount of quota to consume
           type: integer
         notifyUser:
-          description: If true, send a notification email to the user about the quota update
-          type: boolean
-          x-field-extra-annotation: "@jakarta.validation.constraints.NotNull"
+          $ref: '#/components/schemas/NotifyUser'
         comments:
           $ref: '#/components/schemas/QuotaComments'
 
@@ -1063,6 +1063,14 @@ components:
       description: |
         The maximum quota allowable per run.
       type: integer
+
+    NotifyUser:
+      description: |
+        If true, send a notification email to the user about the quota change
+      type: boolean
+      # isNotifyUser() is not recognized as a bean getter by Hibernate Validator since it returns
+      # Boolean (not primitive boolean), so put the constraint on the field to enforce it
+      x-field-extra-annotation: "@jakarta.validation.constraints.NotNull"
 
     Pipeline:
       description: |
