@@ -34,8 +34,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 
@@ -975,57 +979,6 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void consumeQuotaWithCommentsSetsItWhenAllocationHasNone() {
-    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
-    QuotaAllocation allocation =
-        quotasService.allocateQuotaForUserAndPipeline(
-            GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.DEFAULT_FREE, 1000, null);
-
-    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
-        GROOT_USER_ID, pipeline, 400, "manual consumption");
-
-    // verify that comments were set on the allocation after consumption
-    QuotaAllocation updated = quotaAllocationsRepository.findById(allocation.getId()).orElseThrow();
-    assertEquals("manual consumption", updated.getComments());
-  }
-
-  @Test
-  void consumeQuotaWithCommentsAppendsToExistingComments() {
-    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
-    QuotaAllocation allocation =
-        quotasService.allocateQuotaForUserAndPipeline(
-            GROOT_USER_ID,
-            pipeline,
-            QuotaAllocationSourceEnum.DEFAULT_FREE,
-            1000,
-            "original comment");
-
-    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
-        GROOT_USER_ID, pipeline, 400, "manual consumption");
-
-    // verify that comments were appended to the allocation after consumption
-    QuotaAllocation updated = quotaAllocationsRepository.findById(allocation.getId()).orElseThrow();
-    assertEquals("original comment; manual consumption", updated.getComments());
-  }
-
-  @Test
-  void consumeQuotaWithNullCommentsLeavesExistingCommentsUnchanged() {
-    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
-    QuotaAllocation allocation =
-        quotasService.allocateQuotaForUserAndPipeline(
-            GROOT_USER_ID,
-            pipeline,
-            QuotaAllocationSourceEnum.DEFAULT_FREE,
-            1000,
-            "original comment");
-
-    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 400, null);
-
-    QuotaAllocation updated = quotaAllocationsRepository.findById(allocation.getId()).orElseThrow();
-    assertEquals("original comment", updated.getComments());
-  }
-
-  @Test
   void consumeQuotaWithCommentsAppliesToAllAffectedAllocationsOnly() {
     PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
     QuotaAllocation first =
@@ -1050,6 +1003,42 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
         quotaAllocationsRepository.findById(second.getId()).orElseThrow().getComments());
     assertEquals(
         "third", quotaAllocationsRepository.findById(third.getId()).orElseThrow().getComments());
+  }
+
+  private static Stream<Arguments> provideConsumeCommentsScenarios() {
+    // existing allocation comments, comments passed to consume, expected allocation comments
+    return Stream.of(
+        // comments are set when the allocation has none
+        Arguments.of(null, "manual consumption", "manual consumption"),
+        // comments are appended (never overwritten) when the allocation already has some
+        Arguments.of(
+            "original comment", "manual consumption", "original comment; manual consumption"),
+        // null or blank comments leave existing comments unchanged
+        Arguments.of("original comment", null, "original comment"),
+        Arguments.of("original comment", "  ", "original comment"),
+        // no comments anywhere stays null
+        Arguments.of(null, null, null));
+  }
+
+  @ParameterizedTest
+  @MethodSource("provideConsumeCommentsScenarios")
+  void consumeQuotaAppliesCommentsToAllocation(
+      String existingComments, String consumeComments, String expectedComments) {
+    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
+    QuotaAllocation allocation =
+        quotasService.allocateQuotaForUserAndPipeline(
+            GROOT_USER_ID,
+            pipeline,
+            QuotaAllocationSourceEnum.DEFAULT_FREE,
+            1000,
+            existingComments);
+
+    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
+        GROOT_USER_ID, pipeline, 400, consumeComments);
+
+    // verify the allocation's comments after consumption
+    QuotaAllocation updated = quotaAllocationsRepository.findById(allocation.getId()).orElseThrow();
+    assertEquals(expectedComments, updated.getComments());
   }
 
   @Test
