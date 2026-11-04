@@ -1,6 +1,7 @@
 package bio.terra.pipelines.db.repositories;
 
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.common.utils.QuotaAllocationSourceEnum;
 import bio.terra.pipelines.common.utils.QuotaAllocationStatusEnum;
 import bio.terra.pipelines.db.entities.QuotaAllocation;
 import bio.terra.pipelines.model.UserQuotaTotals;
@@ -43,4 +44,7 @@ public interface QuotaAllocationsRepository extends CrudRepository<QuotaAllocati
   // Note: Must be called within an active transaction for the lock to take effect
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   List<QuotaAllocation> findAllByIdInOrderByCreatedAsc(List<Long> ids);
+
+  boolean existsByUserIdAndPipelineNameAndQuotaSource(
+      String userId, PipelinesEnum pipelineName, QuotaAllocationSourceEnum quotaSource);
 }
