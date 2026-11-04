@@ -1669,6 +1669,21 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void recordQuotaDeductionsRejectsEmptyRecords() {
+    Long pipelineRunId = savePipelineRun().getId();
+
+    InternalServerErrorException exception =
+        assertThrows(
+            InternalServerErrorException.class,
+            () -> quotasService.recordQuotaDeductions(pipelineRunId, List.of(), null));
+    assertEquals(
+        "No quota consumption records provided to record deductions for pipeline run %d."
+            .formatted(pipelineRunId),
+        exception.getMessage());
+    assertTrue(quotaAllocationDeductionsRepository.findByPipelineRunId(pipelineRunId).isEmpty());
+  }
+
+  @Test
   void recordQuotaDeductionsRecordsSingleDeduction() {
     PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
     QuotaAllocation allocation =
@@ -1818,21 +1833,6 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void recordQuotaDeductionsRejectsEmptyRecords() {
-    Long pipelineRunId = savePipelineRun().getId();
-
-    InternalServerErrorException exception =
-        assertThrows(
-            InternalServerErrorException.class,
-            () -> quotasService.recordQuotaDeductions(pipelineRunId, List.of(), null));
-    assertEquals(
-        "No quota consumption records provided to record deductions for pipeline run %d."
-            .formatted(pipelineRunId),
-        exception.getMessage());
-    assertTrue(quotaAllocationDeductionsRepository.findByPipelineRunId(pipelineRunId).isEmpty());
-  }
-
-  @Test
   void recordQuotaDeductionsStoresCommentsOnEachDeduction() {
     PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
     QuotaAllocation first =
@@ -1862,5 +1862,278 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
           assertNull(d.getPipelineRunId());
           assertEquals("manual consumption", d.getComments());
         });
+  }
+
+  @Test
+  void manualQuotaConsumeFromSingleAllocation() {
+    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
+    QuotaAllocation allocation =
+        quotasService.allocateQuotaForUserAndPipeline(
+            GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.DEFAULT_FREE, 1000, null);
+
+    List<QuotaAllocation> affected =
+        quotasService.manualQuotaConsumeForUserAndPipeline(GROOT_USER_ID, pipeline, 400, null);
+
+    // returned allocation reflects the consumption
+    assertEquals(1, affected.size());
+    assertEquals(allocation.getId(), affected.get(0).getId());
+    assertEquals(400, affected.get(0).getQuotaConsumed());
+    assertEquals(QuotaAllocationStatusEnum.ACTIVE, affected.get(0).getQuotaStatus());
+
+    // persisted allocation matches
+    QuotaAllocation updated = quotaAllocationsRepository.findById(allocation.getId()).orElseThrow();
+    assertEquals(400, updated.getQuotaConsumed());
+
+    // a deduction was recorded with no pipeline run (manual consumption)
+    List<QuotaAllocationDeduction> deductions = findDeductionsForAllocations(allocation.getId());
+    assertEquals(1, deductions.size());
+    assertEquals(allocation.getId(), deductions.get(0).getQuotaAllocationId());
+    assertEquals(400, deductions.get(0).getAmount());
+    assertNull(deductions.get(0).getPipelineRunId());
+    assertNull(deductions.get(0).getComments());
+  }
+
+  @Test
+  void manualQuotaConsumeExhaustsAllocationAndMarksItExhausted() {
+    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
+    QuotaAllocation allocation =
+        quotasService.allocateQuotaForUserAndPipeline(
+            GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.DEFAULT_FREE, 1000, null);
+
+    List<QuotaAllocation> affected =
+        quotasService.manualQuotaConsumeForUserAndPipeline(GROOT_USER_ID, pipeline, 1000, null);
+
+    assertEquals(1, affected.size());
+    assertEquals(1000, affected.get(0).getQuotaConsumed());
+    assertEquals(QuotaAllocationStatusEnum.EXHAUSTED, affected.get(0).getQuotaStatus());
+    assertEquals(
+        QuotaAllocationStatusEnum.EXHAUSTED,
+        quotaAllocationsRepository.findById(allocation.getId()).orElseThrow().getQuotaStatus());
+  }
+
+  @Test
+  void manualQuotaConsumeSpansMultipleAllocations() {
+    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
+    QuotaAllocation first =
+        quotasService.allocateQuotaForUserAndPipeline(
+            GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.DEFAULT_FREE, 300, null);
+    QuotaAllocation second =
+        quotasService.allocateQuotaForUserAndPipeline(
+            GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.DEVELOPMENT_FREE, 500, null);
+    QuotaAllocation third =
+        quotasService.allocateQuotaForUserAndPipeline(
+            GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.INTERNAL_PAID, 500, null);
+
+    List<QuotaAllocation> affected =
+        quotasService.manualQuotaConsumeForUserAndPipeline(GROOT_USER_ID, pipeline, 600, null);
+
+    // only the first two allocations are affected, returned oldest first
+    assertEquals(2, affected.size());
+    assertEquals(first.getId(), affected.get(0).getId());
+    assertEquals(300, affected.get(0).getQuotaConsumed());
+    assertEquals(QuotaAllocationStatusEnum.EXHAUSTED, affected.get(0).getQuotaStatus());
+    assertEquals(second.getId(), affected.get(1).getId());
+    assertEquals(300, affected.get(1).getQuotaConsumed());
+    assertEquals(QuotaAllocationStatusEnum.ACTIVE, affected.get(1).getQuotaStatus());
+
+    // the third allocation is untouched
+    QuotaAllocation untouched = quotaAllocationsRepository.findById(third.getId()).orElseThrow();
+    assertEquals(0, untouched.getQuotaConsumed());
+
+    // one deduction per affected allocation, none for the untouched one
+    List<QuotaAllocationDeduction> deductions =
+        findDeductionsForAllocations(first.getId(), second.getId(), third.getId());
+    assertEquals(2, deductions.size());
+    assertEquals(first.getId(), deductions.get(0).getQuotaAllocationId());
+    assertEquals(300, deductions.get(0).getAmount());
+    assertEquals(second.getId(), deductions.get(1).getQuotaAllocationId());
+    assertEquals(300, deductions.get(1).getAmount());
+    deductions.forEach(d -> assertNull(d.getPipelineRunId()));
+  }
+
+  @Test
+  void manualQuotaConsumeSkipsExhaustedAllocations() {
+    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
+    QuotaAllocation exhausted =
+        quotasService.allocateQuotaForUserAndPipeline(
+            GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.DEFAULT_FREE, 300, null);
+    // exhaust the first allocation
+    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 300, null);
+    QuotaAllocation active =
+        quotasService.allocateQuotaForUserAndPipeline(
+            GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.EXTERNAL_PAID, 500, null);
+
+    List<QuotaAllocation> affected =
+        quotasService.manualQuotaConsumeForUserAndPipeline(GROOT_USER_ID, pipeline, 200, null);
+
+    assertEquals(1, affected.size());
+    assertEquals(active.getId(), affected.get(0).getId());
+    assertEquals(200, affected.get(0).getQuotaConsumed());
+
+    // exhausted allocation is unchanged and has no deduction from the manual consumption
+    assertEquals(
+        300,
+        quotaAllocationsRepository.findById(exhausted.getId()).orElseThrow().getQuotaConsumed());
+    assertTrue(findDeductionsForAllocations(exhausted.getId()).isEmpty());
+  }
+
+  @Test
+  void manualQuotaConsumeAppendsCommentsToAllocations() {
+    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
+    // first allocation already has a comment, second has none
+    QuotaAllocation first =
+        quotasService.allocateQuotaForUserAndPipeline(
+            GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.DEFAULT_FREE, 300, "original");
+    QuotaAllocation second =
+        quotasService.allocateQuotaForUserAndPipeline(
+            GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.DEVELOPMENT_FREE, 500, null);
+
+    List<QuotaAllocation> affected =
+        quotasService.manualQuotaConsumeForUserAndPipeline(
+            GROOT_USER_ID, pipeline, 400, "manual consumption");
+
+    // existing comment is appended to (not overwritten); missing comment is set
+    assertEquals(first.getId(), affected.get(0).getId());
+    assertEquals("original; manual consumption", affected.get(0).getComments());
+    assertEquals(second.getId(), affected.get(1).getId());
+    assertEquals("manual consumption", affected.get(1).getComments());
+
+    // persisted allocations match
+    assertEquals(
+        "original; manual consumption",
+        quotaAllocationsRepository.findById(first.getId()).orElseThrow().getComments());
+    assertEquals(
+        "manual consumption",
+        quotaAllocationsRepository.findById(second.getId()).orElseThrow().getComments());
+
+    // the comment is stored as-is on each deduction
+    List<QuotaAllocationDeduction> deductions =
+        findDeductionsForAllocations(first.getId(), second.getId());
+    assertEquals(2, deductions.size());
+    deductions.forEach(d -> assertEquals("manual consumption", d.getComments()));
+  }
+
+  @Test
+  void manualQuotaConsumeWithNullCommentsLeavesExistingCommentsUnchanged() {
+    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
+    QuotaAllocation allocation =
+        quotasService.allocateQuotaForUserAndPipeline(
+            GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.DEFAULT_FREE, 1000, "original");
+
+    List<QuotaAllocation> affected =
+        quotasService.manualQuotaConsumeForUserAndPipeline(GROOT_USER_ID, pipeline, 400, null);
+
+    assertEquals("original", affected.get(0).getComments());
+    assertEquals(
+        "original",
+        quotaAllocationsRepository.findById(allocation.getId()).orElseThrow().getComments());
+    assertNull(findDeductionsForAllocations(allocation.getId()).get(0).getComments());
+  }
+
+  @Test
+  void manualQuotaConsumeInsufficientQuotaRollsBackConsumption() {
+    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
+    QuotaAllocation first =
+        quotasService.allocateQuotaForUserAndPipeline(
+            GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.DEFAULT_FREE, 300, "original");
+    QuotaAllocation second =
+        quotasService.allocateQuotaForUserAndPipeline(
+            GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.EXTERNAL_PAID, 200, null);
+
+    BadRequestException exception =
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                quotasService.manualQuotaConsumeForUserAndPipeline(
+                    GROOT_USER_ID, pipeline, 600, "manual consumption"));
+    assertEquals(
+        "Insufficient quota available to consume for user i-am-groot and pipeline ARRAY_IMPUTATION. Requested: 600, available: 500",
+        exception.getMessage());
+
+    // transaction rolled back: no consumption, no comment changes, no deductions
+    QuotaAllocation notUpdatedFirst =
+        quotaAllocationsRepository.findById(first.getId()).orElseThrow();
+    QuotaAllocation notUpdatedSecond =
+        quotaAllocationsRepository.findById(second.getId()).orElseThrow();
+    assertEquals(0, notUpdatedFirst.getQuotaConsumed());
+    assertEquals(QuotaAllocationStatusEnum.ACTIVE, notUpdatedFirst.getQuotaStatus());
+    assertEquals("original", notUpdatedFirst.getComments());
+    assertEquals(0, notUpdatedSecond.getQuotaConsumed());
+    assertNull(notUpdatedSecond.getComments());
+    assertTrue(findDeductionsForAllocations(first.getId(), second.getId()).isEmpty());
+  }
+
+  @Test
+  void manualQuotaConsumeWithNoAllocationsThrowsBadRequest() {
+    BadRequestException exception =
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                quotasService.manualQuotaConsumeForUserAndPipeline(
+                    "no-allocations-user",
+                    PipelinesEnum.ARRAY_IMPUTATION,
+                    100,
+                    "manual consumption"));
+    assertEquals(
+        "Insufficient quota available to consume for user no-allocations-user and pipeline ARRAY_IMPUTATION. Requested: 100, available: 0",
+        exception.getMessage());
+  }
+
+  @Test
+  void manualQuotaConsumeTwiceRecordsDeductionsForEachConsumption() {
+    // deductions for manual consumption have a null pipelineRunId
+    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
+    QuotaAllocation allocation =
+        quotasService.allocateQuotaForUserAndPipeline(
+            GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.DEFAULT_FREE, 1000, null);
+
+    quotasService.manualQuotaConsumeForUserAndPipeline(GROOT_USER_ID, pipeline, 300, "first");
+    quotasService.manualQuotaConsumeForUserAndPipeline(GROOT_USER_ID, pipeline, 200, "second");
+
+    // both consumptions were applied to the allocation
+    QuotaAllocation updated = quotaAllocationsRepository.findById(allocation.getId()).orElseThrow();
+    assertEquals(500, updated.getQuotaConsumed());
+    assertEquals("first; second", updated.getComments());
+
+    // and each one recorded its own deduction row
+    List<QuotaAllocationDeduction> deductions = findDeductionsForAllocations(allocation.getId());
+    assertEquals(2, deductions.size());
+    assertEquals(
+        List.of(200, 300),
+        deductions.stream().map(QuotaAllocationDeduction::getAmount).sorted().toList());
+    assertEquals(
+        List.of("first", "second"),
+        deductions.stream().map(QuotaAllocationDeduction::getComments).sorted().toList());
+    deductions.forEach(d -> assertNull(d.getPipelineRunId()));
+  }
+
+  @Test
+  void manualQuotaConsumeRejectsNonPositiveAmount() {
+    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
+    QuotaAllocation allocation =
+        quotasService.allocateQuotaForUserAndPipeline(
+            GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.DEFAULT_FREE, 1000, null);
+
+    assertThrows(
+        BadRequestException.class,
+        () -> quotasService.manualQuotaConsumeForUserAndPipeline(GROOT_USER_ID, pipeline, 0, null));
+    assertThrows(
+        BadRequestException.class,
+        () ->
+            quotasService.manualQuotaConsumeForUserAndPipeline(GROOT_USER_ID, pipeline, -5, null));
+
+    assertEquals(
+        0,
+        quotaAllocationsRepository.findById(allocation.getId()).orElseThrow().getQuotaConsumed());
+    assertTrue(findDeductionsForAllocations(allocation.getId()).isEmpty());
+  }
+
+  /** Fetch all deductions recorded against the given allocations, ordered by allocation id. */
+  private List<QuotaAllocationDeduction> findDeductionsForAllocations(Long... allocationIds) {
+    List<Long> ids = List.of(allocationIds);
+    return StreamSupport.stream(quotaAllocationDeductionsRepository.findAll().spliterator(), false)
+        .filter(d -> ids.contains(d.getQuotaAllocationId()))
+        .sorted(java.util.Comparator.comparing(QuotaAllocationDeduction::getQuotaAllocationId))
+        .toList();
   }
 }

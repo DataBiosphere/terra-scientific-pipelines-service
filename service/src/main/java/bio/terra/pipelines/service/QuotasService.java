@@ -421,9 +421,10 @@ public class QuotasService {
     }
 
     // if pipelineRunId is not null, check if deductions have already been recorded for this
-    // pipeline run.
-    // Note: This should never happen since we only record deductions for successful runs,
-    // but if it does, log a warning and skip recording deductions to avoid duplicate rows
+    // pipeline run (pipelineRunId can be null for manual consumption).
+    // Note: For a successful pipeline run, this should never happen since we only record
+    // deductions for successful runs, but if it does, log a warning and skip recording
+    // deductions to avoid duplicate rows
     if (pipelineRunId != null
         && quotaAllocationDeductionsRepository.existsByPipelineRunId(pipelineRunId)) {
       logger.info(
@@ -464,7 +465,7 @@ public class QuotasService {
    * @param userId - the user id
    * @param pipelineName - the pipeline name
    * @param amount - the amount of quota to consume
-   * @param comments - optional comments (nullable)
+   * @param comments - comments
    * @return - a list of QuotaAllocation objects that were affected by the consumption
    */
   @Transactional

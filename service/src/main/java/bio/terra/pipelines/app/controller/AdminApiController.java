@@ -377,6 +377,8 @@ public class AdminApiController implements AdminApi {
   /**
    * Send the user an email notification that their quota for a pipeline has changed.
    *
+   * @param userId the user's Sam id
+   * @param pipelineName the pipeline for which the quota changed
    * @param previousQuotaLimit the user's quota limit before the change
    * @param updatedQuotaTotals the user's quota totals after the change
    */
