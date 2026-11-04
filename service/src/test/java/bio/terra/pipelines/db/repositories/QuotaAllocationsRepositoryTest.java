@@ -564,4 +564,93 @@ class QuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
     assertEquals(1, result.size());
     assertEquals(allocation.getId(), result.get(0).getId());
   }
+
+  @Test
+  void existsByQuotaSourceReturnsFalseOnNoMatch() {
+    assertFalse(
+        quotaAllocationsRepository.existsByUserIdAndPipelineNameAndQuotaSource(
+            "groot-has-no-quota",
+            PipelinesEnum.ARRAY_IMPUTATION,
+            QuotaAllocationSourceEnum.DEFAULT_FREE));
+  }
+
+  @Test
+  void existsByQuotaSourceReturnsTrueWhenMatchExists() {
+    quotaAllocationsRepository.save(newAllocation());
+
+    assertTrue(
+        quotaAllocationsRepository.existsByUserIdAndPipelineNameAndQuotaSource(
+            GROOT_TEST_USER_ID,
+            PipelinesEnum.ARRAY_IMPUTATION,
+            QuotaAllocationSourceEnum.DEFAULT_FREE));
+  }
+
+  @Test
+  void existsByQuotaSourceReturnsFalseWhenOnlyOtherSourcesExist() {
+    QuotaAllocation paidAllocation = newAllocation();
+    paidAllocation.setQuotaSource(QuotaAllocationSourceEnum.EXTERNAL_PAID);
+    quotaAllocationsRepository.save(paidAllocation);
+
+    // returns false for the default free source
+    assertFalse(
+        quotaAllocationsRepository.existsByUserIdAndPipelineNameAndQuotaSource(
+            GROOT_TEST_USER_ID,
+            PipelinesEnum.ARRAY_IMPUTATION,
+            QuotaAllocationSourceEnum.DEFAULT_FREE));
+
+    // returns true for the external paid source
+    assertTrue(
+        quotaAllocationsRepository.existsByUserIdAndPipelineNameAndQuotaSource(
+            GROOT_TEST_USER_ID,
+            PipelinesEnum.ARRAY_IMPUTATION,
+            QuotaAllocationSourceEnum.EXTERNAL_PAID));
+  }
+
+  @Test
+  void existsByQuotaSourceIgnoresStatus() {
+    QuotaAllocation exhausted = newAllocation();
+    exhausted.setQuotaConsumed(2500);
+    exhausted.setQuotaStatus(QuotaAllocationStatusEnum.EXHAUSTED);
+    quotaAllocationsRepository.save(exhausted);
+
+    // returns true for the default free source even though the allocation is exhausted
+    assertTrue(
+        quotaAllocationsRepository.existsByUserIdAndPipelineNameAndQuotaSource(
+            GROOT_TEST_USER_ID,
+            PipelinesEnum.ARRAY_IMPUTATION,
+            QuotaAllocationSourceEnum.DEFAULT_FREE));
+  }
+
+  @Test
+  void existsByQuotaSourceIsScopedToUserAndPipeline() {
+    // different user, same pipeline and source - should not match
+    QuotaAllocation otherUserAllocation =
+        new QuotaAllocation(
+            PipelinesEnum.ARRAY_IMPUTATION,
+            "rocket-raccoon",
+            QuotaAllocationSourceEnum.DEFAULT_FREE,
+            2500,
+            0,
+            QuotaAllocationStatusEnum.ACTIVE,
+            null);
+    quotaAllocationsRepository.save(otherUserAllocation);
+
+    // same user, different pipeline, same source - should not match
+    QuotaAllocation otherPipelineAllocation =
+        new QuotaAllocation(
+            PipelinesEnum.LOW_PASS_IMPUTATION,
+            GROOT_TEST_USER_ID,
+            QuotaAllocationSourceEnum.DEFAULT_FREE,
+            100,
+            0,
+            QuotaAllocationStatusEnum.ACTIVE,
+            null);
+    quotaAllocationsRepository.save(otherPipelineAllocation);
+
+    assertFalse(
+        quotaAllocationsRepository.existsByUserIdAndPipelineNameAndQuotaSource(
+            GROOT_TEST_USER_ID,
+            PipelinesEnum.ARRAY_IMPUTATION,
+            QuotaAllocationSourceEnum.DEFAULT_FREE));
+  }
 }

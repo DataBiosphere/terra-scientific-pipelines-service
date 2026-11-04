@@ -1027,7 +1027,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void getOrInitializeQuotaTotalsCreatesDefaultWhenNoneExists() {
+  void getOrInitializeQuotaTotalsCreatesDefaultWhenNoAllocationExists() {
     PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
     int expectedDefaultQuota = quotasService.getPipelineQuota(pipeline).getDefaultQuota();
 
@@ -1050,7 +1050,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void getOrInitializeQuotaTotalsReturnsExistingTotals() {
+  void getOrInitializeQuotaTotalsCreatesDefaultWhenItDoesntExist() {
     PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
 
     // pre-existing non-default allocation
@@ -1060,14 +1060,20 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     UserQuotaTotals totals =
         quotasService.getOrInitializeQuotaTotalsForUserAndPipeline(GROOT_USER_ID, pipeline);
 
-    assertEquals(1000, totals.totalAllocated());
+    assertEquals(3500, totals.totalAllocated());
     assertEquals(0, totals.totalConsumed());
 
-    // only the original allocation should exist; no DEFAULT_FREE allocation created
+    // both the pre-existing EXTERNAL_PAID allocation and the newly created
+    // DEFAULT_FREE allocation should exist
     List<QuotaAllocation> allocations =
         quotasService.getAllQuotaAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline);
-    assertEquals(1, allocations.size());
-    assertEquals(QuotaAllocationSourceEnum.EXTERNAL_PAID, allocations.get(0).getQuotaSource());
+    assertEquals(2, allocations.size());
+    assertTrue(
+        allocations.stream()
+            .anyMatch(a -> a.getQuotaSource() == QuotaAllocationSourceEnum.EXTERNAL_PAID));
+    assertTrue(
+        allocations.stream()
+            .anyMatch(a -> a.getQuotaSource() == QuotaAllocationSourceEnum.DEFAULT_FREE));
   }
 
   @Test
@@ -1126,6 +1132,100 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
 
     assertEquals(1000, totals.totalAllocated());
     assertEquals(300, totals.totalConsumed());
+  }
+
+  @Test
+  void getOrInitializeQuotaTotalsDoesNotRegrantDefaultWhenExhausted() {
+    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
+
+    quotasService.allocateQuotaForUserAndPipeline(
+        GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.DEFAULT_FREE, 100, null);
+    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 100);
+
+    UserQuotaTotals totals =
+        quotasService.getOrInitializeQuotaTotalsForUserAndPipeline(GROOT_USER_ID, pipeline);
+
+    // the exhausted DEFAULT_FREE allocation still counts as the user's default allocation
+    assertEquals(100, totals.totalAllocated());
+    assertEquals(100, totals.totalConsumed());
+
+    List<QuotaAllocation> allocations =
+        quotasService.getAllQuotaAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline);
+    assertEquals(1, allocations.size());
+    assertEquals(QuotaAllocationSourceEnum.DEFAULT_FREE, allocations.get(0).getQuotaSource());
+    assertEquals(QuotaAllocationStatusEnum.EXHAUSTED, allocations.get(0).getQuotaStatus());
+  }
+
+  @Test
+  void getOrInitializeQuotaTotalsCreatesDefaultPerPipeline() {
+    PipelinesEnum lowPassImputationWithDefault = PipelinesEnum.LOW_PASS_IMPUTATION;
+    PipelinesEnum arrayImputationWithNoDefault = PipelinesEnum.ARRAY_IMPUTATION;
+    int arrayImputationDefaultQuota =
+        quotasService.getPipelineQuota(arrayImputationWithNoDefault).getDefaultQuota();
+
+    // create a DEFAULT_FREE allocation for LOW_PASS_IMPUTATION
+    quotasService.getOrInitializeQuotaTotalsForUserAndPipeline(
+        GROOT_USER_ID, lowPassImputationWithDefault);
+
+    // verify no allocations exist yet for ARRAY_IMPUTATION
+    assertTrue(
+        quotasService
+            .getAllQuotaAllocationsForUserAndPipeline(GROOT_USER_ID, arrayImputationWithNoDefault)
+            .isEmpty());
+
+    UserQuotaTotals totals =
+        quotasService.getOrInitializeQuotaTotalsForUserAndPipeline(
+            GROOT_USER_ID, arrayImputationWithNoDefault);
+
+    // DEFAULT_FREE for one pipeline should not suppress the default for another pipeline
+    assertEquals(arrayImputationDefaultQuota, totals.totalAllocated());
+    assertEquals(0, totals.totalConsumed());
+    assertEquals(
+        1,
+        quotasService
+            .getAllQuotaAllocationsForUserAndPipeline(GROOT_USER_ID, arrayImputationWithNoDefault)
+            .size());
+    assertEquals(
+        1,
+        quotasService
+            .getAllQuotaAllocationsForUserAndPipeline(GROOT_USER_ID, lowPassImputationWithDefault)
+            .size());
+
+    // verify that array imputation allocation is DEFAULT_FREE
+    QuotaAllocation arrayAllocation =
+        quotasService
+            .getAllQuotaAllocationsForUserAndPipeline(GROOT_USER_ID, arrayImputationWithNoDefault)
+            .get(0);
+    assertEquals(QuotaAllocationSourceEnum.DEFAULT_FREE, arrayAllocation.getQuotaSource());
+  }
+
+  @Test
+  void getOrInitializeQuotaTotalsCreatesDefaultPerUser() {
+    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
+    String otherUserId = "rocket-raccoon";
+    int defaultQuota = quotasService.getPipelineQuota(pipeline).getDefaultQuota();
+
+    // DEFAULT_FREE for one user should not suppress the default for another user
+    quotasService.getOrInitializeQuotaTotalsForUserAndPipeline(GROOT_USER_ID, pipeline);
+
+    // verify no allocations exist yet for the other user
+    assertTrue(
+        quotasService.getAllQuotaAllocationsForUserAndPipeline(otherUserId, pipeline).isEmpty());
+
+    UserQuotaTotals totals =
+        quotasService.getOrInitializeQuotaTotalsForUserAndPipeline(otherUserId, pipeline);
+
+    assertEquals(defaultQuota, totals.totalAllocated());
+    assertEquals(0, totals.totalConsumed());
+    assertEquals(
+        1, quotasService.getAllQuotaAllocationsForUserAndPipeline(otherUserId, pipeline).size());
+    assertEquals(
+        1, quotasService.getAllQuotaAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline).size());
+
+    // verify that the other user's allocation is DEFAULT_FREE
+    QuotaAllocation otherUserAllocation =
+        quotasService.getAllQuotaAllocationsForUserAndPipeline(otherUserId, pipeline).get(0);
+    assertEquals(QuotaAllocationSourceEnum.DEFAULT_FREE, otherUserAllocation.getQuotaSource());
   }
 
   /**
