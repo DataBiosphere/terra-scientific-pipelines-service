@@ -849,10 +849,10 @@ class AdminApiControllerTest {
               .andExpect(content().contentType(MediaType.APPLICATION_JSON))
               .andReturn();
 
-      ApiAdminAllocateQuotaResponse response =
+      ApiAdminUpdateQuotaResponse response =
           new ObjectMapper()
               .readValue(
-                  result.getResponse().getContentAsString(), ApiAdminAllocateQuotaResponse.class);
+                  result.getResponse().getContentAsString(), ApiAdminUpdateQuotaResponse.class);
 
       assertEquals(PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(), response.getPipelineName());
       assertEquals(TEST_SAM_USER.getSubjectId(), response.getUserId());
