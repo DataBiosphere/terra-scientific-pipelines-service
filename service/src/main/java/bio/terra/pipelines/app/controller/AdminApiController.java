@@ -215,6 +215,9 @@ public class AdminApiController implements AdminApi {
           "Quota amount to allocate must be greater than 0, was %d".formatted(amount));
     }
 
+    // validate that notifyUser was provided in the request body
+    validateNotifyUserProvided(body.isNotifyUser());
+
     QuotaAllocationSourceEnum quotaSource =
         QuotaAllocationSourceEnum.valueOf(body.getQuotaSource().toString());
 
@@ -251,6 +254,9 @@ public class AdminApiController implements AdminApi {
     // get userId from Sam using the email address and throw not found error
     // if the user doesn't exist in Sam
     String userId = samService.getUserIdFromEmailAdmin(authedUser, userEmail);
+
+    // validate that notifyUser was provided in the request body
+    validateNotifyUserProvided(body.isNotifyUser());
 
     int amount = body.getAmount();
 
@@ -372,6 +378,21 @@ public class AdminApiController implements AdminApi {
         .quotaConsumed(quotaTotals.totalConsumed())
         .quotaRemaining(quotaTotals.totalAllocated() - quotaTotals.totalConsumed())
         .allocations(allocations.stream().map(this::toApiQuotaAllocation).toList());
+  }
+
+  /**
+   * Validate that notifyUser was provided in the request body. notifyUser is a required field in
+   * the API spec, but the generated isNotifyUser() getter returns Boolean (not primitive boolean),
+   * which Hibernate Validator does not treat as a bean getter, so its @NotNull is not enforced by
+   * bean validation and has to be checked manually in the controller.
+   *
+   * @param notifyUser the notifyUser value from the request body
+   * @throws BadRequestException if notifyUser is null
+   */
+  private void validateNotifyUserProvided(Boolean notifyUser) {
+    if (notifyUser == null) {
+      throw new BadRequestException("notifyUser must not be null");
+    }
   }
 
   /**

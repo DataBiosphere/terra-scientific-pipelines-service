@@ -1065,12 +1065,12 @@ components:
       type: integer
 
     NotifyUser:
+      # Note: `required` is NOT enforced by bean validation for this property. The generated getter
+      # isNotifyUser() returns Boolean (not primitive boolean), which Hibernate Validator does not
+      # treat as a bean getter, so its @NotNull is ignored. Handlers must check for null themselves.
       description: |
         If true, send a notification email to the user about the quota change
       type: boolean
-      # isNotifyUser() is not recognized as a bean getter by Hibernate Validator since it returns
-      # Boolean (not primitive boolean), so put the constraint on the field to enforce it
-      x-field-extra-annotation: "@jakarta.validation.constraints.NotNull"
 
     Pipeline:
       description: |
