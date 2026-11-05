@@ -1215,7 +1215,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
 
     quotasService.allocateQuotaForUserAndPipeline(
         GROOT_USER_ID, pipeline, QuotaAllocationSourceEnum.DEFAULT_FREE, 100, null);
-    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 100);
+    quotasService.consumeQuotaFromAllocationsForUserAndPipeline(GROOT_USER_ID, pipeline, 100, null);
 
     UserQuotaTotals totals =
         quotasService.getOrInitializeQuotaTotalsForUserAndPipeline(GROOT_USER_ID, pipeline);
