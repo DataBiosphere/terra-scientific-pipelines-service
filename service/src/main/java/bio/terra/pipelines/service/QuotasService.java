@@ -257,7 +257,7 @@ public class QuotasService {
             pipelineName,
             QuotaAllocationSourceEnum.DEFAULT_FREE,
             pipelineQuota.getDefaultQuota(),
-            null);
+            /* comments= */ null);
       } catch (BadRequestException e) {
         // another thread may have created the default allocation between our check and insert
         logger.info(
