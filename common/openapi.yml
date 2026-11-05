@@ -144,9 +144,9 @@ paths:
     patch:
       summary: Update quota for a given pipeline and user identified by email
       description: |
-        Currently, only the Consume operation is supported. It deducts quota from the user's
-        allocations for the given pipeline, oldest first. The provided comments are appended
-        to the comments of each affected allocation, and existing comments are preserved.
+        Deducts quota from the user's allocations for the given pipeline, oldest first.
+        The provided comments are appended to the comments of each affected allocation,
+        and existing comments are preserved.
       tags: [ admin ]
       operationId: updateQuotaForPipelineAndUser
       requestBody:
@@ -898,9 +898,8 @@ components:
 
     AdminUpdateQuotaRequestBody:
       description: |
-        json object containing the admin provided information used to manually update quota
-        for a user and pipeline. Currently only Consume operation is supported. Quota is deducted 
-        from the user's allocations, oldest first.
+        json object containing the admin provided information used to manually consume quota
+        for a user and pipeline. Quota is deducted from the user's allocations, oldest first.
       type: object
       # Note: `required` is NOT enforced by bean validation for notifyUser property. The generated getter
       # isNotifyUser() returns Boolean (not primitive boolean), which Hibernate Validator does not

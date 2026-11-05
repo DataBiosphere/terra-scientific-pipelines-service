@@ -206,7 +206,7 @@ public class AdminApiController implements AdminApi {
 
     // get userId from Sam using the email address and throw not found error
     // if the user doesn't exist in Sam
-    String userId = samService.getUserIdFromEmailAdmin(authedAdminCaller, userEmail);
+    String targetUserId = samService.getUserIdFromEmailAdmin(authedAdminCaller, userEmail);
 
     // validate the amount
     int amount = body.getAmount();
@@ -224,20 +224,20 @@ public class AdminApiController implements AdminApi {
     // allocate the quota for the user/pipeline and fetch the user's quota totals for that pipeline
     QuotaAllocation newAllocation =
         quotasService.allocateQuotaForUserAndPipeline(
-            userId, validatedPipelineName, quotaSource, amount, body.getComments());
+            targetUserId, validatedPipelineName, quotaSource, amount, body.getComments());
 
     UserQuotaTotals quotaTotals =
-        quotasService.getQuotaTotalsForUserAndPipeline(userId, validatedPipelineName);
+        quotasService.getQuotaTotalsForUserAndPipeline(targetUserId, validatedPipelineName);
 
     // if requested, send email notification to the user about the quota allocation
     if (body.isNotifyUser()) {
       sendQuotaChangedNotification(
-          userId, validatedPipelineName, quotaTotals.totalAllocated() - amount, quotaTotals);
+          targetUserId, validatedPipelineName, quotaTotals.totalAllocated() - amount, quotaTotals);
     }
 
     return new ResponseEntity<>(
         toApiAdminUpdateQuotaResponseV3(
-            userId, userEmail, validatedPipelineName, quotaTotals, List.of(newAllocation)),
+            targetUserId, userEmail, validatedPipelineName, quotaTotals, List.of(newAllocation)),
         HttpStatus.OK);
   }
 
@@ -253,7 +253,7 @@ public class AdminApiController implements AdminApi {
 
     // get userId from Sam using the email address and throw not found error
     // if the user doesn't exist in Sam
-    String userId = samService.getUserIdFromEmailAdmin(authedAdminCaller, userEmail);
+    String targetUserId = samService.getUserIdFromEmailAdmin(authedAdminCaller, userEmail);
 
     // validate that notifyUser was provided in the request body
     validateNotifyUserProvided(body.isNotifyUser());
@@ -262,7 +262,7 @@ public class AdminApiController implements AdminApi {
 
     // check if user has enough quota remaining to consume the requested amount
     UserQuotaTotals quotaTotals =
-        quotasService.getQuotaTotalsForUserAndPipeline(userId, validatedPipelineName);
+        quotasService.getQuotaTotalsForUserAndPipeline(targetUserId, validatedPipelineName);
     int quotaRemaining = quotaTotals.totalAllocated() - quotaTotals.totalConsumed();
     if (amount > quotaRemaining) {
       throw new BadRequestException(
@@ -274,22 +274,29 @@ public class AdminApiController implements AdminApi {
     // consume the quota for the user/pipeline and fetch the affected allocations
     List<QuotaAllocation> affectedAllocations =
         quotasService.manuallyConsumeQuotaForUserAndPipeline(
-            userId, validatedPipelineName, amount, body.getComments());
+            targetUserId, validatedPipelineName, amount, body.getComments());
 
     // fetch the user's updated quota totals for that pipeline
     UserQuotaTotals updatedQuotaTotals =
-        quotasService.getQuotaTotalsForUserAndPipeline(userId, validatedPipelineName);
+        quotasService.getQuotaTotalsForUserAndPipeline(targetUserId, validatedPipelineName);
 
     // if requested, send email notification to the user about the quota change.
     // The quota limit is unchanged by a consumption, so the previous and new limits are the same.
     if (body.isNotifyUser()) {
       sendQuotaChangedNotification(
-          userId, validatedPipelineName, updatedQuotaTotals.totalAllocated(), updatedQuotaTotals);
+          targetUserId,
+          validatedPipelineName,
+          updatedQuotaTotals.totalAllocated(),
+          updatedQuotaTotals);
     }
 
     return new ResponseEntity<>(
         toApiAdminUpdateQuotaResponseV3(
-            userId, userEmail, validatedPipelineName, updatedQuotaTotals, affectedAllocations),
+            targetUserId,
+            userEmail,
+            validatedPipelineName,
+            updatedQuotaTotals,
+            affectedAllocations),
         HttpStatus.OK);
   }
 
