@@ -90,7 +90,8 @@ public class CompletePipelineRunStep implements Step {
 
     // record the quota deductions for this run in the database
     try {
-      quotasService.recordQuotaDeductions(pipelineRun.getId(), quotaConsumptionRecords, null);
+      quotasService.recordQuotaDeductions(
+          pipelineRun.getId(), quotaConsumptionRecords, /* comments= */ null);
 
       logger.info(
           "Marked run {} as a success and wrote job outputs and quota deductions to the db", jobId);

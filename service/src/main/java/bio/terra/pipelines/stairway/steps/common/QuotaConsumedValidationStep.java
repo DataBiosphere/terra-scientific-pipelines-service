@@ -229,7 +229,7 @@ public class QuotaConsumedValidationStep implements Step {
     try {
       quotaConsumptionRecords =
           quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
-              userId, pipelineName, quotaUsedForThisRun, null);
+              userId, pipelineName, quotaUsedForThisRun, /* comments= */ null);
     } catch (BadRequestException e) {
       // quota ran out between the totals check and the consume operation (e.g. concurrent job)
       return new StepResult(

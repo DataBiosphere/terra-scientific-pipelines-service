@@ -255,7 +255,7 @@ public class QuotasService {
               pipelineName,
               QuotaAllocationSourceEnum.DEFAULT_FREE,
               pipelineQuota.getDefaultQuota(),
-              null);
+              /* comments= */ null);
         } catch (BadRequestException e) {
           // another thread may have created the default allocation between our check and insert
           logger.info(
@@ -469,7 +469,7 @@ public class QuotasService {
    * @return - a list of QuotaAllocation objects that were affected by the consumption
    */
   @Transactional
-  public List<QuotaAllocation> manualQuotaConsumeForUserAndPipeline(
+  public List<QuotaAllocation> manuallyConsumeQuotaForUserAndPipeline(
       String userId, PipelinesEnum pipelineName, int amount, String comments) {
     // consume the quota for the user/pipeline
     List<QuotaConsumptionRecord> consumptionRecords =
@@ -477,7 +477,7 @@ public class QuotasService {
 
     // write the quota deductions to the database with a null pipelineRunId since this is a manual
     // consumption
-    recordQuotaDeductions(null, consumptionRecords, comments);
+    recordQuotaDeductions(/* pipelineRunId= */ null, consumptionRecords, comments);
 
     // fetch allocations that were affected by the consumption
     List<Long> affectedAllocationIds =

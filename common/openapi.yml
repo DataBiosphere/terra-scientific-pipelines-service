@@ -810,6 +810,9 @@ components:
         json object containing the admin provided information used to allocate quota
         for a user and pipeline. Creates a new quota allocation for the user and pipeline.
       type: object
+      # Note: `required` is NOT enforced by bean validation for notifyUser property. The generated getter
+      # isNotifyUser() returns Boolean (not primitive boolean), which Hibernate Validator does not
+      # treat as a bean getter, so its @NotNull is ignored. Handlers must check for null themselves.
       required: [ quotaSource, amount, notifyUser, comments ]
       properties:
         quotaSource:
@@ -899,6 +902,9 @@ components:
         for a user and pipeline. Currently only Consume operation is supported. Quota is deducted 
         from the user's allocations, oldest first.
       type: object
+      # Note: `required` is NOT enforced by bean validation for notifyUser property. The generated getter
+      # isNotifyUser() returns Boolean (not primitive boolean), which Hibernate Validator does not
+      # treat as a bean getter, so its @NotNull is ignored. Handlers must check for null themselves.
       required: [ amount, notifyUser, comments ]
       properties:
         amount:
@@ -1065,9 +1071,6 @@ components:
       type: integer
 
     NotifyUser:
-      # Note: `required` is NOT enforced by bean validation for this property. The generated getter
-      # isNotifyUser() returns Boolean (not primitive boolean), which Hibernate Validator does not
-      # treat as a bean getter, so its @NotNull is ignored. Handlers must check for null themselves.
       description: |
         If true, send a notification email to the user about the quota change
       type: boolean

@@ -197,16 +197,16 @@ public class AdminApiController implements AdminApi {
   @Override
   public ResponseEntity<ApiAdminUpdateQuotaResponse> allocateQuotaForPipelineAndUser(
       String pipelineName, String userEmail, ApiAdminAllocateQuotaRequestBody body) {
-    // check if user is an admin
-    final SamUser authedUser = getAuthenticatedInfo();
-    samService.checkAdminAuthz(authedUser);
+    // check if caller is an admin
+    final SamUser authedAdminCaller = getAuthenticatedInfo();
+    samService.checkAdminAuthz(authedAdminCaller);
 
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
 
     // get userId from Sam using the email address and throw not found error
     // if the user doesn't exist in Sam
-    String userId = samService.getUserIdFromEmailAdmin(authedUser, userEmail);
+    String userId = samService.getUserIdFromEmailAdmin(authedAdminCaller, userEmail);
 
     // validate the amount
     int amount = body.getAmount();
@@ -244,16 +244,16 @@ public class AdminApiController implements AdminApi {
   @Override
   public ResponseEntity<ApiAdminUpdateQuotaResponse> updateQuotaForPipelineAndUser(
       String pipelineName, String userEmail, ApiAdminUpdateQuotaRequestBody body) {
-    // check if user is an admin
-    final SamUser authedUser = getAuthenticatedInfo();
-    samService.checkAdminAuthz(authedUser);
+    // check if caller is an admin
+    final SamUser authedAdminCaller = getAuthenticatedInfo();
+    samService.checkAdminAuthz(authedAdminCaller);
 
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
 
     // get userId from Sam using the email address and throw not found error
     // if the user doesn't exist in Sam
-    String userId = samService.getUserIdFromEmailAdmin(authedUser, userEmail);
+    String userId = samService.getUserIdFromEmailAdmin(authedAdminCaller, userEmail);
 
     // validate that notifyUser was provided in the request body
     validateNotifyUserProvided(body.isNotifyUser());
@@ -273,7 +273,7 @@ public class AdminApiController implements AdminApi {
 
     // consume the quota for the user/pipeline and fetch the affected allocations
     List<QuotaAllocation> affectedAllocations =
-        quotasService.manualQuotaConsumeForUserAndPipeline(
+        quotasService.manuallyConsumeQuotaForUserAndPipeline(
             userId, validatedPipelineName, amount, body.getComments());
 
     // fetch the user's updated quota totals for that pipeline

@@ -1131,7 +1131,7 @@ class AdminApiControllerTest {
       when(quotasServiceMock.getQuotaTotalsForUserAndPipeline(
               userId, PipelinesEnum.ARRAY_IMPUTATION))
           .thenReturn(new UserQuotaTotals(4000, 3000), new UserQuotaTotals(4000, 3500));
-      when(quotasServiceMock.manualQuotaConsumeForUserAndPipeline(
+      when(quotasServiceMock.manuallyConsumeQuotaForUserAndPipeline(
               userId, PipelinesEnum.ARRAY_IMPUTATION, 500, mockComments))
           .thenReturn(List.of(consumedAllocation));
       when(pipelinesServiceMock.getLatestPipeline(PipelinesEnum.ARRAY_IMPUTATION))
@@ -1185,7 +1185,7 @@ class AdminApiControllerTest {
       when(quotasServiceMock.getQuotaTotalsForUserAndPipeline(
               userId, PipelinesEnum.ARRAY_IMPUTATION))
           .thenReturn(new UserQuotaTotals(4000, 3000), new UserQuotaTotals(4000, 3500));
-      when(quotasServiceMock.manualQuotaConsumeForUserAndPipeline(
+      when(quotasServiceMock.manuallyConsumeQuotaForUserAndPipeline(
               userId, PipelinesEnum.ARRAY_IMPUTATION, 500, mockComments))
           .thenReturn(
               List.of(
@@ -1221,7 +1221,7 @@ class AdminApiControllerTest {
       when(quotasServiceMock.getQuotaTotalsForUserAndPipeline(
               userId, PipelinesEnum.ARRAY_IMPUTATION))
           .thenReturn(new UserQuotaTotals(800, 0), new UserQuotaTotals(800, 500));
-      when(quotasServiceMock.manualQuotaConsumeForUserAndPipeline(
+      when(quotasServiceMock.manuallyConsumeQuotaForUserAndPipeline(
               userId, PipelinesEnum.ARRAY_IMPUTATION, 500, mockComments))
           .thenReturn(List.of(first, second));
 
@@ -1280,7 +1280,7 @@ class AdminApiControllerTest {
               .contains("Quota amount to consume (1000) exceeds remaining quota (200)"));
 
       verify(quotasServiceMock, never())
-          .manualQuotaConsumeForUserAndPipeline(any(), any(), anyInt(), any());
+          .manuallyConsumeQuotaForUserAndPipeline(any(), any(), anyInt(), any());
       verifyNoInteractions(notificationService);
     }
 
@@ -1294,7 +1294,7 @@ class AdminApiControllerTest {
               userId, PipelinesEnum.ARRAY_IMPUTATION))
           .thenReturn(new UserQuotaTotals(4000, 3000));
       // e.g. an invalid amount, or quota consumed concurrently since the remaining quota check
-      when(quotasServiceMock.manualQuotaConsumeForUserAndPipeline(
+      when(quotasServiceMock.manuallyConsumeQuotaForUserAndPipeline(
               userId, PipelinesEnum.ARRAY_IMPUTATION, 500, mockComments))
           .thenThrow(new BadRequestException("Insufficient quota available to consume"));
 
