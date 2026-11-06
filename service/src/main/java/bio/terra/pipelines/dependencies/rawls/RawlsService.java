@@ -21,7 +21,7 @@ public class RawlsService implements HealthCheck {
   private final RawlsClient rawlsClient;
   private final RetryTemplate listenerResetRetryTemplate;
   private final ObjectMapper objectMapper;
-  private final Logger logger = LoggerFactory.getLogger(RawlsService.class);
+  private static final Logger logger = LoggerFactory.getLogger(RawlsService.class);
 
   private static final List<SubmissionStatus> FINAL_RUN_STATES =
       List.of(SubmissionStatus.ABORTED, SubmissionStatus.DONE);
@@ -68,7 +68,7 @@ public class RawlsService implements HealthCheck {
         || workspaceDetails.getGoogleProject() == null) {
       throw new RawlsServiceApiException(
           String.format(
-              "Rawls returned workspace %s/%s missing required bucketName and/or googleProject",
+              "Workspace %s/%s missing required bucketName and/or googleProject",
               workspaceNamespace, workspaceName));
     }
     return workspaceDetails;
@@ -330,6 +330,12 @@ public class RawlsService implements HealthCheck {
           try {
             return action.execute();
           } catch (ApiException e) {
+            // the user-facing message is intentionally generic, so log the Rawls details here
+            logger.error(
+                "Rawls call failed with status code {} and response body: {}",
+                e.getCode(),
+                e.getResponseBody(),
+                e);
             throw new RawlsServiceApiException(e);
           }
         });
