@@ -358,7 +358,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
     QuotasService mockQuotasService = mockQuotasServiceWithQuotaAvailable();
     when(mockQuotasService.consumeQuotaFromAllocationsForUserAndPipeline(
-            TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 1000))
+            TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 1000, null))
         .thenThrow(
             new BadRequestException(
                 "Insufficient quota available to consume for user testUser and pipeline ARRAY_IMPUTATION. Requested: 1000, available: 0"));
@@ -384,7 +384,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
     QuotasService mockQuotasService = mockQuotasServiceWithQuotaAvailable();
     when(mockQuotasService.consumeQuotaFromAllocationsForUserAndPipeline(
-            TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 1000))
+            TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 1000, null))
         .thenThrow(new CannotAcquireLockException("could not obtain lock on row"));
     putQuotaOutputs("1000");
 
@@ -403,7 +403,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
     QuotasService mockQuotasService = mockQuotasServiceWithQuotaAvailable();
     when(mockQuotasService.consumeQuotaFromAllocationsForUserAndPipeline(
-            TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 1000))
+            TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 1000, null))
         .thenThrow(
             new InternalServerErrorException(
                 "Data integrity issue: allocation 5 for user testUser pipeline ARRAY_IMPUTATION is ACTIVE but has 0 or negative quota remaining (0). Aborting quota consumption."));
@@ -428,7 +428,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
     QuotasService mockQuotasService = mockQuotasServiceWithQuotaAvailable();
     when(mockQuotasService.consumeQuotaFromAllocationsForUserAndPipeline(
-            TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 1000))
+            TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 1000, null))
         .thenReturn(List.of());
     putQuotaOutputs("1000");
 
@@ -450,7 +450,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     // there is no receipt of quota consumption in working map
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
     quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
-        TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 600);
+        TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 600, null);
 
     QuotaConsumedValidationStep quotaConsumedValidationStep =
         new QuotaConsumedValidationStep(quotasService, pipelineRunsService);
@@ -522,7 +522,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
 
     List<QuotaConsumptionRecord> records =
         quotasService.consumeQuotaFromAllocationsForUserAndPipeline(
-            TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 600);
+            TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 600, null);
 
     flightContext
         .getWorkingMap()
