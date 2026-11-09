@@ -24,7 +24,7 @@ class QuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
 
   private static final String GROOT_TEST_USER_ID = "i-am-groot";
 
-  private QuotaAllocation newAllocation() {
+  private QuotaAllocation newDefaultFreeTestAllocation() {
     return new QuotaAllocation(
         PipelinesEnum.ARRAY_IMPUTATION,
         GROOT_TEST_USER_ID,
@@ -50,7 +50,7 @@ class QuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
 
   @Test
   void saveAllocation() {
-    QuotaAllocation saved = quotaAllocationsRepository.save(newAllocation());
+    QuotaAllocation saved = quotaAllocationsRepository.save(newDefaultFreeTestAllocation());
     assertNotNull(saved.getId());
 
     QuotaAllocation found = quotaAllocationsRepository.findById(saved.getId()).orElseThrow();
@@ -67,7 +67,7 @@ class QuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
 
   @Test
   void savingAllocationWithComments() {
-    QuotaAllocation allocation = newAllocation();
+    QuotaAllocation allocation = newDefaultFreeTestAllocation();
     allocation.setComments("I am Groot");
 
     Long id = quotaAllocationsRepository.save(allocation).getId();
@@ -78,7 +78,7 @@ class QuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
   @Test
   void allQuotaSourcesCanBePersisted() {
     for (QuotaAllocationSourceEnum source : QuotaAllocationSourceEnum.values()) {
-      QuotaAllocation allocation = newAllocation();
+      QuotaAllocation allocation = newDefaultFreeTestAllocation();
       allocation.setQuotaSource(source);
       Long id = quotaAllocationsRepository.save(allocation).getId();
       assertEquals(source, quotaAllocationsRepository.findById(id).orElseThrow().getQuotaSource());
@@ -87,7 +87,7 @@ class QuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
 
   @Test
   void updatingRowUpdatesUpdatedTimestamp() {
-    Long id = quotaAllocationsRepository.save(newAllocation()).getId();
+    Long id = quotaAllocationsRepository.save(newDefaultFreeTestAllocation()).getId();
     QuotaAllocation quotaAllocation = quotaAllocationsRepository.findById(id).orElseThrow();
     Instant createdTimestamp = quotaAllocation.getCreated();
     Instant updatedTimestampBeforeUpdate = quotaAllocation.getUpdated();
@@ -116,7 +116,7 @@ class QuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
 
   @Test
   void sumQuotaTotalsAggregatesAcrossMultipleAllocations() {
-    QuotaAllocation defaultFreeAllocation = newAllocation();
+    QuotaAllocation defaultFreeAllocation = newDefaultFreeTestAllocation();
     defaultFreeAllocation.setQuotaAllocated(2500);
     defaultFreeAllocation.setQuotaConsumed(1000);
     quotaAllocationsRepository.save(defaultFreeAllocation);
@@ -144,7 +144,7 @@ class QuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
   void sumQuotaTotalsIsScopedToUserAndPipeline() {
     String otherUserId = "rocket-raccoon";
 
-    QuotaAllocation firstUserArrayImputation = newAllocation();
+    QuotaAllocation firstUserArrayImputation = newDefaultFreeTestAllocation();
     firstUserArrayImputation.setQuotaAllocated(2500);
     quotaAllocationsRepository.save(firstUserArrayImputation);
 
@@ -207,14 +207,14 @@ class QuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
   void findAllActiveAllocationsReturnsOldestFirst() {
     Instant now = Instant.now();
 
-    QuotaAllocation newest = newAllocation();
+    QuotaAllocation newest = newDefaultFreeTestAllocation();
     newest.setQuotaSource(QuotaAllocationSourceEnum.EXTERNAL_PAID);
     quotaAllocationsRepository.save(newest);
 
-    QuotaAllocation oldest = newAllocation();
+    QuotaAllocation oldest = newDefaultFreeTestAllocation();
     quotaAllocationsRepository.save(oldest);
 
-    QuotaAllocation middle = newAllocation();
+    QuotaAllocation middle = newDefaultFreeTestAllocation();
     middle.setQuotaSource(QuotaAllocationSourceEnum.DEVELOPMENT_FREE);
     quotaAllocationsRepository.save(middle);
 
@@ -242,17 +242,17 @@ class QuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
   void findAllActiveAllocationsOrdersByCreatedWhileExcludingNonActive() {
     Instant now = Instant.now();
 
-    QuotaAllocation newestActive = newAllocation();
+    QuotaAllocation newestActive = newDefaultFreeTestAllocation();
     newestActive.setQuotaSource(QuotaAllocationSourceEnum.EXTERNAL_PAID);
     quotaAllocationsRepository.save(newestActive);
 
     // exhausted row sits chronologically between the two active rows
-    QuotaAllocation exhausted = newAllocation();
+    QuotaAllocation exhausted = newDefaultFreeTestAllocation();
     exhausted.setQuotaSource(QuotaAllocationSourceEnum.DEVELOPMENT_FREE);
     exhausted.setQuotaStatus(QuotaAllocationStatusEnum.EXHAUSTED);
     quotaAllocationsRepository.save(exhausted);
 
-    QuotaAllocation oldestActive = newAllocation();
+    QuotaAllocation oldestActive = newDefaultFreeTestAllocation();
     quotaAllocationsRepository.save(oldestActive);
 
     setCreated(newestActive, now.plus(15, ChronoUnit.MINUTES));
@@ -274,10 +274,10 @@ class QuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
   @Test
   @Transactional
   void findAllActiveAllocationsFiltersByStatus() {
-    QuotaAllocation activeAllocation = newAllocation();
+    QuotaAllocation activeAllocation = newDefaultFreeTestAllocation();
     quotaAllocationsRepository.save(activeAllocation);
 
-    QuotaAllocation exhaustedAllocation = newAllocation();
+    QuotaAllocation exhaustedAllocation = newDefaultFreeTestAllocation();
     exhaustedAllocation.setQuotaSource(QuotaAllocationSourceEnum.DEVELOPMENT_FREE);
     exhaustedAllocation.setQuotaStatus(QuotaAllocationStatusEnum.EXHAUSTED);
     quotaAllocationsRepository.save(exhaustedAllocation);
@@ -296,7 +296,7 @@ class QuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
   void findAllActiveAllocationsFiltersByUserAndPipeline() {
     String otherUserId = "rocket-raccoon";
 
-    QuotaAllocation grootArrayAllocation = newAllocation();
+    QuotaAllocation grootArrayAllocation = newDefaultFreeTestAllocation();
     quotaAllocationsRepository.save(grootArrayAllocation);
 
     // same user, different pipeline - should not be included
@@ -346,14 +346,14 @@ class QuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
   void findAllAllocationsReturnsNewestFirst() {
     Instant now = Instant.now();
 
-    QuotaAllocation oldest = newAllocation();
+    QuotaAllocation oldest = newDefaultFreeTestAllocation();
     quotaAllocationsRepository.save(oldest);
 
-    QuotaAllocation newest = newAllocation();
+    QuotaAllocation newest = newDefaultFreeTestAllocation();
     newest.setQuotaSource(QuotaAllocationSourceEnum.EXTERNAL_PAID);
     quotaAllocationsRepository.save(newest);
 
-    QuotaAllocation middle = newAllocation();
+    QuotaAllocation middle = newDefaultFreeTestAllocation();
     middle.setQuotaSource(QuotaAllocationSourceEnum.DEVELOPMENT_FREE);
     quotaAllocationsRepository.save(middle);
 
@@ -379,10 +379,10 @@ class QuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
   void findAllAllocationsIncludesAllStatusesNewestFirst() {
     Instant now = Instant.now();
 
-    QuotaAllocation active = newAllocation();
+    QuotaAllocation active = newDefaultFreeTestAllocation();
     quotaAllocationsRepository.save(active);
 
-    QuotaAllocation exhausted = newAllocation();
+    QuotaAllocation exhausted = newDefaultFreeTestAllocation();
     exhausted.setQuotaSource(QuotaAllocationSourceEnum.DEVELOPMENT_FREE);
     exhausted.setQuotaStatus(QuotaAllocationStatusEnum.EXHAUSTED);
     quotaAllocationsRepository.save(exhausted);
@@ -408,7 +408,7 @@ class QuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
   void findAllAllocationsFiltersByUserAndPipeline() {
     String otherUserId = "rocket-raccoon";
 
-    QuotaAllocation grootArrayAllocation = newAllocation();
+    QuotaAllocation grootArrayAllocation = newDefaultFreeTestAllocation();
     quotaAllocationsRepository.save(grootArrayAllocation);
 
     // same user, different pipeline - should not be included
@@ -443,5 +443,215 @@ class QuotaAllocationsRepositoryTest extends BaseEmbeddedDbTest {
     assertEquals(grootArrayAllocation.getId(), result.get(0).getId());
     assertEquals(GROOT_TEST_USER_ID, result.get(0).getUserId());
     assertEquals(PipelinesEnum.ARRAY_IMPUTATION, result.get(0).getPipelineName());
+  }
+
+  @Test
+  void findAllByIdInRequiresActiveTransactionForPessimisticLock() {
+    // the query uses @Lock(PESSIMISTIC_WRITE), which requires an active transaction
+    List<Long> ids =
+        List.of(quotaAllocationsRepository.save(newDefaultFreeTestAllocation()).getId());
+
+    assertThrows(
+        InvalidDataAccessApiUsageException.class,
+        () -> quotaAllocationsRepository.findAllByIdInOrderByCreatedAsc(ids));
+  }
+
+  @Test
+  @Transactional
+  void findAllByIdInReturnsEmptyListOnNoMatch() {
+    List<QuotaAllocation> result =
+        quotaAllocationsRepository.findAllByIdInOrderByCreatedAsc(List.of(2026L, 2027L));
+
+    assertTrue(result.isEmpty());
+  }
+
+  @Test
+  @Transactional // required by setCreated helper method (native update)
+  void findAllByIdInReturnsOldestFirst() {
+    Instant now = Instant.now();
+
+    QuotaAllocation newest = newDefaultFreeTestAllocation();
+    newest.setQuotaSource(QuotaAllocationSourceEnum.EXTERNAL_PAID);
+    quotaAllocationsRepository.save(newest);
+
+    QuotaAllocation oldest = newDefaultFreeTestAllocation();
+    quotaAllocationsRepository.save(oldest);
+
+    QuotaAllocation middle = newDefaultFreeTestAllocation();
+    middle.setQuotaSource(QuotaAllocationSourceEnum.DEVELOPMENT_FREE);
+    quotaAllocationsRepository.save(middle);
+
+    // set created timestamps out of insertion order to verify the query sorts by created
+    setCreated(newest, now.plus(15, ChronoUnit.MINUTES));
+    setCreated(oldest, now);
+    setCreated(middle, now.plus(10, ChronoUnit.MINUTES));
+    entityManager.flush();
+    entityManager.clear();
+
+    // the order of the ids passed in should not affect the order of the results
+    List<QuotaAllocation> result =
+        quotaAllocationsRepository.findAllByIdInOrderByCreatedAsc(
+            List.of(newest.getId(), oldest.getId(), middle.getId()));
+
+    assertEquals(3, result.size());
+    assertEquals(oldest.getId(), result.get(0).getId());
+    assertEquals(middle.getId(), result.get(1).getId());
+    assertEquals(newest.getId(), result.get(2).getId());
+  }
+
+  @Test
+  @Transactional
+  void findAllByIdInOnlyReturnsRequestedAllocations() {
+    QuotaAllocation requested = newDefaultFreeTestAllocation();
+    quotaAllocationsRepository.save(requested);
+
+    // same user and pipeline but not requested - should not be included
+    QuotaAllocation notRequested = newDefaultFreeTestAllocation();
+    notRequested.setQuotaSource(QuotaAllocationSourceEnum.EXTERNAL_PAID);
+    quotaAllocationsRepository.save(notRequested);
+
+    // different user and pipeline but not requested - should not be included
+    QuotaAllocation otherUserAllocation =
+        new QuotaAllocation(
+            PipelinesEnum.LOW_PASS_IMPUTATION,
+            "rocket-raccoon",
+            QuotaAllocationSourceEnum.DEFAULT_FREE,
+            100,
+            0,
+            QuotaAllocationStatusEnum.ACTIVE,
+            null);
+    quotaAllocationsRepository.save(otherUserAllocation);
+
+    List<QuotaAllocation> result =
+        quotaAllocationsRepository.findAllByIdInOrderByCreatedAsc(List.of(requested.getId()));
+
+    assertEquals(1, result.size());
+    assertEquals(requested.getId(), result.get(0).getId());
+  }
+
+  @Test
+  @Transactional
+  void findAllByIdInIncludesAllocationsOfAnyStatus() {
+    // reverting quota needs to find allocations that were exhausted by the consumption
+    QuotaAllocation active = newDefaultFreeTestAllocation();
+    quotaAllocationsRepository.save(active);
+
+    QuotaAllocation exhausted = newDefaultFreeTestAllocation();
+    exhausted.setQuotaSource(QuotaAllocationSourceEnum.DEVELOPMENT_FREE);
+    exhausted.setQuotaStatus(QuotaAllocationStatusEnum.EXHAUSTED);
+    quotaAllocationsRepository.save(exhausted);
+
+    List<QuotaAllocation> result =
+        quotaAllocationsRepository.findAllByIdInOrderByCreatedAsc(
+            List.of(active.getId(), exhausted.getId()));
+
+    assertEquals(2, result.size());
+    assertTrue(
+        result.stream().anyMatch(a -> a.getQuotaStatus() == QuotaAllocationStatusEnum.EXHAUSTED));
+    assertTrue(
+        result.stream().anyMatch(a -> a.getQuotaStatus() == QuotaAllocationStatusEnum.ACTIVE));
+  }
+
+  @Test
+  @Transactional
+  void findAllByIdInReturnsEachAllocationOnceForDuplicateIds() {
+    QuotaAllocation allocation = newDefaultFreeTestAllocation();
+    quotaAllocationsRepository.save(allocation);
+
+    List<QuotaAllocation> result =
+        quotaAllocationsRepository.findAllByIdInOrderByCreatedAsc(
+            List.of(allocation.getId(), allocation.getId()));
+
+    assertEquals(1, result.size());
+    assertEquals(allocation.getId(), result.get(0).getId());
+  }
+
+  @Test
+  void existsByQuotaSourceReturnsFalseOnNoMatch() {
+    assertFalse(
+        quotaAllocationsRepository.existsByUserIdAndPipelineNameAndQuotaSource(
+            "groot-has-no-quota",
+            PipelinesEnum.ARRAY_IMPUTATION,
+            QuotaAllocationSourceEnum.DEFAULT_FREE));
+  }
+
+  @Test
+  void existsByQuotaSourceReturnsTrueWhenMatchExists() {
+    quotaAllocationsRepository.save(newDefaultFreeTestAllocation());
+
+    assertTrue(
+        quotaAllocationsRepository.existsByUserIdAndPipelineNameAndQuotaSource(
+            GROOT_TEST_USER_ID,
+            PipelinesEnum.ARRAY_IMPUTATION,
+            QuotaAllocationSourceEnum.DEFAULT_FREE));
+  }
+
+  @Test
+  void existsByQuotaSourceReturnsFalseWhenOnlyOtherSourcesExist() {
+    QuotaAllocation paidAllocation = newDefaultFreeTestAllocation();
+    paidAllocation.setQuotaSource(QuotaAllocationSourceEnum.EXTERNAL_PAID);
+    quotaAllocationsRepository.save(paidAllocation);
+
+    // returns false for the default free source
+    assertFalse(
+        quotaAllocationsRepository.existsByUserIdAndPipelineNameAndQuotaSource(
+            GROOT_TEST_USER_ID,
+            PipelinesEnum.ARRAY_IMPUTATION,
+            QuotaAllocationSourceEnum.DEFAULT_FREE));
+
+    // returns true for the external paid source
+    assertTrue(
+        quotaAllocationsRepository.existsByUserIdAndPipelineNameAndQuotaSource(
+            GROOT_TEST_USER_ID,
+            PipelinesEnum.ARRAY_IMPUTATION,
+            QuotaAllocationSourceEnum.EXTERNAL_PAID));
+  }
+
+  @Test
+  void existsByQuotaSourceIgnoresStatus() {
+    QuotaAllocation exhausted = newDefaultFreeTestAllocation();
+    exhausted.setQuotaConsumed(2500);
+    exhausted.setQuotaStatus(QuotaAllocationStatusEnum.EXHAUSTED);
+    quotaAllocationsRepository.save(exhausted);
+
+    // returns true for the default free source even though the allocation is exhausted
+    assertTrue(
+        quotaAllocationsRepository.existsByUserIdAndPipelineNameAndQuotaSource(
+            GROOT_TEST_USER_ID,
+            PipelinesEnum.ARRAY_IMPUTATION,
+            QuotaAllocationSourceEnum.DEFAULT_FREE));
+  }
+
+  @Test
+  void existsByQuotaSourceIsScopedToUserAndPipeline() {
+    // different user, same pipeline and source - should not match
+    QuotaAllocation otherUserAllocation =
+        new QuotaAllocation(
+            PipelinesEnum.ARRAY_IMPUTATION,
+            "rocket-raccoon",
+            QuotaAllocationSourceEnum.DEFAULT_FREE,
+            2500,
+            0,
+            QuotaAllocationStatusEnum.ACTIVE,
+            null);
+    quotaAllocationsRepository.save(otherUserAllocation);
+
+    // same user, different pipeline, same source - should not match
+    QuotaAllocation otherPipelineAllocation =
+        new QuotaAllocation(
+            PipelinesEnum.LOW_PASS_IMPUTATION,
+            GROOT_TEST_USER_ID,
+            QuotaAllocationSourceEnum.DEFAULT_FREE,
+            100,
+            0,
+            QuotaAllocationStatusEnum.ACTIVE,
+            null);
+    quotaAllocationsRepository.save(otherPipelineAllocation);
+
+    assertFalse(
+        quotaAllocationsRepository.existsByUserIdAndPipelineNameAndQuotaSource(
+            GROOT_TEST_USER_ID,
+            PipelinesEnum.ARRAY_IMPUTATION,
+            QuotaAllocationSourceEnum.DEFAULT_FREE));
   }
 }

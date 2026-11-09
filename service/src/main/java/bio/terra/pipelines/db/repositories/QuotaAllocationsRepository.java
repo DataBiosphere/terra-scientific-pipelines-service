@@ -1,6 +1,7 @@
 package bio.terra.pipelines.db.repositories;
 
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.common.utils.QuotaAllocationSourceEnum;
 import bio.terra.pipelines.common.utils.QuotaAllocationStatusEnum;
 import bio.terra.pipelines.db.entities.QuotaAllocation;
 import bio.terra.pipelines.model.UserQuotaTotals;
@@ -35,4 +36,15 @@ public interface QuotaAllocationsRepository extends CrudRepository<QuotaAllocati
 
   List<QuotaAllocation> findByUserIdAndPipelineNameOrderByCreatedDesc(
       String userId, PipelinesEnum pipelineName);
+
+  // Locking is required to avoid race conditions when multiple threads are trying to
+  // update quota allocations for the same user and pipeline. This allows rows to be selected
+  // and locked for update, preventing other transactions from modifying them until
+  // the current transaction is complete.
+  // Note: Must be called within an active transaction for the lock to take effect
+  @Lock(LockModeType.PESSIMISTIC_WRITE)
+  List<QuotaAllocation> findAllByIdInOrderByCreatedAsc(List<Long> ids);
+
+  boolean existsByUserIdAndPipelineNameAndQuotaSource(
+      String userId, PipelinesEnum pipelineName, QuotaAllocationSourceEnum quotaSource);
 }

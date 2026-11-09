@@ -16,9 +16,9 @@ import bio.terra.pipelines.app.controller.GlobalExceptionHandler;
 import bio.terra.pipelines.app.controller.QuotasController;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
-import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.db.exception.InvalidPipelineException;
 import bio.terra.pipelines.generated.model.ApiQuotaWithDetails;
+import bio.terra.pipelines.model.UserQuotaTotals;
 import bio.terra.pipelines.service.QuotasService;
 import bio.terra.pipelines.testutils.MockMvcUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -43,16 +43,16 @@ class QuotasControllerTest {
   @Autowired private MockMvc mockMvc;
 
   private final SamUser testUser = MockMvcUtils.TEST_SAM_USER;
-  private final UserQuota testUserQuota = MockMvcUtils.TEST_USER_QUOTA_1;
+  private final UserQuotaTotals testUserQuotaTotals = new UserQuotaTotals(1000, 10);
 
   @BeforeEach
   void beforeEach() {
     when(samConfiguration.baseUri()).thenReturn("baseSamUri");
     when(samUserFactoryMock.from(any(HttpServletRequest.class), eq("baseSamUri")))
         .thenReturn(testUser);
-    when(quotasServiceMock.getOrCreateQuotaForUserAndPipeline(
+    when(quotasServiceMock.getOrInitializeQuotaTotalsForUserAndPipeline(
             testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION))
-        .thenReturn(testUserQuota);
+        .thenReturn(testUserQuotaTotals);
     when(quotasServiceMock.getQuotaUnitsForPipeline(PipelinesEnum.ARRAY_IMPUTATION))
         .thenReturn(QuotaUnitsEnum.SAMPLES);
   }
@@ -71,9 +71,9 @@ class QuotasControllerTest {
         new ObjectMapper()
             .readValue(result.getResponse().getContentAsString(), ApiQuotaWithDetails.class);
 
-    assertEquals(testUserQuota.getQuota(), response.getQuotaLimit());
-    assertEquals(testUserQuota.getQuotaConsumed(), response.getQuotaConsumed());
-    assertEquals(testUserQuota.getPipelineName().getLowerCaseValue(), response.getPipelineName());
+    assertEquals(testUserQuotaTotals.totalAllocated(), response.getQuotaLimit());
+    assertEquals(testUserQuotaTotals.totalConsumed(), response.getQuotaConsumed());
+    assertEquals(PipelinesEnum.ARRAY_IMPUTATION.getLowerCaseValue(), response.getPipelineName());
     assertEquals(QuotaUnitsEnum.SAMPLES.getValue(), response.getQuotaUnits());
   }
 

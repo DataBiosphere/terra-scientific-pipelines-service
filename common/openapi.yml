@@ -134,7 +134,34 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AdminAllocateQuotaResponse'
+                $ref: '#/components/schemas/AdminUpdateQuotaResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        403:
+          $ref: '#/components/responses/PermissionDenied'
+        500:
+          $ref: '#/components/responses/ServerError'
+    patch:
+      summary: Update quota for a given pipeline and user identified by email
+      description: |
+        Deducts quota from the user's allocations for the given pipeline, oldest first.
+        The provided comments are appended to the comments of each affected allocation,
+        and existing comments are preserved.
+      tags: [ admin ]
+      operationId: updateQuotaForPipelineAndUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminUpdateQuotaRequestBody'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUpdateQuotaResponse'
         400:
           $ref: '#/components/responses/BadRequest'
         403:
@@ -783,40 +810,20 @@ components:
         json object containing the admin provided information used to allocate quota
         for a user and pipeline. Creates a new quota allocation for the user and pipeline.
       type: object
-      required: [ quotaSource, amount, comments ]
+      # Note: `required` is NOT enforced by bean validation for notifyUser property. The generated getter
+      # isNotifyUser() returns Boolean (not primitive boolean), which Hibernate Validator does not
+      # treat as a bean getter, so its @NotNull is ignored. Handlers must check for null themselves.
+      required: [ quotaSource, amount, notifyUser, comments ]
       properties:
         quotaSource:
           $ref: '#/components/schemas/QuotaAllocationSource'
         amount:
           description: Amount of quota to allocate
           type: integer
+        notifyUser:
+          $ref: '#/components/schemas/NotifyUser'
         comments:
           $ref: '#/components/schemas/QuotaComments'
-
-    AdminAllocateQuotaResponse:
-      description: |
-        Result of a quota update for a user and pipeline. Contains the user's aggregate quota
-        limit, consumed and remaining quota, and the list of allocations created by this update.
-      type: object
-      required: [ userEmail, userId, pipelineName, quotaLimit, quotaConsumed, quotaRemaining, allocations ]
-      properties:
-        userEmail:
-          $ref: '#/components/schemas/UserEmail'
-        userId:
-          $ref: '#/components/schemas/UserId'
-        pipelineName:
-          $ref: '#/components/schemas/PipelineName'
-        quotaLimit:
-          $ref: '#/components/schemas/QuotaLimit'
-        quotaConsumed:
-          $ref: '#/components/schemas/QuotaConsumed'
-        quotaRemaining:
-          $ref: '#/components/schemas/QuotaRemaining'
-        allocations:
-          description: List of allocations created or modified during this update
-          type: array
-          items:
-            $ref: '#/components/schemas/QuotaAllocation'
 
     AdminGetQuotaResponseV3:
       description: |
@@ -888,6 +895,49 @@ components:
           $ref: "#/components/schemas/QuotaLimit"
         quotaConsumed:
           $ref: "#/components/schemas/QuotaConsumed"
+
+    AdminUpdateQuotaRequestBody:
+      description: |
+        json object containing the admin provided information used to manually consume quota
+        for a user and pipeline. Quota is deducted from the user's allocations, oldest first.
+      type: object
+      # Note: `required` is NOT enforced by bean validation for notifyUser property. The generated getter
+      # isNotifyUser() returns Boolean (not primitive boolean), which Hibernate Validator does not
+      # treat as a bean getter, so its @NotNull is ignored. Handlers must check for null themselves.
+      required: [ amount, notifyUser, comments ]
+      properties:
+        amount:
+          description: Amount of quota to consume
+          type: integer
+        notifyUser:
+          $ref: '#/components/schemas/NotifyUser'
+        comments:
+          $ref: '#/components/schemas/QuotaComments'
+
+    AdminUpdateQuotaResponse:
+      description: |
+        Result of a quota update for a user and pipeline. Contains the user's aggregate quota
+        limit, consumed and remaining quota, and the list of allocations created/affected by this update.
+      type: object
+      required: [ userEmail, userId, pipelineName, quotaLimit, quotaConsumed, quotaRemaining, allocations ]
+      properties:
+        userEmail:
+          $ref: '#/components/schemas/UserEmail'
+        userId:
+          $ref: '#/components/schemas/UserId'
+        pipelineName:
+          $ref: '#/components/schemas/PipelineName'
+        quotaLimit:
+          $ref: '#/components/schemas/QuotaLimit'
+        quotaConsumed:
+          $ref: '#/components/schemas/QuotaConsumed'
+        quotaRemaining:
+          $ref: '#/components/schemas/QuotaRemaining'
+        allocations:
+          description: List of allocations created or modified during this update
+          type: array
+          items:
+            $ref: '#/components/schemas/QuotaAllocation'
 
     AgreeToTerms:
       description: |
@@ -1018,6 +1068,11 @@ components:
       description: |
         The maximum quota allowable per run.
       type: integer
+
+    NotifyUser:
+      description: |
+        If true, send a notification email to the user about the quota change
+      type: boolean
 
     Pipeline:
       description: |

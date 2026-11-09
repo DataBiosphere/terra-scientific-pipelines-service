@@ -195,18 +195,18 @@ public class AdminApiController implements AdminApi {
   }
 
   @Override
-  public ResponseEntity<ApiAdminAllocateQuotaResponse> allocateQuotaForPipelineAndUser(
+  public ResponseEntity<ApiAdminUpdateQuotaResponse> allocateQuotaForPipelineAndUser(
       String pipelineName, String userEmail, ApiAdminAllocateQuotaRequestBody body) {
-    // check if user is an admin
-    final SamUser authedUser = getAuthenticatedInfo();
-    samService.checkAdminAuthz(authedUser);
+    // check if caller is an admin
+    final SamUser authedAdminCaller = getAuthenticatedInfo();
+    samService.checkAdminAuthz(authedAdminCaller);
 
     PipelinesEnum validatedPipelineName =
         PipelineApiUtils.validatePipelineName(pipelineName, logger);
 
     // get userId from Sam using the email address and throw not found error
     // if the user doesn't exist in Sam
-    String userId = samService.getUserIdFromEmailAdmin(authedUser, userEmail);
+    String targetUserId = samService.getUserIdFromEmailAdmin(authedAdminCaller, userEmail);
 
     // validate the amount
     int amount = body.getAmount();
@@ -215,19 +215,89 @@ public class AdminApiController implements AdminApi {
           "Quota amount to allocate must be greater than 0, was %d".formatted(amount));
     }
 
+    // validate that notifyUser was provided in the request body
+    validateNotifyUserProvided(body.isNotifyUser());
+
     QuotaAllocationSourceEnum quotaSource =
         QuotaAllocationSourceEnum.valueOf(body.getQuotaSource().toString());
 
     // allocate the quota for the user/pipeline and fetch the user's quota totals for that pipeline
     QuotaAllocation newAllocation =
         quotasService.allocateQuotaForUserAndPipeline(
-            userId, validatedPipelineName, quotaSource, amount, body.getComments());
+            targetUserId, validatedPipelineName, quotaSource, amount, body.getComments());
 
     UserQuotaTotals quotaTotals =
-        quotasService.getQuotaTotalsForUserAndPipeline(userId, validatedPipelineName);
+        quotasService.getQuotaTotalsForUserAndPipeline(targetUserId, validatedPipelineName);
+
+    // if requested, send email notification to the user about the quota allocation
+    if (body.isNotifyUser()) {
+      sendQuotaChangedNotification(
+          targetUserId, validatedPipelineName, quotaTotals.totalAllocated() - amount, quotaTotals);
+    }
 
     return new ResponseEntity<>(
-        toApiAdminUpdateQuotaResponseV3(userEmail, newAllocation, quotaTotals), HttpStatus.OK);
+        toApiAdminUpdateQuotaResponseV3(
+            targetUserId, userEmail, validatedPipelineName, quotaTotals, List.of(newAllocation)),
+        HttpStatus.OK);
+  }
+
+  @Override
+  public ResponseEntity<ApiAdminUpdateQuotaResponse> updateQuotaForPipelineAndUser(
+      String pipelineName, String userEmail, ApiAdminUpdateQuotaRequestBody body) {
+    // check if caller is an admin
+    final SamUser authedAdminCaller = getAuthenticatedInfo();
+    samService.checkAdminAuthz(authedAdminCaller);
+
+    PipelinesEnum validatedPipelineName =
+        PipelineApiUtils.validatePipelineName(pipelineName, logger);
+
+    // get userId from Sam using the email address and throw not found error
+    // if the user doesn't exist in Sam
+    String targetUserId = samService.getUserIdFromEmailAdmin(authedAdminCaller, userEmail);
+
+    // validate that notifyUser was provided in the request body
+    validateNotifyUserProvided(body.isNotifyUser());
+
+    int amount = body.getAmount();
+
+    // check if user has enough quota remaining to consume the requested amount
+    UserQuotaTotals quotaTotals =
+        quotasService.getQuotaTotalsForUserAndPipeline(targetUserId, validatedPipelineName);
+    int quotaRemaining = quotaTotals.totalAllocated() - quotaTotals.totalConsumed();
+    if (amount > quotaRemaining) {
+      throw new BadRequestException(
+          "Quota amount to consume (%d) exceeds remaining quota (%d) for user %s and pipeline %s"
+              .formatted(
+                  amount, quotaRemaining, userEmail, validatedPipelineName.getLowerCaseValue()));
+    }
+
+    // consume the quota for the user/pipeline and fetch the affected allocations
+    List<QuotaAllocation> affectedAllocations =
+        quotasService.manuallyConsumeQuotaForUserAndPipeline(
+            targetUserId, validatedPipelineName, amount, body.getComments());
+
+    // fetch the user's updated quota totals for that pipeline
+    UserQuotaTotals updatedQuotaTotals =
+        quotasService.getQuotaTotalsForUserAndPipeline(targetUserId, validatedPipelineName);
+
+    // if requested, send email notification to the user about the quota change.
+    // The quota limit is unchanged by a consumption, so the previous and new limits are the same.
+    if (body.isNotifyUser()) {
+      sendQuotaChangedNotification(
+          targetUserId,
+          validatedPipelineName,
+          updatedQuotaTotals.totalAllocated(),
+          updatedQuotaTotals);
+    }
+
+    return new ResponseEntity<>(
+        toApiAdminUpdateQuotaResponseV3(
+            targetUserId,
+            userEmail,
+            validatedPipelineName,
+            updatedQuotaTotals,
+            affectedAllocations),
+        HttpStatus.OK);
   }
 
   public ApiAdminPipeline pipelineToApiAdminPipeline(Pipeline pipeline) {
@@ -255,23 +325,30 @@ public class AdminApiController implements AdminApi {
   }
 
   /**
-   * Convert a QuotaAllocation and UserQuotaTotals to an ApiAdminAllocateQuotaResponse object.
+   * Convert quota totals and the allocations affected by an update (allocate or consume) to an
+   * ApiAdminUpdateQuotaResponse object.
    *
-   * @param userEmail The email of the user for whom the quota was updated.
-   * @param allocation The QuotaAllocation object representing the new allocation.
-   * @param quotaTotals The UserQuotaTotals object representing the user's total quota information.
-   * @return An ApiAdminAllocateQuotaResponse object containing the updated quota information.
+   * @param userId The Sam user id of the user whose quota was updated.
+   * @param userEmail The email of the user whose quota was updated.
+   * @param pipelineName The pipeline the quota applies to.
+   * @param quotaTotals The user's aggregate quota totals after the update.
+   * @param allocations The allocations created (POST) or consumed from (PATCH) by the update.
+   * @return An ApiAdminUpdateQuotaResponse containing the updated quota information.
    */
-  private ApiAdminAllocateQuotaResponse toApiAdminUpdateQuotaResponseV3(
-      String userEmail, QuotaAllocation allocation, UserQuotaTotals quotaTotals) {
-    return new ApiAdminAllocateQuotaResponse()
+  private ApiAdminUpdateQuotaResponse toApiAdminUpdateQuotaResponseV3(
+      String userId,
+      String userEmail,
+      PipelinesEnum pipelineName,
+      UserQuotaTotals quotaTotals,
+      List<QuotaAllocation> allocations) {
+    return new ApiAdminUpdateQuotaResponse()
         .userEmail(userEmail)
-        .userId(allocation.getUserId())
-        .pipelineName(allocation.getPipelineName().getLowerCaseValue())
+        .userId(userId)
+        .pipelineName(pipelineName.getLowerCaseValue())
         .quotaLimit(quotaTotals.totalAllocated())
         .quotaConsumed(quotaTotals.totalConsumed())
         .quotaRemaining(quotaTotals.totalAllocated() - quotaTotals.totalConsumed())
-        .allocations(List.of(toApiQuotaAllocation(allocation)));
+        .allocations(allocations.stream().map(this::toApiQuotaAllocation).toList());
   }
 
   /**
@@ -308,5 +385,44 @@ public class AdminApiController implements AdminApi {
         .quotaConsumed(quotaTotals.totalConsumed())
         .quotaRemaining(quotaTotals.totalAllocated() - quotaTotals.totalConsumed())
         .allocations(allocations.stream().map(this::toApiQuotaAllocation).toList());
+  }
+
+  /**
+   * Validate that notifyUser was provided in the request body. notifyUser is a required field in
+   * the API spec, but the generated isNotifyUser() getter returns Boolean (not primitive boolean),
+   * which Hibernate Validator does not treat as a bean getter, so its @NotNull is not enforced by
+   * bean validation and has to be checked manually in the controller.
+   *
+   * @param notifyUser the notifyUser value from the request body
+   * @throws BadRequestException if notifyUser is null
+   */
+  private void validateNotifyUserProvided(Boolean notifyUser) {
+    if (notifyUser == null) {
+      throw new BadRequestException("notifyUser must not be null");
+    }
+  }
+
+  /**
+   * Send the user an email notification that their quota for a pipeline has changed.
+   *
+   * @param userId the user's Sam id
+   * @param pipelineName the pipeline for which the quota changed
+   * @param previousQuotaLimit the user's quota limit before the change
+   * @param updatedQuotaTotals the user's quota totals after the change
+   */
+  private void sendQuotaChangedNotification(
+      String userId,
+      PipelinesEnum pipelineName,
+      int previousQuotaLimit,
+      UserQuotaTotals updatedQuotaTotals) {
+    String pipelineDisplayName = pipelinesService.getLatestPipeline(pipelineName).getDisplayName();
+
+    notificationService.configureAndSendUserQuotaChangedNotification(
+        userId,
+        pipelineDisplayName,
+        previousQuotaLimit,
+        updatedQuotaTotals.totalAllocated(),
+        updatedQuotaTotals.totalConsumed(),
+        updatedQuotaTotals.totalAllocated() - updatedQuotaTotals.totalConsumed());
   }
 }

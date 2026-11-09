@@ -5,9 +5,9 @@ import static bio.terra.pipelines.app.controller.JobApiUtils.buildApiErrorReport
 import bio.terra.pipelines.app.configuration.internal.NotificationConfiguration;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.db.entities.PipelineRun;
-import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.generated.model.ApiErrorReport;
 import bio.terra.pipelines.model.Pipeline;
+import bio.terra.pipelines.model.UserQuotaTotals;
 import bio.terra.pipelines.notifications.model.*;
 import bio.terra.pipelines.service.PipelineRunsService;
 import bio.terra.pipelines.service.PipelinesService;
@@ -76,11 +76,13 @@ public class NotificationService {
         pipelinesService.getPipelineByPipelineKey(pipelineRun.getPipelineKey(), true);
     String pipelineDisplayName = pipeline.getDisplayName();
 
-    // if flight fails before quota steps on user's first run, there won't be a row for them yet
-    // in the quotas table
-    UserQuota userQuota =
-        quotasService.getOrCreateQuotaForUserAndPipeline(userId, pipeline.getName());
-    String quotaRemaining = String.valueOf(userQuota.getQuota() - userQuota.getQuotaConsumed());
+    // a quota allocation is guaranteed to exist for a user and pipeline because it is created when
+    // the prepare API is called, which is before the flight is started. So we can safely
+    // call getQuotaTotalsForUserAndPipeline here
+    UserQuotaTotals userQuotaTotals =
+        quotasService.getQuotaTotalsForUserAndPipeline(userId, pipeline.getName());
+    String quotaRemaining =
+        String.valueOf(userQuotaTotals.totalAllocated() - userQuotaTotals.totalConsumed());
 
     if (isSuccess) { // succeeded
       return new TeaspoonsJobSucceededNotification(

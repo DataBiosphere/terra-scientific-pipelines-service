@@ -8,7 +8,9 @@ import bio.terra.pipelines.common.utils.QuotaAllocationSourceEnum;
 import bio.terra.pipelines.common.utils.QuotaAllocationStatusEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
 import bio.terra.pipelines.db.entities.QuotaAllocation;
+import bio.terra.pipelines.db.entities.QuotaAllocationDeduction;
 import bio.terra.pipelines.db.entities.UserQuota;
+import bio.terra.pipelines.db.repositories.QuotaAllocationDeductionsRepository;
 import bio.terra.pipelines.db.repositories.QuotaAllocationsRepository;
 import bio.terra.pipelines.db.repositories.UserQuotasRepository;
 import bio.terra.pipelines.model.PipelineQuota;
@@ -18,7 +20,10 @@ import io.sentry.Sentry;
 import io.sentry.SentryLevel;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,15 +38,18 @@ public class QuotasService {
       "idx_quota_allocations_unique_default_free_per_user_pipeline";
   private final UserQuotasRepository userQuotasRepository;
   private final QuotaAllocationsRepository quotaAllocationsRepository;
+  private final QuotaAllocationDeductionsRepository quotaAllocationDeductionsRepository;
   private final PipelineConfigurations pipelineConfigurations;
 
   @Autowired
   QuotasService(
       UserQuotasRepository userQuotasRepository,
       QuotaAllocationsRepository quotaAllocationsRepository,
+      QuotaAllocationDeductionsRepository quotaAllocationDeductionsRepository,
       PipelineConfigurations pipelineConfigurations) {
     this.userQuotasRepository = userQuotasRepository;
     this.quotaAllocationsRepository = quotaAllocationsRepository;
+    this.quotaAllocationDeductionsRepository = quotaAllocationDeductionsRepository;
     this.pipelineConfigurations = pipelineConfigurations;
   }
 
@@ -116,27 +124,6 @@ public class QuotasService {
   }
 
   /**
-   * This method updates the quota consumed for a given user and pipeline. It will return the
-   * updated user quota object.
-   *
-   * @param userQuota - the user quota object to update
-   * @param newQuotaConsumed - the quota consumed
-   * @return - the updated user quota object
-   */
-  public UserQuota updateQuotaConsumed(UserQuota userQuota, int newQuotaConsumed) {
-    if (newQuotaConsumed < 0 || newQuotaConsumed > userQuota.getQuota()) {
-      logger.error(
-          "Issue with updating quota consumed: User quota: {}, current quota consumed: {}, new quota consumed {}",
-          userQuota.getQuota(),
-          userQuota.getQuotaConsumed(),
-          newQuotaConsumed);
-      throw new InternalServerErrorException("Internal Error");
-    }
-    userQuota.setQuotaConsumed(newQuotaConsumed);
-    return userQuotasRepository.save(userQuota);
-  }
-
-  /**
    * This method updates the quota limit for a given user quota. This should only be called from the
    * Admin Controller
    *
@@ -163,9 +150,10 @@ public class QuotasService {
    * @param pipelineName - the pipeline name
    */
   public void validateUserHasEnoughQuota(String userId, PipelinesEnum pipelineName) {
-    UserQuota userQuota = getOrCreateQuotaForUserAndPipeline(userId, pipelineName);
+    UserQuotaTotals userQuotaTotals =
+        getOrInitializeQuotaTotalsForUserAndPipeline(userId, pipelineName);
     int minQuotaNeededByPipeline = getPipelineQuota(pipelineName).getMinQuotaConsumed();
-    int availableUserQuota = userQuota.getQuota() - userQuota.getQuotaConsumed();
+    int availableUserQuota = userQuotaTotals.totalAllocated() - userQuotaTotals.totalConsumed();
 
     if (availableUserQuota < minQuotaNeededByPipeline) {
       throw new BadRequestException(
@@ -243,6 +231,47 @@ public class QuotasService {
   }
 
   /**
+   * This method returns the total quota allocated and total quota consumed for a given user and
+   * pipeline. If the pipeline has a default quota greater than 0 and the user does not yet have a
+   * DEFAULT_FREE allocation for it (regardless of any other allocations the user has), it will
+   * create the DEFAULT_FREE allocation for the user/pipeline before returning the totals.
+   *
+   * @param userId - the user id
+   * @param pipelineName - the pipeline name
+   * @return - the user's total quota allocated and consumed for the pipeline
+   */
+  public UserQuotaTotals getOrInitializeQuotaTotalsForUserAndPipeline(
+      String userId, PipelinesEnum pipelineName) {
+    PipelineQuota pipelineQuota = getPipelineQuota(pipelineName);
+    boolean userHasDefaultFreeAllocation =
+        quotaAllocationsRepository.existsByUserIdAndPipelineNameAndQuotaSource(
+            userId, pipelineName, QuotaAllocationSourceEnum.DEFAULT_FREE);
+
+    // if the pipeline has a default quota greater than 0 and the user does not
+    // yet have a DEFAULT_FREE allocation for it, create the DEFAULT_FREE allocation
+    // for the user/pipeline
+    if (pipelineQuota.getDefaultQuota() > 0 && !userHasDefaultFreeAllocation) {
+      try {
+        allocateQuotaForUserAndPipeline(
+            userId,
+            pipelineName,
+            QuotaAllocationSourceEnum.DEFAULT_FREE,
+            pipelineQuota.getDefaultQuota(),
+            /* comments= */ null);
+      } catch (BadRequestException e) {
+        // another thread may have created the default allocation between our check and insert
+        logger.info(
+            "Race condition detected while creating default quota allocation for user {} and pipeline {}. "
+                + "Fetching existing record instead.",
+            userId,
+            pipelineName);
+      }
+    }
+
+    return getQuotaTotalsForUserAndPipeline(userId, pipelineName);
+  }
+
+  /**
    * This method consumes quota for a given user and pipeline (only from quota_allocations table).
    * It will throw an exception if the user does not have enough quota to consume the requested
    * amount. It will return a list of QuotaConsumptionRecord, one for each allocation that was
@@ -255,11 +284,13 @@ public class QuotasService {
    * @param userId - the user id
    * @param pipelineName - the pipeline name
    * @param amount - the amount of quota to consume
+   * @param comments - optional comments (nullable) appended to the comments of every allocation
+   *     consumed from; existing comments are never overwritten
    * @return - a list of QuotaConsumptionRecord objects
    */
   @Transactional
   public List<QuotaConsumptionRecord> consumeQuotaFromAllocationsForUserAndPipeline(
-      String userId, PipelinesEnum pipelineName, int amount) {
+      String userId, PipelinesEnum pipelineName, int amount, String comments) {
     // this should never happen, but if it does, throw an exception
     if (amount <= 0) {
       logger.warn("Received request to consume non-positive amount of quota: {}", amount);
@@ -284,7 +315,8 @@ public class QuotasService {
 
       // consume as much as we can from this allocation, up to the remaining amount needed
       // and update the allocation's consumed quota and status as necessary
-      int amountConsumedFromAllocation = consumeQuotaFromAllocation(allocation, remainingToConsume);
+      int amountConsumedFromAllocation =
+          consumeQuotaFromAllocation(allocation, remainingToConsume, comments);
 
       // record the consumption in the list of consumption records to return
       consumptionRecords.add(
@@ -312,15 +344,158 @@ public class QuotasService {
   }
 
   /**
+   * This method reverts quota consumption for a list of QuotaConsumptionRecord. It will throw an
+   * exception if any of the allocations are not found or if reverting would result in negative
+   * consumed quota.
+   *
+   * <p>It is annotated with @Transactional to ensure that all quota reversion operations are atomic
+   * and consistent. If any part of the operation fails, the entire transaction will be rolled back,
+   * preventing partial reversion of quota.
+   *
+   * @param consumptionRecords - a list of QuotaConsumptionRecord objects to revert (must not be
+   *     null or empty)
+   */
+  @Transactional
+  public void revertQuotaConsumption(List<QuotaConsumptionRecord> consumptionRecords) {
+    // callers are expected to skip the revert when nothing was consumed (which generally
+    // should not happen)
+    if (consumptionRecords == null || consumptionRecords.isEmpty()) {
+      String errorMessage = "No quota consumption records provided to revert.";
+      logger.error(errorMessage);
+      throw new InternalServerErrorException(errorMessage);
+    }
+
+    List<Long> allocationIds =
+        consumptionRecords.stream().map(QuotaConsumptionRecord::quotaAllocationId).toList();
+
+    // fetch all allocations together to avoid potential race conditions
+    Map<Long, QuotaAllocation> allocationsByIdMap =
+        quotaAllocationsRepository.findAllByIdInOrderByCreatedAsc(allocationIds).stream()
+            .collect(Collectors.toMap(QuotaAllocation::getId, Function.identity()));
+
+    // revert the quota consumption for each record
+    for (QuotaConsumptionRecord consumptionRecord : consumptionRecords) {
+      QuotaAllocation allocation = allocationsByIdMap.get(consumptionRecord.quotaAllocationId());
+
+      // this should never happen, but if it does, log an error and throw an exception
+      if (allocation == null) {
+        throw new IllegalStateException(
+            "Quota allocation with ID %d not found while reverting quota consumption."
+                .formatted(consumptionRecord.quotaAllocationId()));
+      }
+
+      // revert the quota consumption for this allocation
+      revertQuotaFromAllocation(allocation, consumptionRecord.amountConsumed());
+    }
+
+    // save all the updated allocations to the database in a single batch operation
+    quotaAllocationsRepository.saveAll(allocationsByIdMap.values());
+
+    logger.info(
+        "Successfully reverted quota consumption for {} allocation(s). Number of allocation(s) reverted: {}",
+        consumptionRecords.size(),
+        consumptionRecords.stream().map(QuotaConsumptionRecord::quotaAllocationId).toList());
+  }
+
+  /**
+   * This method records the quota deductions made by a successful pipeline run or manual quota
+   * consumption (through Admin API) in the quota_allocation_deductions table, one row per
+   * QuotaConsumptionRecord.
+   *
+   * @param pipelineRunId - the id of the pipeline run that consumed the quota (null for manual
+   *     consumption)
+   * @param consumptionRecords - the records of quota consumed from each allocation
+   * @param comments - optional comments (nullable) stored on each deduction row
+   */
+  public void recordQuotaDeductions(
+      Long pipelineRunId, List<QuotaConsumptionRecord> consumptionRecords, String comments) {
+    // a successful run always consumes quota, so missing records indicate a bug upstream
+    if (consumptionRecords == null || consumptionRecords.isEmpty()) {
+      String errorMessage =
+          "No quota consumption records provided to record deductions for pipeline run %d."
+              .formatted(pipelineRunId);
+      logger.error(errorMessage);
+      throw new InternalServerErrorException(errorMessage);
+    }
+
+    // if pipelineRunId is not null, check if deductions have already been recorded for this
+    // pipeline run (pipelineRunId can be null for manual consumption).
+    // Note: For a successful pipeline run, this should never happen since we only record
+    // deductions for successful runs, but if it does, log a warning and skip recording
+    // deductions to avoid duplicate rows
+    if (pipelineRunId != null
+        && quotaAllocationDeductionsRepository.existsByPipelineRunId(pipelineRunId)) {
+      logger.info(
+          "Quota deductions already recorded for pipeline run {}. Skipping.", pipelineRunId);
+      return;
+    }
+
+    // create a list of QuotaAllocationDeduction entities from the consumption records
+    List<QuotaAllocationDeduction> deductions =
+        consumptionRecords.stream()
+            .map(
+                consumptionRecord ->
+                    new QuotaAllocationDeduction(
+                        consumptionRecord.quotaAllocationId(),
+                        pipelineRunId,
+                        consumptionRecord.amountConsumed(),
+                        comments))
+            .toList();
+
+    // save all the deductions to the database in a single batch operation
+    quotaAllocationDeductionsRepository.saveAll(deductions);
+
+    logger.info(
+        "Successfully recorded {} quota deduction(s) for pipeline run {}",
+        deductions.size(),
+        pipelineRunId);
+  }
+
+  /**
+   * This method consumes quota for a given user and pipeline, and records the deductions in the
+   * database. It is intended for manual quota consumption (e.g., by an admin), so it does not
+   * associate the consumption with a specific pipeline run.
+   *
+   * <p>It is annotated with @Transactional to ensure that all quota consumption and deduction
+   * recording operations are atomic and consistent. If any part of the operation fails, the entire
+   * transaction will be rolled back, preventing partial consumption or recording of quota.
+   *
+   * @param userId - the user id
+   * @param pipelineName - the pipeline name
+   * @param amount - the amount of quota to consume
+   * @param comments - comments
+   * @return - a list of QuotaAllocation objects that were affected by the consumption
+   */
+  @Transactional
+  public List<QuotaAllocation> manuallyConsumeQuotaForUserAndPipeline(
+      String userId, PipelinesEnum pipelineName, int amount, String comments) {
+    // consume the quota for the user/pipeline
+    List<QuotaConsumptionRecord> consumptionRecords =
+        consumeQuotaFromAllocationsForUserAndPipeline(userId, pipelineName, amount, comments);
+
+    // write the quota deductions to the database with a null pipelineRunId since this is a manual
+    // consumption
+    recordQuotaDeductions(/* pipelineRunId= */ null, consumptionRecords, comments);
+
+    // fetch allocations that were affected by the consumption
+    List<Long> affectedAllocationIds =
+        consumptionRecords.stream().map(QuotaConsumptionRecord::quotaAllocationId).toList();
+
+    return quotaAllocationsRepository.findAllByIdInOrderByCreatedAsc(affectedAllocationIds);
+  }
+
+  /**
    * This method consumes quota from a single allocation, up to the amount needed. It updates the
    * allocation's consumed quota and status as necessary, and saves the changes to the database. It
    * returns the amount of quota actually consumed from this allocation.
    *
    * @param allocation - the quota allocation to consume from
    * @param amountNeeded - the amount of quota needed to consume
+   * @param comments - optional comments to append to the allocation's existing comments
    * @return - the amount of quota actually consumed from this allocation
    */
-  private int consumeQuotaFromAllocation(QuotaAllocation allocation, int amountNeeded) {
+  private int consumeQuotaFromAllocation(
+      QuotaAllocation allocation, int amountNeeded, String comments) {
     int quotaAvailable = allocation.getQuotaAllocated() - allocation.getQuotaConsumed();
 
     // this should never happen, but if it does, log an error and throw an exception
@@ -345,9 +520,47 @@ public class QuotasService {
       allocation.setQuotaStatus(QuotaAllocationStatusEnum.EXHAUSTED);
     }
 
+    // append (never overwrite) any provided comments to the allocation's existing comments
+    if (comments != null && !comments.isBlank()) {
+      String existingComment = allocation.getComments();
+      String updatedComment =
+          existingComment == null || existingComment.isBlank()
+              ? comments
+              : existingComment + "; " + comments;
+      allocation.setComments(updatedComment);
+    }
+
     quotaAllocationsRepository.save(allocation);
 
     return amountToConsume;
+  }
+
+  /**
+   * This method reverts quota consumed from a single allocation by the given amount. It updates the
+   * allocation's consumed quota and status as necessary but does not save it; the caller is
+   * responsible for persisting the change.
+   *
+   * @param allocation - the quota allocation to give quota back to
+   * @param amountToRevert - the amount of quota to give back to the allocation
+   */
+  private void revertQuotaFromAllocation(QuotaAllocation allocation, int amountToRevert) {
+    int newConsumed = allocation.getQuotaConsumed() - amountToRevert;
+
+    // this should never happen, but if it does, log an error and throw an exception
+    if (newConsumed < 0) {
+      String errorMessage =
+          "Reverting quota consumption would result in negative consumed quota for allocation ID %d."
+              .formatted(allocation.getId());
+      logger.error(errorMessage);
+      throw new IllegalStateException(errorMessage);
+    }
+
+    allocation.setQuotaConsumed(newConsumed);
+
+    // if the allocation was previously EXHAUSTED, mark it as ACTIVE
+    if (allocation.getQuotaStatus() == QuotaAllocationStatusEnum.EXHAUSTED) {
+      allocation.setQuotaStatus(QuotaAllocationStatusEnum.ACTIVE);
+    }
   }
 
   /**
