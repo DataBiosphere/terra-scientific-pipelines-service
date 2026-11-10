@@ -37,9 +37,18 @@ public class RunWdlBasedPipelineJobFlight extends Flight {
    */
   private final RetryRule externalServiceRetryRule =
       // maxOperationTimeSeconds must be larger than socket timeout (20s), otherwise a socket
-      // timeout
-      // won't be retried.
+      // timeout won't be retried.
       new RetryRuleExponentialBackoff(1, 8, /* maxOperationTimeSeconds */ 30);
+
+  /**
+   * Use for steps that may run for a long time or whose work is costly to lose, such as polling a
+   * Rawls submission and fetching its outputs. Stairway's time-based rules (like the exponential
+   * backoff above) measure maxOperationTimeSeconds from the start of the step, so a long-running
+   * step has already used up its retry window by the time a failure occurs. This rule is
+   * count-based, so it retries regardless of how long the step has been running.
+   */
+  private final RetryRule countBasedRetryRule =
+      new RetryRuleFixedInterval(/* intervalSeconds= */ 30, /* maxCount= */ 3);
 
   // addStep is protected in Flight, so make an override that is public
   @Override
@@ -95,7 +104,7 @@ public class RunWdlBasedPipelineJobFlight extends Flight {
             flightBeanBag.getSamService(),
             WdlBasedPipelineJobMapKeys.QUOTA_TOOL_CONFIG,
             WdlBasedPipelineJobMapKeys.QUOTA_SUBMISSION_ID),
-        externalServiceRetryRule);
+        countBasedRetryRule);
 
     addStep(
         new FetchOutputsFromDataTableStep(
@@ -104,7 +113,7 @@ public class RunWdlBasedPipelineJobFlight extends Flight {
             flightBeanBag.getPipelineInputsOutputsService(),
             WdlBasedPipelineJobMapKeys.QUOTA_TOOL_CONFIG,
             WdlBasedPipelineJobMapKeys.QUOTA_OUTPUTS),
-        externalServiceRetryRule);
+        countBasedRetryRule);
 
     addStep(
         new QuotaConsumedValidationStep(
@@ -126,7 +135,7 @@ public class RunWdlBasedPipelineJobFlight extends Flight {
             flightBeanBag.getSamService(),
             WdlBasedPipelineJobMapKeys.INPUT_QC_TOOL_CONFIG,
             WdlBasedPipelineJobMapKeys.INPUT_QC_SUBMISSION_ID),
-        externalServiceRetryRule);
+        countBasedRetryRule);
 
     addStep(
         new FetchOutputsFromDataTableStep(
@@ -135,7 +144,7 @@ public class RunWdlBasedPipelineJobFlight extends Flight {
             flightBeanBag.getPipelineInputsOutputsService(),
             WdlBasedPipelineJobMapKeys.INPUT_QC_TOOL_CONFIG,
             WdlBasedPipelineJobMapKeys.INPUT_QC_OUTPUTS),
-        externalServiceRetryRule);
+        countBasedRetryRule);
 
     addStep(new InputQcValidationStep(), dbRetryRule);
 
@@ -154,7 +163,7 @@ public class RunWdlBasedPipelineJobFlight extends Flight {
             flightBeanBag.getSamService(),
             WdlBasedPipelineJobMapKeys.PIPELINE_TOOL_CONFIG,
             WdlBasedPipelineJobMapKeys.PIPELINE_SUBMISSION_ID),
-        externalServiceRetryRule);
+        countBasedRetryRule);
 
     addStep(
         new FetchOutputsFromDataTableStep(
@@ -163,7 +172,7 @@ public class RunWdlBasedPipelineJobFlight extends Flight {
             flightBeanBag.getPipelineInputsOutputsService(),
             WdlBasedPipelineJobMapKeys.PIPELINE_TOOL_CONFIG,
             WdlBasedPipelineJobMapKeys.PIPELINE_RUN_OUTPUTS),
-        externalServiceRetryRule);
+        countBasedRetryRule);
 
     // populate file sizes for pipeline outputs
     addStep(
