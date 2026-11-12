@@ -62,9 +62,9 @@ public class RetryConfiguration {
     RetryTemplate retryTemplate = new RetryTemplate();
 
     ExponentialBackOffPolicy backOffPolicy = new ExponentialBackOffPolicy();
-    backOffPolicy.setInitialInterval(5000L);
-    backOffPolicy.setMultiplier(2.0);
-    backOffPolicy.setMaxInterval(30000L);
+    backOffPolicy.setInitialInterval(5000L); // 5 seconds
+    backOffPolicy.setMultiplier(2.0); // double the wait time after each retry
+    backOffPolicy.setMaxInterval(30000L); // 30 seconds
 
     // connection-level failures: up to 3 attempts
     SimpleRetryPolicy connectionFailurePolicy = new SimpleRetryPolicy(3);
