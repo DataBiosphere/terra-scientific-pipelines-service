@@ -63,10 +63,10 @@ class StairwayExceptionSerializerTest extends BaseTest {
   @Test
   void deserialize_RawlsServiceApiException() {
     String input =
-        "{\"className\":\"bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException\",\"message\":\"Rawls returned an unsuccessful status code\",\"errorDetails\":[],\"errorCode\":500,\"apiErrorReportException\":true}";
+        "{\"className\":\"bio.terra.pipelines.dependencies.rawls.RawlsServiceApiException\",\"message\":\"A dependent service returned an unsuccessful status code\",\"errorDetails\":[],\"errorCode\":500,\"apiErrorReportException\":true}";
 
     RuntimeException expectedException =
-        new RawlsServiceApiException("Rawls returned an unsuccessful status code");
+        new RawlsServiceApiException("A dependent service returned an unsuccessful status code");
     Exception deserializedException = stairwayExceptionSerializer.deserialize(input);
     assertEquals(expectedException.getMessage(), deserializedException.getMessage());
     assertEquals(expectedException.getClass(), deserializedException.getClass());

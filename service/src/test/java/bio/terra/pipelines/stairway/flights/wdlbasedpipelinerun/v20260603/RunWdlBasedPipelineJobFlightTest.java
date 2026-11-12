@@ -2,8 +2,11 @@ package bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.v20260603;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import bio.terra.pipelines.common.utils.FlightBeanBag;
@@ -13,6 +16,10 @@ import bio.terra.pipelines.stairway.flights.wdlbasedpipelinerun.WdlBasedPipeline
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
 import bio.terra.pipelines.testutils.StairwayTestUtils;
 import bio.terra.pipelines.testutils.TestUtils;
+import bio.terra.stairway.RetryRule;
+import bio.terra.stairway.RetryRuleExponentialBackoff;
+import bio.terra.stairway.RetryRuleFixedInterval;
+import bio.terra.stairway.Step;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -131,6 +138,48 @@ class RunWdlBasedPipelineJobFlightTest extends BaseEmbeddedDbTest {
     Counter counter = meterRegistry.find("teaspoons.pipeline.run.count").counter();
     assertNotNull(counter);
     assertEquals(1, counter.count());
+  }
+
+  @Test
+  void stepsUseExpectedRetryRules() {
+    RunWdlBasedPipelineJobFlight runWdlBasedPipelineJobFlight =
+        new RunWdlBasedPipelineJobFlight(
+            StairwayTestUtils.CREATE_ARRAY_IMPUTATION_JOB_INPUT_PARAMS, flightBeanBag);
+    List<Step> steps = runWdlBasedPipelineJobFlight.getSteps();
+    List<RetryRule> retryRules = runWdlBasedPipelineJobFlight.getRetryRules();
+    assertEquals(steps.size(), retryRules.size());
+
+    RetryRule dbRule = null;
+    RetryRule countBasedRule = null;
+    for (int i = 0; i < steps.size(); i++) {
+      String stepName = steps.get(i).getClass().getSimpleName();
+      RetryRule rule = retryRules.get(i);
+      switch (stepName) {
+        // Polling and fetching outputs must use a count-based rule: Stairway's time-based rules
+        // measure the retry window from the start of the step, so a long-running step would have
+        // no retries left by the time it fails. All of these steps share one rule instance.
+        case "PollCromwellSubmissionStatusStep", "FetchOutputsFromDataTableStep" -> {
+          assertInstanceOf(RetryRuleFixedInterval.class, rule, stepName);
+          if (countBasedRule == null) {
+            countBasedRule = rule;
+          } else {
+            assertSame(countBasedRule, rule, stepName);
+          }
+        }
+        // other Rawls steps use the time-based exponential backoff rule
+        case "AddDataTableRowStep", "SubmitCromwellSubmissionStep" ->
+            assertInstanceOf(RetryRuleExponentialBackoff.class, rule, stepName);
+        case "PrepareInputsStep" -> dbRule = rule;
+        default -> {
+          // the remaining steps' retry rules are not relevant to this test
+        }
+      }
+    }
+
+    assertNotNull(dbRule);
+    assertNotNull(countBasedRule);
+    // the db rule is also a fixed interval rule, so make sure it is a different rule
+    assertNotSame(dbRule, countBasedRule);
   }
 
   @Test
