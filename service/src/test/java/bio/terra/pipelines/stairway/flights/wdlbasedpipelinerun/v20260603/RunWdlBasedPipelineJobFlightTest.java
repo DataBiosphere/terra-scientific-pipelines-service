@@ -170,7 +170,9 @@ class RunWdlBasedPipelineJobFlightTest extends BaseEmbeddedDbTest {
         case "AddDataTableRowStep", "SubmitCromwellSubmissionStep" ->
             assertInstanceOf(RetryRuleExponentialBackoff.class, rule, stepName);
         case "PrepareInputsStep" -> dbRule = rule;
-        default -> {}
+        default -> {
+          // the remaining steps' retry rules are not relevant to this test
+        }
       }
     }
 
