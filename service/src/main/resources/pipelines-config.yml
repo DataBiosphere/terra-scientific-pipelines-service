@@ -54,7 +54,7 @@ configurations:
       maxQuotaConsumed: 1000
       quotaUnits: SAMPLES
     svImputation:
-      defaultQuota: 0 #This will be updated to non-zero value in https://broadworkbench.atlassian.net/browse/TSPS-1196
+      defaultQuota: 500
       minQuotaConsumed: 250
       maxQuotaConsumed: 10000
       quotaUnits: SAMPLES
