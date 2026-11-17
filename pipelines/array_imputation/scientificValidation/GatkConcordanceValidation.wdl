@@ -115,7 +115,7 @@ workflow GatkConcordanceValidation {
     }
 
     if (run_chromosomes) {
-        call ConcatenateTsvs as ConcatenateChrSpecificCorrelationTsvs_samples {
+        call ConcatenateTsvs as ConcatenateChrSpecificCorrelationTsvs_whole {
             input:
                 input_tsvs = select_all(ConcatenateChrSpecificCorrelationTsvs_batch.output_file),
                 output_filename = output_basename + ".chr_specific_correlations",
@@ -124,7 +124,7 @@ workflow GatkConcordanceValidation {
     }
 
     if (run_full_genome) {
-        call ConcatenateTsvs as ConcatenateWholeGenomeCorrelations_samples {
+        call ConcatenateTsvs as ConcatenateWholeGenomeCorrelations_whole {
             input:
                 input_tsvs = select_all(AddConstantColumn_whole_genome_batch.output_file),
                 output_filename = output_basename + ".whole_genome_correlations",
@@ -133,8 +133,8 @@ workflow GatkConcordanceValidation {
     }
 
     output {
-        File? correlations_chr_concatenated = ConcatenateChrSpecificCorrelationTsvs_samples.output_file
-        File? correlations_whole_genome = ConcatenateWholeGenomeCorrelations_samples.output_file
+        File? correlations_chr_concatenated = ConcatenateChrSpecificCorrelationTsvs_whole.output_file
+        File? correlations_whole_genome = ConcatenateWholeGenomeCorrelations_whole.output_file
     }
 }
 
