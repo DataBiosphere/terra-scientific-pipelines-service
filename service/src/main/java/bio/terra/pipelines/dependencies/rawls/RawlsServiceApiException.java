@@ -6,7 +6,7 @@ import bio.terra.rawls.client.ApiException;
 public class RawlsServiceApiException extends RawlsServiceException {
 
   public RawlsServiceApiException(ApiException exception) {
-    super("A dependent service returned an unsuccessful status code", exception);
+    super("Something went wrong while running the job.", exception);
   }
 
   public RawlsServiceApiException(String message) {
