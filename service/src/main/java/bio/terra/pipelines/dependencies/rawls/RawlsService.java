@@ -19,9 +19,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class RawlsService implements HealthCheck {
   private final RawlsClient rawlsClient;
-  private final RetryTemplate listenerResetRetryTemplate;
+  private final RetryTemplate rawlsRetryTemplate;
   private final ObjectMapper objectMapper;
-  private final Logger logger = LoggerFactory.getLogger(RawlsService.class);
+  private static final Logger logger = LoggerFactory.getLogger(RawlsService.class);
 
   private static final List<SubmissionStatus> FINAL_RUN_STATES =
       List.of(SubmissionStatus.ABORTED, SubmissionStatus.DONE);
@@ -29,11 +29,9 @@ public class RawlsService implements HealthCheck {
 
   @Autowired
   public RawlsService(
-      RawlsClient rawlsClient,
-      RetryTemplate listenerResetRetryTemplate,
-      ObjectMapper objectMapper) {
+      RawlsClient rawlsClient, RetryTemplate rawlsRetryTemplate, ObjectMapper objectMapper) {
     this.rawlsClient = rawlsClient;
-    this.listenerResetRetryTemplate = listenerResetRetryTemplate;
+    this.rawlsRetryTemplate = rawlsRetryTemplate;
     this.objectMapper = objectMapper;
   }
 
@@ -53,7 +51,7 @@ public class RawlsService implements HealthCheck {
     List<String> fields = List.of("workspace.bucketName", "workspace.googleProject");
     WorkspaceDetails workspaceDetails =
         executionWithRetryTemplate(
-            listenerResetRetryTemplate,
+            rawlsRetryTemplate,
             () ->
                 rawlsClient
                     .getWorkspacesApi(accessToken)
@@ -68,7 +66,7 @@ public class RawlsService implements HealthCheck {
         || workspaceDetails.getGoogleProject() == null) {
       throw new RawlsServiceApiException(
           String.format(
-              "Rawls returned workspace %s/%s missing required bucketName and/or googleProject",
+              "Workspace %s/%s missing required bucketName and/or googleProject",
               workspaceNamespace, workspaceName));
     }
     return workspaceDetails;
@@ -80,7 +78,7 @@ public class RawlsService implements HealthCheck {
       String workspaceNamespace,
       String workspaceName) {
     return executionWithRetryTemplate(
-        listenerResetRetryTemplate,
+        rawlsRetryTemplate,
         () ->
             rawlsClient
                 .getSubmissionsApi(accessToken)
@@ -90,7 +88,7 @@ public class RawlsService implements HealthCheck {
   public Submission getSubmissionStatus(
       String accessToken, String workspaceNamespace, String workspaceName, UUID submissionId) {
     return executionWithRetryTemplate(
-        listenerResetRetryTemplate,
+        rawlsRetryTemplate,
         () ->
             rawlsClient
                 .getSubmissionsApi(accessToken)
@@ -100,7 +98,7 @@ public class RawlsService implements HealthCheck {
   public Entity upsertDataTableEntity(
       String accessToken, String workspaceNamespace, String workspaceName, Entity entity) {
     return executionWithRetryTemplate(
-        listenerResetRetryTemplate,
+        rawlsRetryTemplate,
         () ->
             rawlsClient
                 .getEntitiesApi(accessToken)
@@ -114,7 +112,7 @@ public class RawlsService implements HealthCheck {
       String entityType,
       String entityName) {
     return executionWithRetryTemplate(
-        listenerResetRetryTemplate,
+        rawlsRetryTemplate,
         () ->
             rawlsClient
                 .getEntitiesApi(accessToken)
@@ -124,7 +122,7 @@ public class RawlsService implements HealthCheck {
   public MethodConfiguration getCurrentMethodConfigForMethod(
       String accessToken, String workspaceNamespace, String workspaceName, String methodName) {
     return executionWithRetryTemplate(
-        listenerResetRetryTemplate,
+        rawlsRetryTemplate,
         () ->
             rawlsClient
                 .getMethodConfigsApi(accessToken)
@@ -140,7 +138,7 @@ public class RawlsService implements HealthCheck {
       String methodName) {
     logger.info("Updating method configuration for {}", methodName);
     return executionWithRetryTemplate(
-        listenerResetRetryTemplate,
+        rawlsRetryTemplate,
         () ->
             rawlsClient
                 .getMethodConfigsApi(accessToken)
@@ -330,6 +328,12 @@ public class RawlsService implements HealthCheck {
           try {
             return action.execute();
           } catch (ApiException e) {
+            // the user-facing message is intentionally generic, so log the Rawls details here
+            logger.error(
+                "Rawls call failed with status code {} and response body: {}",
+                e.getCode(),
+                e.getResponseBody(),
+                e);
             throw new RawlsServiceApiException(e);
           }
         });

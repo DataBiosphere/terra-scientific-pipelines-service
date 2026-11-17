@@ -32,7 +32,7 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
   @MockitoBean RawlsClient rawlsClient;
 
   final RetryConfiguration retryConfig = new RetryConfiguration();
-  RetryTemplate template = retryConfig.listenerResetRetryTemplate();
+  RetryTemplate template = retryConfig.rawlsRetryTemplate();
 
   final Answer<Object> errorAnswer =
       invocation -> {
@@ -44,6 +44,46 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
     FixedBackOffPolicy smallerBackoff = new FixedBackOffPolicy();
     smallerBackoff.setBackOffPeriod(5L); // 5 ms
     template.setBackOffPolicy(smallerBackoff);
+  }
+
+  @Test
+  void serverErrorRetriesEventuallySucceed() throws Exception {
+    SubmissionReport expectedResponse =
+        new SubmissionReport().status("status").submissionId(UUID.randomUUID().toString());
+
+    SubmissionsApi submissionsApi = mock(SubmissionsApi.class);
+    when(submissionsApi.createSubmission("workspaceNamespace", "workspaceName", null))
+        .thenThrow(new ApiException(500, "Internal Server Error"))
+        .thenThrow(new ApiException(502, "Bad Gateway"))
+        .thenReturn(expectedResponse);
+
+    doReturn(submissionsApi).when(rawlsClient).getSubmissionsApi("accessToken");
+
+    assertEquals(
+        expectedResponse,
+        rawlsService.submitWorkflow("accessToken", null, "workspaceNamespace", "workspaceName"));
+    verify(submissionsApi, times(3)).createSubmission("workspaceNamespace", "workspaceName", null);
+  }
+
+  @Test
+  void serverErrorRetriesEventuallyFail() throws Exception {
+    ApiException serverError = new ApiException(500, "Internal Server Error");
+
+    SubmissionsApi submissionsApi = mock(SubmissionsApi.class);
+    when(submissionsApi.createSubmission("workspaceNamespace", "workspaceName", null))
+        .thenThrow(serverError);
+
+    doReturn(submissionsApi).when(rawlsClient).getSubmissionsApi("accessToken");
+
+    RawlsServiceApiException thrown =
+        assertThrows(
+            RawlsServiceApiException.class,
+            () ->
+                rawlsService.submitWorkflow(
+                    "accessToken", null, "workspaceNamespace", "workspaceName"));
+    assertEquals(serverError, thrown.getCause());
+    // 7 total attempts for 5xx responses
+    verify(submissionsApi, times(7)).createSubmission("workspaceNamespace", "workspaceName", null);
   }
 
   @Test
@@ -105,6 +145,8 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
                 rawlsService.submitWorkflow(
                     "blah", emptySubmissionRequest, "workspaceNamespace", "workspace"));
     assertEquals(expectedException, thrown.getCause());
+    verify(submissionsApi, times(1))
+        .createSubmission("workspaceNamespace", "workspace", emptySubmissionRequest);
   }
 
   @Test

@@ -36,7 +36,12 @@ public class RetryLoggingListener implements RetryListener {
   @Override
   public <T, E extends Throwable> void onError(
       RetryContext context, RetryCallback<T, E> callback, Throwable throwable) {
-    logger.error(
-        "Retryable method threw exception (retry count: {})", context.getRetryCount(), throwable);
+    // retry count is the number of failed attempts so far (1 after the first failure).
+    // We log at WARN level because executionWithRetryTemplate will log the same exception
+    // at ERROR level
+    logger.warn(
+        "Retryable method threw exception (failed attempt count: {})",
+        context.getRetryCount(),
+        throwable);
   }
 }
