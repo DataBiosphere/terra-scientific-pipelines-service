@@ -142,7 +142,7 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
     patch:
-      summary: Update quota for a given pipeline and user identified by email
+      summary: Deduct quota for a given pipeline and user identified by email
       description: |
         Deducts quota from the user's allocations for the given pipeline, oldest first.
         The provided comments are appended to the comments of each affected allocation,
