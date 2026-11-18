@@ -125,6 +125,7 @@ of this wdl can be analyzed using the [Imputation_Validation](Imputation_Validat
 * sample_to_ancestry_af_annotation - file containing one line per sample that will pass an `--af-annotations` arg
 to the gatk tool to tell it which annotation in the af_annotation_vcf file to use for that sample
 i.e. `--af-annotations HGDP00001:gnomad-AF-sas`
+* batch_size (optional) - number of samples to include per batch when splitting the eval VCF samples before running concordance; default is 50
 * sample_mapping (optional) - mapping of sample name in eval file to sample name in truth if necessary. One line
 per sample i.e. `{eval_sample_name}:{truth_sample_name}`
 * n_bins (optional) - how many AF bins to group variants by when calculating concordance
@@ -134,6 +135,7 @@ per sample i.e. `{eval_sample_name}:{truth_sample_name}`
 * output_basename
 * preemptible
 
+The workflow now derives the sample list directly from the eval VCF using `bcftools query -l`, splits those samples into batches of `batch_size`, runs the current concordance logic within each batch, and then concatenates the resulting TSV outputs back into the final per-chromosome and whole-genome outputs.
 
 Note that default preemptible_tries are set to 0 each but can be set by the user.
 
@@ -157,3 +159,55 @@ runs of the wdl along with labels for those ids.
 #### Outputs
 This notebook will output a series of plots and tables that summarize the concordance validation results,
 broken down by chromosome, ancestry, SNPs vs Indels, and panel/label. It is customizable.
+
+## SubsetVcfByContigsAndSamples
+### Purpose
+This WDL subsets a VCF down to a set of contigs and a set of samples, then concatenates the per-contig results back into a single VCF. It is useful when a VCF needs to be restricted to only a subset of chromosomes and only a subset of samples before downstream analysis or imputation validation.
+
+The workflow operates by scattering over the requested contigs, subsetting each contig to the provided sample list with GATK `SelectVariants`, and then concatenating the per-contig VCFs back together with `bcftools concat`.
+
+#### Inputs
+* input_vcf - input VCF to subset
+* input_vcf_index - index for the input VCF
+* ref_fasta - reference FASTA used for variant selection
+* ref_fasta_index - index for the reference FASTA
+* ref_fasta_dict - dictionary for the reference FASTA
+* contigs - list of contigs to keep
+* sample_names_file - text file containing one sample name per line to retain from the VCF
+* output_basename - base name used for output files
+* preemptible
+
+#### Outputs
+* subset_vcf - merged VCF containing only the selected contigs and samples
+* subset_vcf_index - index for the merged VCF
+
+## SubsetVcfInfoAnnotations
+### Purpose
+This WDL removes non-whitelisted INFO annotations from one or more input VCFs while preserving the rest of the VCF structure. It is meant to keep the fields required for downstream analysis while stripping noisy or irrelevant INFO annotations.
+
+The workflow validates that the input VCF and index arrays are the same length, processes each VCF independently, and then concatenates the filtered files back into a single merged VCF.
+
+#### Inputs
+* input_vcfs - array of VCFs to filter
+* input_vcf_indexes - array of indexes for those VCFs
+* output_basename - base name used for output files
+* preemptible
+
+#### Outputs
+* merged_vcf - merged VCF with only allowed INFO annotations retained
+* merged_vcf_index - index for the merged VCF
+
+The filter keeps only the following INFO IDs:
+* AF_afr
+* AF_ami
+* AF_amr
+* AF_asj
+* AF_eas
+* AF_fin
+* AF_mid
+* AF_nfe
+* AF_raw
+* AF_remaining
+* AF_sas
+
+All other INFO annotations are removed.
