@@ -177,17 +177,21 @@ public class NotificationService {
   public void configureAndSendUserQuotaChangedNotification(
       String userId,
       String pipelineDisplayName,
-      int previousQuotaLimit,
-      int newQuotaLimit,
-      int quotaConsumedByUser,
+      String customMessage,
+      int previousQuotaAllocated,
+      int updatedQuotaAllocated,
+      int previousQuotaConsumed,
+      int updatedQuotaConsumed,
       int quotaAvailable) {
     TeaspoonsUserQuotaChangedNotification notificationObj =
         new TeaspoonsUserQuotaChangedNotification(
             userId,
             pipelineDisplayName,
-            String.valueOf(previousQuotaLimit),
-            String.valueOf(newQuotaLimit),
-            String.valueOf(quotaConsumedByUser),
+            customMessage,
+            String.valueOf(previousQuotaAllocated),
+            String.valueOf(updatedQuotaAllocated),
+            String.valueOf(previousQuotaConsumed),
+            String.valueOf(updatedQuotaConsumed),
             String.valueOf(quotaAvailable));
 
     publishNotificationMessage(notificationObj);

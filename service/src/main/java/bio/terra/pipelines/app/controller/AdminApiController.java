@@ -153,8 +153,10 @@ public class AdminApiController implements AdminApi {
     notificationService.configureAndSendUserQuotaChangedNotification(
         userQuota.getUserId(),
         pipelineDisplayName,
+        "Your 'lifetime quota allocated' has been updated.",
         originalQuotaLimit,
         newQuotaLimit,
+        userQuota.getQuotaConsumed(),
         userQuota.getQuotaConsumed(),
         quotaAvailableAfterChange);
 
@@ -229,10 +231,17 @@ public class AdminApiController implements AdminApi {
     UserQuotaTotals quotaTotals =
         quotasService.getQuotaTotalsForUserAndPipeline(targetUserId, validatedPipelineName);
 
-    // if requested, send email notification to the user about the quota allocation
+    // if requested, send email notification to the user about the quota allocation.
+    // The quota consumed is unchanged by an allocation, so the previous and new consumed values
+    // are the same.
     if (body.isNotifyUser()) {
       sendQuotaChangedNotification(
-          targetUserId, validatedPipelineName, quotaTotals.totalAllocated() - amount, quotaTotals);
+          targetUserId,
+          validatedPipelineName,
+          "Your 'lifetime quota allocated' has been updated.",
+          quotaTotals.totalAllocated() - amount,
+          quotaTotals.totalConsumed(),
+          quotaTotals);
     }
 
     return new ResponseEntity<>(
@@ -286,7 +295,9 @@ public class AdminApiController implements AdminApi {
       sendQuotaChangedNotification(
           targetUserId,
           validatedPipelineName,
+          "A manual adjustment was made to your 'lifetime quota consumed'.",
           updatedQuotaTotals.totalAllocated(),
+          quotaTotals.totalConsumed(),
           updatedQuotaTotals);
     }
 
@@ -407,21 +418,27 @@ public class AdminApiController implements AdminApi {
    *
    * @param userId the user's Sam id
    * @param pipelineName the pipeline for which the quota changed
-   * @param previousQuotaLimit the user's quota limit before the change
+   * @param customMessage message included in the email describing what changed
+   * @param previousQuotaAllocated the user's total quota allocated before the change
+   * @param previousQuotaConsumed the user's total quota consumed before the change
    * @param updatedQuotaTotals the user's quota totals after the change
    */
   private void sendQuotaChangedNotification(
       String userId,
       PipelinesEnum pipelineName,
-      int previousQuotaLimit,
+      String customMessage,
+      int previousQuotaAllocated,
+      int previousQuotaConsumed,
       UserQuotaTotals updatedQuotaTotals) {
     String pipelineDisplayName = pipelinesService.getLatestPipeline(pipelineName).getDisplayName();
 
     notificationService.configureAndSendUserQuotaChangedNotification(
         userId,
         pipelineDisplayName,
-        previousQuotaLimit,
+        customMessage,
+        previousQuotaAllocated,
         updatedQuotaTotals.totalAllocated(),
+        previousQuotaConsumed,
         updatedQuotaTotals.totalConsumed(),
         updatedQuotaTotals.totalAllocated() - updatedQuotaTotals.totalConsumed());
   }
