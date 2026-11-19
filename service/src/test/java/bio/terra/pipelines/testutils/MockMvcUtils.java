@@ -3,7 +3,6 @@ package bio.terra.pipelines.testutils;
 import bio.terra.common.iam.BearerToken;
 import bio.terra.common.iam.SamUser;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
-import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.model.Pipeline;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -74,7 +73,4 @@ public class MockMvcUtils {
         .updated(Instant.now())
         .build();
   }
-
-  public static final UserQuota TEST_USER_QUOTA_1 =
-      new UserQuota(PipelinesEnum.ARRAY_IMPUTATION, TEST_SAM_USER.getSubjectId(), 1000, 10);
 }
