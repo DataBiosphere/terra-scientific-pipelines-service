@@ -37,6 +37,11 @@ public class AdminApiController implements AdminApi {
   private final QuotasService quotasService;
   private final NotificationService notificationService;
 
+  private static final String QUOTA_ALLOCATED_EMAIL_MSG =
+      "Your 'lifetime quota allocated' has been updated.";
+  private static final String QUOTA_CONSUMED_EMAIL_MSG =
+      "A manual adjustment was made to your 'lifetime quota consumed'.";
+
   @Autowired
   public AdminApiController(
       SamConfiguration samConfiguration,
@@ -169,7 +174,7 @@ public class AdminApiController implements AdminApi {
       sendQuotaChangedNotification(
           targetUserId,
           validatedPipelineName,
-          "Your 'lifetime quota allocated' has been updated.",
+          QUOTA_ALLOCATED_EMAIL_MSG,
           quotaTotals.totalAllocated() - amount,
           quotaTotals.totalConsumed(),
           quotaTotals);
@@ -226,7 +231,7 @@ public class AdminApiController implements AdminApi {
       sendQuotaChangedNotification(
           targetUserId,
           validatedPipelineName,
-          "A manual adjustment was made to your 'lifetime quota consumed'.",
+          QUOTA_CONSUMED_EMAIL_MSG,
           updatedQuotaTotals.totalAllocated(),
           quotaTotals.totalConsumed(),
           updatedQuotaTotals);
