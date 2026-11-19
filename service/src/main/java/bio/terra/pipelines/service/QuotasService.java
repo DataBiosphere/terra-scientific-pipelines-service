@@ -9,10 +9,8 @@ import bio.terra.pipelines.common.utils.QuotaAllocationStatusEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
 import bio.terra.pipelines.db.entities.QuotaAllocation;
 import bio.terra.pipelines.db.entities.QuotaAllocationDeduction;
-import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.db.repositories.QuotaAllocationDeductionsRepository;
 import bio.terra.pipelines.db.repositories.QuotaAllocationsRepository;
-import bio.terra.pipelines.db.repositories.UserQuotasRepository;
 import bio.terra.pipelines.model.PipelineQuota;
 import bio.terra.pipelines.model.QuotaConsumptionRecord;
 import bio.terra.pipelines.model.UserQuotaTotals;
@@ -21,7 +19,6 @@ import io.sentry.SentryLevel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -36,18 +33,15 @@ public class QuotasService {
   private static final Logger logger = LoggerFactory.getLogger(QuotasService.class);
   private static final String DEFAULT_FREE_UNIQUE_INDEX_NAME =
       "idx_quota_allocations_unique_default_free_per_user_pipeline";
-  private final UserQuotasRepository userQuotasRepository;
   private final QuotaAllocationsRepository quotaAllocationsRepository;
   private final QuotaAllocationDeductionsRepository quotaAllocationDeductionsRepository;
   private final PipelineConfigurations pipelineConfigurations;
 
   @Autowired
   QuotasService(
-      UserQuotasRepository userQuotasRepository,
       QuotaAllocationsRepository quotaAllocationsRepository,
       QuotaAllocationDeductionsRepository quotaAllocationDeductionsRepository,
       PipelineConfigurations pipelineConfigurations) {
-    this.userQuotasRepository = userQuotasRepository;
     this.quotaAllocationsRepository = quotaAllocationsRepository;
     this.quotaAllocationDeductionsRepository = quotaAllocationDeductionsRepository;
     this.pipelineConfigurations = pipelineConfigurations;
@@ -68,78 +62,6 @@ public class QuotasService {
   /** This method gets the quota units value for a given pipeline. */
   public QuotaUnitsEnum getQuotaUnitsForPipeline(PipelinesEnum pipelineName) {
     return getPipelineQuota(pipelineName).getQuotaUnits();
-  }
-
-  /**
-   * This method gets the quota for a given user and pipeline. If the user quota does not exist, it
-   * will create a new row in the user quotas table with the default quota for the pipeline.
-   */
-  public UserQuota getOrCreateQuotaForUserAndPipeline(String userId, PipelinesEnum pipelineName) {
-    // try to get the user quota
-    Optional<UserQuota> userQuota = getQuotaForUserAndPipeline(userId, pipelineName);
-
-    // if the user quota is not found, grab the default pipeline quota and make a new row in user
-    // quotas table
-    if (userQuota.isEmpty()) {
-      logger.debug(
-          "Couldn't find user quota for user {} and pipeline {}. Creating a new row",
-          userId,
-          pipelineName);
-      try {
-        /* Note: This try/catch relies on this method NOT being wrapped in an outer @Transactional.
-         * Because there is no outer transaction, CrudRepository.save() commits and flushes immediately,
-         * allowing us to catch the constraint violation. If you add @Transactional to this service
-         * in the future, the flush will be delayed and the try/catch will fail.
-         */
-        PipelineQuota pipelineQuota = getPipelineQuota(pipelineName);
-        UserQuota newUserQuota = new UserQuota();
-        newUserQuota.setUserId(userId);
-        newUserQuota.setPipelineName(pipelineName);
-        newUserQuota.setQuota(pipelineQuota.getDefaultQuota());
-        return userQuotasRepository.save(newUserQuota);
-      } catch (org.springframework.dao.DataIntegrityViolationException e) {
-        // Handle race condition: another thread may have created the quota between our check and
-        // insert
-        logger.info(
-            "Race condition detected while creating user quota for user {} and pipeline {}. Fetching existing record.",
-            userId,
-            pipelineName);
-        return getQuotaForUserAndPipeline(userId, pipelineName)
-            .orElseThrow(
-                () ->
-                    new IllegalStateException(
-                        "Quota should exist but was not found for user %s and pipeline %s."
-                            .formatted(userId, pipelineName)));
-      }
-    }
-    return userQuota.get();
-  }
-
-  /**
-   * This method gets the quota for a given user and pipeline. If the user quota does not exist, it
-   * will return an empty optional.
-   */
-  public Optional<UserQuota> getQuotaForUserAndPipeline(String userId, PipelinesEnum pipelineName) {
-    return userQuotasRepository.findByUserIdAndPipelineName(userId, pipelineName);
-  }
-
-  /**
-   * This method updates the quota limit for a given user quota. This should only be called from the
-   * Admin Controller
-   *
-   * @param userQuota - the user quota to update
-   * @param newQuotaLimit - the new quota limit
-   * @return - the updated user quota
-   */
-  public UserQuota adminUpdateQuotaLimit(UserQuota userQuota, int newQuotaLimit) {
-    if (newQuotaLimit < userQuota.getQuotaConsumed()) {
-      throw new InternalServerErrorException(
-          String.format(
-              "New quota limit: %d, is less than the quota consumed: %d",
-              newQuotaLimit, userQuota.getQuotaConsumed()));
-    }
-    userQuota.setQuota(newQuotaLimit);
-    return userQuotasRepository.save(userQuota);
   }
 
   /**
