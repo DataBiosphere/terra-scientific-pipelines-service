@@ -51,52 +51,6 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
 
-  /api/admin/v2/quotas/{pipelineName}/{userEmail}:
-    parameters:
-      - $ref: '#/components/parameters/PipelineName'
-      - $ref: '#/components/parameters/UserEmail'
-    get:
-      summary: Get quota for a given pipeline and user identified by email
-      tags: [ admin ]
-      operationId: getQuotaForPipelineAndUserV2
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminQuotaV2'
-        400:
-          $ref: '#/components/responses/BadRequest'
-        403:
-          $ref: '#/components/responses/PermissionDenied'
-        500:
-          $ref: '#/components/responses/ServerError'
-    # v2 PATCH endpoint will be deprecated in https://broadworkbench.atlassian.net/browse/TSPS-1238
-    patch:
-      summary: Update quota limit for a given pipeline and user identified by email
-      tags: [ admin ]
-      operationId: updateQuotaLimitForPipelineAndUserV2
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateQuotaLimitRequestBody'
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminQuotaV2'
-        400:
-          $ref: '#/components/responses/BadRequest'
-        403:
-          $ref: '#/components/responses/PermissionDenied'
-        500:
-          $ref: '#/components/responses/ServerError'
-
   /api/admin/v3/quotas/{pipelineName}/{userEmail}:
     parameters:
       - $ref: '#/components/parameters/PipelineName'
@@ -142,7 +96,7 @@ paths:
         500:
           $ref: '#/components/responses/ServerError'
     patch:
-      summary: Update quota for a given pipeline and user identified by email
+      summary: Deduct quota for a given pipeline and user identified by email
       description: |
         Deducts quota from the user's allocations for the given pipeline, oldest first.
         The provided comments are appended to the comments of each affected allocation,
@@ -879,23 +833,6 @@ components:
         updated:
           $ref: "#/components/schemas/PipelineRuntimeMetadataUpdated"
 
-    AdminQuotaV2:
-      description: |
-        Object containing the use id, pipeline identifier, quota limit, and quota usage of a Pipeline for a user.
-      type: object
-      required: [ userEmail, userId, pipelineName, quotaLimit, quotaConsumed ]
-      properties:
-        userEmail:
-          $ref: "#/components/schemas/UserEmail"
-        userId:
-          $ref: "#/components/schemas/UserId"
-        pipelineName:
-          $ref: "#/components/schemas/PipelineName"
-        quotaLimit:
-          $ref: "#/components/schemas/QuotaLimit"
-        quotaConsumed:
-          $ref: "#/components/schemas/QuotaConsumed"
-
     AdminUpdateQuotaRequestBody:
       description: |
         json object containing the admin provided information used to manually consume quota
@@ -1618,15 +1555,6 @@ components:
           $ref: "#/components/schemas/PipelineToolVersion"
         isHidden:
           $ref: "#/components/schemas/PipelineIsHidden"
-
-    UpdateQuotaLimitRequestBody:
-      description: |
-        json object containing the admin provided information used to update a user's quota limit
-      type: object
-      required: [ quotaLimit ]
-      properties:
-        quotaLimit:
-          $ref: "#/components/schemas/QuotaLimit"
 
     UseResumableUploads:
       type: boolean

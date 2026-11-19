@@ -7,7 +7,6 @@ import bio.terra.pipelines.app.configuration.external.SamConfiguration;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaAllocationSourceEnum;
 import bio.terra.pipelines.db.entities.QuotaAllocation;
-import bio.terra.pipelines.db.entities.UserQuota;
 import bio.terra.pipelines.dependencies.sam.SamService;
 import bio.terra.pipelines.generated.api.AdminApi;
 import bio.terra.pipelines.generated.model.*;
@@ -94,72 +93,6 @@ public class AdminApiController implements AdminApi {
             workspaceName,
             toolVersion);
     return new ResponseEntity<>(pipelineToApiAdminPipeline(updatedPipeline), HttpStatus.OK);
-  }
-
-  // Note: This will be removed in https://broadworkbench.atlassian.net/browse/TSPS-1244
-  @Override
-  public ResponseEntity<ApiAdminQuotaV2> getQuotaForPipelineAndUserV2(
-      String pipelineName, String userEmail) {
-    // check if user is an admin
-    final SamUser authedUser = getAuthenticatedInfo();
-    samService.checkAdminAuthz(authedUser);
-
-    PipelinesEnum validatedPipelineName =
-        PipelineApiUtils.validatePipelineName(pipelineName, logger);
-
-    // get userId from Sam using the email address and throw not found error
-    // if the user doesn't exist in Sam
-    String userId = samService.getUserIdFromEmailAdmin(authedUser, userEmail);
-
-    // check if row exists for this user and pipeline. If user does not have a quota row,
-    // create one with default quota limit and return it
-    UserQuota userQuota =
-        quotasService.getOrCreateQuotaForUserAndPipeline(userId, validatedPipelineName);
-
-    return new ResponseEntity<>(userQuotaToApiAdminQuotaV2(userQuota, userEmail), HttpStatus.OK);
-  }
-
-  // Note: This will be deprecated in https://broadworkbench.atlassian.net/browse/TSPS-1238
-  @Override
-  public ResponseEntity<ApiAdminQuotaV2> updateQuotaLimitForPipelineAndUserV2(
-      String pipelineName, String userEmail, ApiUpdateQuotaLimitRequestBody body) {
-    // check if user is an admin
-    final SamUser authedUser = getAuthenticatedInfo();
-    samService.checkAdminAuthz(authedUser);
-
-    PipelinesEnum validatedPipelineName =
-        PipelineApiUtils.validatePipelineName(pipelineName, logger);
-
-    // get userId from Sam using the email address and throw not found error
-    // if the user doesn't exist in Sam
-    String userId = samService.getUserIdFromEmailAdmin(authedUser, userEmail);
-
-    // check if row exists for this user and pipeline. If user does not have a quota row,
-    // create one with default quota limit
-    UserQuota userQuota =
-        quotasService.getOrCreateQuotaForUserAndPipeline(userId, validatedPipelineName);
-
-    int newQuotaLimit = body.getQuotaLimit();
-    int originalQuotaLimit =
-        userQuota.getQuota(); // capture original limit for email notification before update
-
-    UserQuota updatedUserQuota = quotasService.adminUpdateQuotaLimit(userQuota, newQuotaLimit);
-
-    Pipeline pipeline = pipelinesService.getLatestPipeline(validatedPipelineName);
-    String pipelineDisplayName = pipeline.getDisplayName();
-    int quotaAvailableAfterChange = newQuotaLimit - userQuota.getQuotaConsumed();
-
-    // send email notification to user about quota change
-    notificationService.configureAndSendUserQuotaChangedNotification(
-        userQuota.getUserId(),
-        pipelineDisplayName,
-        originalQuotaLimit,
-        newQuotaLimit,
-        userQuota.getQuotaConsumed(),
-        quotaAvailableAfterChange);
-
-    return new ResponseEntity<>(
-        userQuotaToApiAdminQuotaV2(updatedUserQuota, userEmail), HttpStatus.OK);
   }
 
   @Override
@@ -313,15 +246,6 @@ public class AdminApiController implements AdminApi {
         .workspaceGoogleProject(pipeline.getWorkspaceGoogleProject())
         .toolVersion(pipeline.getToolVersion())
         .updated(pipeline.getUpdated().toString());
-  }
-
-  private ApiAdminQuotaV2 userQuotaToApiAdminQuotaV2(UserQuota userQuota, String userEmail) {
-    return new ApiAdminQuotaV2()
-        .userEmail(userEmail)
-        .userId(userQuota.getUserId())
-        .pipelineName(userQuota.getPipelineName().getLowerCaseValue())
-        .quotaLimit(userQuota.getQuota())
-        .quotaConsumed(userQuota.getQuotaConsumed());
   }
 
   /**
