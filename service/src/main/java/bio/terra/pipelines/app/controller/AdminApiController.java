@@ -171,12 +171,13 @@ public class AdminApiController implements AdminApi {
     // The quota consumed is unchanged by an allocation, so the previous and new consumed values
     // are the same.
     if (body.isNotifyUser()) {
+      UserQuotaTotals previousQuotaTotals =
+          new UserQuotaTotals(quotaTotals.totalAllocated() - amount, quotaTotals.totalConsumed());
       sendQuotaChangedNotification(
           targetUserId,
           validatedPipelineName,
           QUOTA_ALLOCATED_EMAIL_MSG,
-          quotaTotals.totalAllocated() - amount,
-          quotaTotals.totalConsumed(),
+          previousQuotaTotals,
           quotaTotals);
     }
 
@@ -226,14 +227,14 @@ public class AdminApiController implements AdminApi {
         quotasService.getQuotaTotalsForUserAndPipeline(targetUserId, validatedPipelineName);
 
     // if requested, send email notification to the user about the quota change.
+    // quotaTotals was fetched before the consumption, so it holds the previous totals.
     // The quota limit is unchanged by a consumption, so the previous and new limits are the same.
     if (body.isNotifyUser()) {
       sendQuotaChangedNotification(
           targetUserId,
           validatedPipelineName,
           QUOTA_CONSUMED_EMAIL_MSG,
-          updatedQuotaTotals.totalAllocated(),
-          quotaTotals.totalConsumed(),
+          quotaTotals,
           updatedQuotaTotals);
     }
 
@@ -346,27 +347,18 @@ public class AdminApiController implements AdminApi {
    * @param userId the user's Sam id
    * @param pipelineName the pipeline for which the quota changed
    * @param customMessage message included in the email describing what changed
-   * @param previousQuotaAllocated the user's total quota allocated before the change
-   * @param previousQuotaConsumed the user's total quota consumed before the change
+   * @param previousQuotaTotals the user's quota totals before the change
    * @param updatedQuotaTotals the user's quota totals after the change
    */
   private void sendQuotaChangedNotification(
       String userId,
       PipelinesEnum pipelineName,
       String customMessage,
-      int previousQuotaAllocated,
-      int previousQuotaConsumed,
+      UserQuotaTotals previousQuotaTotals,
       UserQuotaTotals updatedQuotaTotals) {
     String pipelineDisplayName = pipelinesService.getLatestPipeline(pipelineName).getDisplayName();
 
     notificationService.configureAndSendUserQuotaChangedNotification(
-        userId,
-        pipelineDisplayName,
-        customMessage,
-        previousQuotaAllocated,
-        updatedQuotaTotals.totalAllocated(),
-        previousQuotaConsumed,
-        updatedQuotaTotals.totalConsumed(),
-        updatedQuotaTotals.totalAllocated() - updatedQuotaTotals.totalConsumed());
+        userId, pipelineDisplayName, customMessage, previousQuotaTotals, updatedQuotaTotals);
   }
 }

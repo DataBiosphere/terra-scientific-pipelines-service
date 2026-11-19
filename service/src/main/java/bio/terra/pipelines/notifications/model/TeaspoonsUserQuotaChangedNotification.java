@@ -1,5 +1,6 @@
 package bio.terra.pipelines.notifications.model;
 
+import bio.terra.pipelines.model.UserQuotaTotals;
 import lombok.Getter;
 
 @Getter
@@ -16,19 +17,17 @@ public class TeaspoonsUserQuotaChangedNotification extends BaseTeaspoonsNotifica
       String recipientUserId,
       String pipelineDisplayName,
       String customMessage,
-      String previousQuotaAllocated,
-      String updatedQuotaAllocated,
-      String previousQuotaConsumed,
-      String updatedQuotaConsumed,
+      UserQuotaTotals previousQuotaTotals,
+      UserQuotaTotals updatedQuotaTotals,
       String quotaAvailable) {
     this.notificationType = "TeaspoonsUserQuotaChangedNotification";
     this.recipientUserId = recipientUserId;
     this.pipelineDisplayName = pipelineDisplayName;
     this.customMessage = customMessage;
-    this.previousQuotaAllocated = previousQuotaAllocated;
-    this.updatedQuotaAllocated = updatedQuotaAllocated;
-    this.previousQuotaConsumed = previousQuotaConsumed;
-    this.updatedQuotaConsumed = updatedQuotaConsumed;
+    this.previousQuotaAllocated = String.valueOf(previousQuotaTotals.totalAllocated());
+    this.updatedQuotaAllocated = String.valueOf(updatedQuotaTotals.totalAllocated());
+    this.previousQuotaConsumed = String.valueOf(previousQuotaTotals.totalConsumed());
+    this.updatedQuotaConsumed = String.valueOf(updatedQuotaTotals.totalConsumed());
     this.quotaAvailable = quotaAvailable;
   }
 }

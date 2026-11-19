@@ -639,11 +639,8 @@ class AdminApiControllerTest {
               userId,
               MockMvcUtils.getTestPipeline().getDisplayName(),
               "Your 'lifetime quota allocated' has been updated.",
-              3500,
-              4000,
-              3200,
-              3200,
-              800);
+              new UserQuotaTotals(3500, 3200),
+              new UserQuotaTotals(4000, 3200));
     }
 
     @Test
@@ -911,11 +908,8 @@ class AdminApiControllerTest {
               userId,
               MockMvcUtils.getTestPipeline().getDisplayName(),
               "A manual adjustment was made to your 'lifetime quota consumed'.",
-              4000,
-              4000,
-              3000,
-              3500,
-              500);
+              new UserQuotaTotals(4000, 3000),
+              new UserQuotaTotals(4000, 3500));
     }
 
     @Test

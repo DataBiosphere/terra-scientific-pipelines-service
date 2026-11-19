@@ -246,22 +246,12 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
     String userId = "groot-user";
     String pipelineName = "my-test-pipeline";
     String customMessage = "Your 'lifetime quota allocated' has been updated.";
-    int previousQuotaAllocated = 100;
-    int updatedQuotaAllocated = 200;
-    int previousQuotaConsumed = 50;
-    int updatedQuotaConsumed = 50;
-    int quotaAvailable = 150;
+    UserQuotaTotals previousQuotaTotals = new UserQuotaTotals(100, 50);
+    UserQuotaTotals updatedQuotaTotals = new UserQuotaTotals(200, 50);
 
     TeaspoonsUserQuotaChangedNotification expectedNotification =
         new TeaspoonsUserQuotaChangedNotification(
-            userId,
-            pipelineName,
-            customMessage,
-            String.valueOf(previousQuotaAllocated),
-            String.valueOf(updatedQuotaAllocated),
-            String.valueOf(previousQuotaConsumed),
-            String.valueOf(updatedQuotaConsumed),
-            String.valueOf(quotaAvailable));
+            userId, pipelineName, customMessage, previousQuotaTotals, updatedQuotaTotals, "150");
 
     String expectedMessage = objectMapper.writeValueAsString(expectedNotification);
 
@@ -273,14 +263,7 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
             expectedMessage);
 
     notificationService.configureAndSendUserQuotaChangedNotification(
-        userId,
-        pipelineName,
-        customMessage,
-        previousQuotaAllocated,
-        updatedQuotaAllocated,
-        previousQuotaConsumed,
-        updatedQuotaConsumed,
-        quotaAvailable);
+        userId, pipelineName, customMessage, previousQuotaTotals, updatedQuotaTotals);
 
     // assert that pubsub service is called with expected parameters
     verify(pubsubService, times(1))
@@ -298,7 +281,11 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
 
     // allocated is unchanged, consumed goes from 50 to 70
     notificationService.configureAndSendUserQuotaChangedNotification(
-        userId, pipelineName, customMessage, 200, 200, 50, 70, 130);
+        userId,
+        pipelineName,
+        customMessage,
+        new UserQuotaTotals(200, 50),
+        new UserQuotaTotals(200, 70));
 
     ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
     verify(pubsubService, times(1))
@@ -325,22 +312,12 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
     String userId = "groot-user";
     String pipelineName = "my-test-pipeline";
     String customMessage = "Your 'lifetime quota allocated' has been updated.";
-    int previousQuotaAllocated = 100;
-    int updatedQuotaAllocated = 200;
-    int previousQuotaConsumed = 50;
-    int updatedQuotaConsumed = 50;
-    int quotaAvailable = 150;
+    UserQuotaTotals previousQuotaTotals = new UserQuotaTotals(100, 50);
+    UserQuotaTotals updatedQuotaTotals = new UserQuotaTotals(200, 50);
 
     TeaspoonsUserQuotaChangedNotification expectedNotification =
         new TeaspoonsUserQuotaChangedNotification(
-            userId,
-            pipelineName,
-            customMessage,
-            String.valueOf(previousQuotaAllocated),
-            String.valueOf(updatedQuotaAllocated),
-            String.valueOf(previousQuotaConsumed),
-            String.valueOf(updatedQuotaConsumed),
-            String.valueOf(quotaAvailable));
+            userId, pipelineName, customMessage, previousQuotaTotals, updatedQuotaTotals, "150");
 
     String expectedMessage = objectMapper.writeValueAsString(expectedNotification);
 
@@ -355,14 +332,7 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
     assertDoesNotThrow(
         () ->
             notificationService.configureAndSendUserQuotaChangedNotification(
-                userId,
-                pipelineName,
-                customMessage,
-                previousQuotaAllocated,
-                updatedQuotaAllocated,
-                previousQuotaConsumed,
-                updatedQuotaConsumed,
-                quotaAvailable));
+                userId, pipelineName, customMessage, previousQuotaTotals, updatedQuotaTotals));
   }
 
   /**

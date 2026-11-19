@@ -173,26 +173,33 @@ public class NotificationService {
     publishNotificationMessage(createTeaspoonsJobNotification(jobId, userId, context, false));
   }
 
-  /** Configure and send an email notification that a user's quota has changed. */
+  /**
+   * Configure and send an email notification that a user's quota has changed. The quota available
+   * is derived from the updated quota totals.
+   *
+   * @param userId the user's Sam id
+   * @param pipelineDisplayName the display name of the pipeline for which the quota changed
+   * @param customMessage message included in the email describing what changed
+   * @param previousQuotaTotals the user's quota totals before the change
+   * @param updatedQuotaTotals the user's quota totals after the change
+   */
   public void configureAndSendUserQuotaChangedNotification(
       String userId,
       String pipelineDisplayName,
       String customMessage,
-      int previousQuotaAllocated,
-      int updatedQuotaAllocated,
-      int previousQuotaConsumed,
-      int updatedQuotaConsumed,
-      int quotaAvailable) {
+      UserQuotaTotals previousQuotaTotals,
+      UserQuotaTotals updatedQuotaTotals) {
+    String quotaAvailable =
+        String.valueOf(updatedQuotaTotals.totalAllocated() - updatedQuotaTotals.totalConsumed());
+
     TeaspoonsUserQuotaChangedNotification notificationObj =
         new TeaspoonsUserQuotaChangedNotification(
             userId,
             pipelineDisplayName,
             customMessage,
-            String.valueOf(previousQuotaAllocated),
-            String.valueOf(updatedQuotaAllocated),
-            String.valueOf(previousQuotaConsumed),
-            String.valueOf(updatedQuotaConsumed),
-            String.valueOf(quotaAvailable));
+            previousQuotaTotals,
+            updatedQuotaTotals,
+            quotaAvailable);
 
     publishNotificationMessage(notificationObj);
   }
