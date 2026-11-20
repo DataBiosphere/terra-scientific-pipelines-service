@@ -175,7 +175,7 @@ class PipelineRunsApiControllerTest {
               testPipeline.getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doNothing()
           .when(quotasServiceMock)
-          .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
+          .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION, 1);
       when(pipelineRunsServiceMock.preparePipelineRunV2(
               testPipeline, jobId, testUser, TestUtils.TEST_PIPELINE_INPUTS, description, false))
           .thenReturn(pipelineInputsWithSasUrls);
@@ -214,7 +214,7 @@ class PipelineRunsApiControllerTest {
               testPipeline.getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doNothing()
           .when(quotasServiceMock)
-          .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
+          .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION, 1);
       when(pipelineRunsServiceMock.preparePipelineRunV2(
               testPipeline, jobId, testUser, TestUtils.TEST_PIPELINE_INPUTS, description, false))
           .thenReturn(null); // if cloud inputs, preparePipelineRun returns nothing
@@ -260,7 +260,7 @@ class PipelineRunsApiControllerTest {
               testPipeline.getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doNothing()
           .when(quotasServiceMock)
-          .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
+          .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION, 1);
       when(pipelineRunsServiceMock.preparePipelineRunV2(
               testPipeline, jobId, testUser, TestUtils.TEST_PIPELINE_INPUTS, null, false))
           .thenReturn(pipelineInputsWithSasUrls);
@@ -384,7 +384,7 @@ class PipelineRunsApiControllerTest {
               testPipeline.getInputDefinitions(), TestUtils.TEST_PIPELINE_INPUTS);
       doThrow(new BadRequestException("Insufficient quota to run the pipeline."))
           .when(quotasServiceMock)
-          .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION);
+          .validateUserHasEnoughQuota(testUser.getSubjectId(), PipelinesEnum.ARRAY_IMPUTATION, 1);
 
       // assert that insufficient quota exception is thrown
       mockMvc

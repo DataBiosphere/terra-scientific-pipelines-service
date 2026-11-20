@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
 import bio.terra.pipelines.common.utils.PipelinesEnum;
+import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
 import bio.terra.pipelines.model.PipelineInputDefinition;
 import bio.terra.pipelines.model.PipelineOutputDefinition;
 import bio.terra.pipelines.testutils.BaseEmbeddedDbTest;
@@ -84,6 +85,36 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
     assertThrows(
         IllegalArgumentException.class,
         () -> pipelineConfigurations.getPipelineConfiguration("array_imputation_v999"));
+  }
+
+  @Test
+  void arrayImputationVersionsHaveDifferentMinAndMaxQuotas() {
+    PipelineConfigurations.PipelineQuotaVersionConfiguration v1Quota =
+        pipelineConfigurations.getVersionQuotaForPipeline(PipelinesEnum.ARRAY_IMPUTATION, 1);
+    PipelineConfigurations.PipelineQuotaVersionConfiguration v2Quota =
+        pipelineConfigurations.getVersionQuotaForPipeline(PipelinesEnum.ARRAY_IMPUTATION, 2);
+    assertEquals(500, v1Quota.getMinQuotaConsumed());
+    assertEquals(10000, v1Quota.getMaxQuotaConsumed());
+    assertEquals(700, v2Quota.getMinQuotaConsumed());
+    assertEquals(20000, v2Quota.getMaxQuotaConsumed());
+    assertNotEquals(v1Quota.getMinQuotaConsumed(), v2Quota.getMinQuotaConsumed());
+    assertNotEquals(v1Quota.getMaxQuotaConsumed(), v2Quota.getMaxQuotaConsumed());
+    assertEquals(
+        2500,
+        pipelineConfigurations
+            .getQuotaForPipeline(PipelinesEnum.ARRAY_IMPUTATION)
+            .getDefaultQuota());
+    assertEquals(
+        QuotaUnitsEnum.SAMPLES,
+        pipelineConfigurations.getQuotaForPipeline(PipelinesEnum.ARRAY_IMPUTATION).getQuotaUnits());
+  }
+
+  @Test
+  void getQuotaForMissingPipelineVersionThrows() {
+    assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            pipelineConfigurations.getVersionQuotaForPipeline(PipelinesEnum.ARRAY_IMPUTATION, 999));
   }
 
   @Nested
@@ -210,7 +241,9 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
    * <ul>
    *   <li>the quota map exists and is non-empty
    *   <li>every known pipeline enum has a quota entry
-   *   <li>each quota entry passes {@link #validateQuota}
+   *   <li>required fields are present: {@code defaultQuota}, {@code quotaUnits}, {@code versions}
+   *   <li>{@code defaultQuota >= 0}
+   *   <li>each pipeline version quota entry passes {@link #validateVersionQuota}
    * </ul>
    */
   private Set<String> validatePipelineQuotasOnly(PipelineConfigurations pipelineConfigurations) {
@@ -219,14 +252,103 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
         pipelineConfigurations.getPipelineQuotas();
     if (pipelineQuotas == null || pipelineQuotas.isEmpty()) {
       violations.add("Missing configurations.pipelineQuotas");
-    } else {
-      for (PipelinesEnum pipelineEnum : PipelinesEnum.values()) {
-        String pipelineName = pipelineEnum.getConfigKeyValue();
-        PipelineConfigurations.PipelineQuotaConfiguration quota = pipelineQuotas.get(pipelineName);
-        validateQuota(quota, pipelineName, violations);
+      return violations;
+    }
+
+    Map<String, Map<String, PipelineConfigurations.WdlBasedPipelineConfiguration>> pipelines =
+        pipelineConfigurations.getPipelines();
+
+    for (PipelinesEnum pipelineEnum : PipelinesEnum.values()) {
+      String pipelineName = pipelineEnum.getConfigKeyValue();
+      PipelineConfigurations.PipelineQuotaConfiguration quota = pipelineQuotas.get(pipelineName);
+      if (quota == null) {
+        violations.add("Missing quota definition for pipeline '%s'".formatted(pipelineName));
+        continue;
+      }
+
+      Integer defaultQuota =
+          requireNonNull(quota.getDefaultQuota(), "quota.defaultQuota", pipelineName, violations);
+      requireNonNull(quota.getQuotaUnits(), "quota.quotaUnits", pipelineName, violations);
+      if (defaultQuota != null && defaultQuota < 0) {
+        violations.add("quota.defaultQuota must be >= 0 for pipeline '%s'".formatted(pipelineName));
+      }
+
+      Map<String, PipelineConfigurations.PipelineQuotaVersionConfiguration> versions =
+          quota.getVersions();
+      if (versions == null || versions.isEmpty()) {
+        violations.add(
+            "Missing version quota definitions for pipeline '%s'".formatted(pipelineName));
+        continue;
+      }
+
+      Map<String, PipelineConfigurations.WdlBasedPipelineConfiguration> pipelineVersions =
+          pipelines == null ? null : pipelines.get(pipelineName);
+      if (pipelineVersions == null) {
+        continue;
+      }
+
+      for (String version : pipelineVersions.keySet()) {
+        PipelineConfigurations.PipelineQuotaVersionConfiguration versionQuota =
+            versions.get(version);
+        validateVersionQuota(versionQuota, pipelineName + "_v" + version, violations);
+      }
+
+      // quota entries should not exist for versions that have no pipeline definition
+      for (String quotaVersion : versions.keySet()) {
+        if (!pipelineVersions.containsKey(quotaVersion)) {
+          violations.add(
+              "Quota defined for pipeline '%s' version '%s' but no such pipeline version is configured"
+                  .formatted(pipelineName, quotaVersion));
+        }
       }
     }
     return violations;
+  }
+
+  /**
+   * Validates one quota block for a specific pipeline + version key.
+   *
+   * <p>Checks performed:
+   *
+   * <ul>
+   *   <li>quota object is non-null
+   *   <li>required fields are present:{@code minQuotaConsumed}, {@code maxQuotaConsumed}
+   *   <li>{@code minQuotaConsumed >= 0}
+   *   <li>{@code maxQuotaConsumed >= 0}
+   *   <li>{@code maxQuotaConsumed >= minQuotaConsumed}
+   * </ul>
+   */
+  private void validateVersionQuota(
+      PipelineConfigurations.PipelineQuotaVersionConfiguration quota,
+      String pipelineKey,
+      Set<String> violations) {
+    if (quota == null) {
+      violations.add("Missing quota definition for pipeline '%s'".formatted(pipelineKey));
+      return;
+    }
+
+    Integer minQuotaConsumed =
+        requireNonNull(
+            quota.getMinQuotaConsumed(), "quota.minQuotaConsumed", pipelineKey, violations);
+    Integer maxQuotaConsumed =
+        requireNonNull(
+            quota.getMaxQuotaConsumed(), "quota.maxQuotaConsumed", pipelineKey, violations);
+
+    if (minQuotaConsumed != null && minQuotaConsumed < 0) {
+      violations.add(
+          "quota.minQuotaConsumed must be >= 0 for pipeline '%s'".formatted(pipelineKey));
+    }
+    if (maxQuotaConsumed != null && maxQuotaConsumed < 0) {
+      violations.add(
+          "quota.maxQuotaConsumed must be >= 0 for pipeline '%s'".formatted(pipelineKey));
+    }
+    if (minQuotaConsumed != null
+        && maxQuotaConsumed != null
+        && maxQuotaConsumed < minQuotaConsumed) {
+      violations.add(
+          "quota.maxQuotaConsumed (%s) must be >= quota.minQuotaConsumed (%s) for pipeline '%s'"
+              .formatted(maxQuotaConsumed, minQuotaConsumed, pipelineKey));
+    }
   }
 
   /**
@@ -553,60 +675,6 @@ class PipelineConfigurationsTest extends BaseEmbeddedDbTest {
             "Duplicate output definition name '%s' for pipeline '%s'"
                 .formatted(outputName, pipelineKey));
       }
-    }
-  }
-
-  /**
-   * Validates one quota block for a specific pipeline key.
-   *
-   * <p>Checks performed:
-   *
-   * <ul>
-   *   <li>quota object is non-null
-   *   <li>required fields are present: {@code defaultQuota}, {@code minQuotaConsumed}, {@code
-   *       maxQuotaConsumed}, {@code quotaUnits}
-   *   <li>{@code defaultQuota >= 0}
-   *   <li>{@code minQuotaConsumed >= 0}
-   *   <li>{@code maxQuotaConsumed >= 0}
-   *   <li>{@code maxQuotaConsumed >= minQuotaConsumed}
-   * </ul>
-   */
-  private void validateQuota(
-      PipelineConfigurations.PipelineQuotaConfiguration quota,
-      String pipelineKey,
-      Set<String> violations) {
-    if (quota == null) {
-      violations.add("Missing quota definition for pipeline '%s'".formatted(pipelineKey));
-      return;
-    }
-
-    Integer defaultQuota =
-        requireNonNull(quota.getDefaultQuota(), "quota.defaultQuota", pipelineKey, violations);
-    Integer minQuotaConsumed =
-        requireNonNull(
-            quota.getMinQuotaConsumed(), "quota.minQuotaConsumed", pipelineKey, violations);
-    Integer maxQuotaConsumed =
-        requireNonNull(
-            quota.getMaxQuotaConsumed(), "quota.maxQuotaConsumed", pipelineKey, violations);
-    requireNonNull(quota.getQuotaUnits(), "quota.quotaUnits", pipelineKey, violations);
-
-    if (defaultQuota != null && defaultQuota < 0) {
-      violations.add("quota.defaultQuota must be >= 0 for pipeline '%s'".formatted(pipelineKey));
-    }
-    if (minQuotaConsumed != null && minQuotaConsumed < 0) {
-      violations.add(
-          "quota.minQuotaConsumed must be >= 0 for pipeline '%s'".formatted(pipelineKey));
-    }
-    if (maxQuotaConsumed != null && maxQuotaConsumed < 0) {
-      violations.add(
-          "quota.maxQuotaConsumed must be >= 0 for pipeline '%s'".formatted(pipelineKey));
-    }
-    if (minQuotaConsumed != null
-        && maxQuotaConsumed != null
-        && maxQuotaConsumed < minQuotaConsumed) {
-      violations.add(
-          "quota.maxQuotaConsumed (%s) must be >= quota.minQuotaConsumed (%s) for pipeline '%s'"
-              .formatted(maxQuotaConsumed, minQuotaConsumed, pipelineKey));
     }
   }
 

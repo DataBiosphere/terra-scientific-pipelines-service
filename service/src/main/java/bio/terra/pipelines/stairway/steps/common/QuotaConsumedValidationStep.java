@@ -1,6 +1,7 @@
 package bio.terra.pipelines.stairway.steps.common;
 
 import static bio.terra.pipelines.common.utils.PipelineKeyUtils.enumFromPipelineKey;
+import static bio.terra.pipelines.common.utils.PipelineKeyUtils.versionFromPipelineKey;
 
 import bio.terra.common.exception.BadRequestException;
 import bio.terra.common.exception.InternalServerErrorException;
@@ -68,8 +69,9 @@ public class QuotaConsumedValidationStep implements Step {
     FlightUtils.validateRequiredEntries(
         inputParameters, JobMapKeys.PIPELINE_KEY, JobMapKeys.USER_ID);
 
-    PipelinesEnum pipelineName =
-        enumFromPipelineKey(inputParameters.get(JobMapKeys.PIPELINE_KEY, String.class));
+    String pipelineKey = inputParameters.get(JobMapKeys.PIPELINE_KEY, String.class);
+    PipelinesEnum pipelineName = enumFromPipelineKey(pipelineKey);
+    int pipelineVersion = versionFromPipelineKey(pipelineKey);
     String userId = inputParameters.get(JobMapKeys.USER_ID, String.class);
 
     // validate and extract parameters from working map
@@ -96,7 +98,7 @@ public class QuotaConsumedValidationStep implements Step {
           new InternalStepException("No valid input files found; please check your input."));
     }
 
-    PipelineQuota pipelineQuota = quotasService.getPipelineQuota(pipelineName);
+    PipelineQuota pipelineQuota = quotasService.getPipelineQuota(pipelineName, pipelineVersion);
 
     if (rawQuotaConsumed > pipelineQuota.getMaxQuotaConsumed()) {
       logger.error(

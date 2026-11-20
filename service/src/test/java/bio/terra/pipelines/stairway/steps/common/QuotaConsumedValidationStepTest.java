@@ -57,8 +57,8 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
   // its quota checks and the test can control what happens when the quota is consumed
   private QuotasService mockQuotasServiceWithQuotaAvailable() {
     QuotasService mockQuotasService = mock(QuotasService.class);
-    when(mockQuotasService.getPipelineQuota(PipelinesEnum.ARRAY_IMPUTATION))
-        .thenReturn(quotasService.getPipelineQuota(PipelinesEnum.ARRAY_IMPUTATION));
+    when(mockQuotasService.getPipelineQuota(PipelinesEnum.ARRAY_IMPUTATION, 1))
+        .thenReturn(quotasService.getPipelineQuota(PipelinesEnum.ARRAY_IMPUTATION, 1));
     when(mockQuotasService.getQuotaTotalsForUserAndPipeline(
             TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION))
         .thenReturn(new UserQuotaTotals(2500, 0));
@@ -118,7 +118,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     userQuotaTotals =
         quotasService.getQuotaTotalsForUserAndPipeline(
             TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION);
-    PipelineQuota pipelineQuota = quotasService.getPipelineQuota(PipelinesEnum.ARRAY_IMPUTATION);
+    PipelineQuota pipelineQuota = quotasService.getPipelineQuota(PipelinesEnum.ARRAY_IMPUTATION, 1);
     assertEquals(pipelineQuota.getMinQuotaConsumed(), userQuotaTotals.totalConsumed());
 
     // make sure the raw quota assumed was saved for the pipeline
@@ -209,8 +209,9 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     // setup
     StairwayTestUtils.constructCreateJobInputs(flightContext.getInputParameters());
 
-    // set quota consumed in working map to above the pipeline quota limit
-    final Map<String, String> quotaOutputs = new HashMap<>(Map.of("quotaConsumed", "11000"));
+    // set quota consumed in working map to above the pipeline quota limit but below the version 1
+    // maximum
+    final Map<String, String> quotaOutputs = new HashMap<>(Map.of("quotaConsumed", "9000"));
     flightContext.getWorkingMap().put(WdlBasedPipelineJobMapKeys.QUOTA_OUTPUTS, quotaOutputs);
 
     // do the step
@@ -224,7 +225,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
     // make sure we returned the correct error message for the insufficient quota error
     assertEquals(
         "User quota exceeded for pipeline array_imputation. User quota limit: 2500, "
-            + "Quota consumed before this run: 0, Quota consumed for this run: 11000. "
+            + "Quota consumed before this run: 0, Quota consumed for this run: 9000. "
             + "Please visit https://services.terra.bio/pipelines/quotas to purchase additional quota.",
         result.getException().get().getMessage());
 
@@ -233,7 +234,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
         pipelineRunsRepository
             .findByJobIdAndUserId(testJobId, TestUtils.TEST_USER_1_ID)
             .orElseThrow();
-    assertEquals(11000, updatedPipelineRun.getRawQuotaConsumed());
+    assertEquals(9000, updatedPipelineRun.getRawQuotaConsumed());
   }
 
   @Test
@@ -255,7 +256,7 @@ class QuotaConsumedValidationStepTest extends BaseEmbeddedDbTest {
 
     // make sure we returned the correct error message
     assertEquals(
-        "The number of submitted samples for this job (50000) exceeds the maximum allowed (20000). Please try again with a smaller input size.",
+        "The number of submitted samples for this job (50000) exceeds the maximum allowed (10000). Please try again with a smaller input size.",
         result.getException().get().getMessage());
   }
 

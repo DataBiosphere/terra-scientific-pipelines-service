@@ -65,14 +65,19 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     // Test quotas defined in pipelines-config.yml (test config)
     PipelineConfigurations.PipelineQuotaConfiguration arrayImputationQuota =
         pipelineConfigurations.getQuotaForPipeline(PipelinesEnum.ARRAY_IMPUTATION);
+    PipelineConfigurations.PipelineQuotaVersionConfiguration arrayImputationV1Quota =
+        pipelineConfigurations.getVersionQuotaForPipeline(PipelinesEnum.ARRAY_IMPUTATION, 1);
     assertEquals(2500, arrayImputationQuota.getDefaultQuota());
-    assertEquals(500, arrayImputationQuota.getMinQuotaConsumed());
+    assertEquals(500, arrayImputationV1Quota.getMinQuotaConsumed());
+    assertEquals(10000, arrayImputationV1Quota.getMaxQuotaConsumed());
     assertEquals(QuotaUnitsEnum.SAMPLES, arrayImputationQuota.getQuotaUnits());
-
     PipelineConfigurations.PipelineQuotaConfiguration lowPassImputationQuota =
         pipelineConfigurations.getQuotaForPipeline(PipelinesEnum.LOW_PASS_IMPUTATION);
+    PipelineConfigurations.PipelineQuotaVersionConfiguration lowPassImputationV1Quota =
+        pipelineConfigurations.getVersionQuotaForPipeline(PipelinesEnum.LOW_PASS_IMPUTATION, 1);
     assertEquals(100, lowPassImputationQuota.getDefaultQuota());
-    assertEquals(10, lowPassImputationQuota.getMinQuotaConsumed());
+    assertEquals(10, lowPassImputationV1Quota.getMinQuotaConsumed());
+    assertEquals(5000, lowPassImputationV1Quota.getMaxQuotaConsumed());
     assertEquals(QuotaUnitsEnum.SAMPLES, lowPassImputationQuota.getQuotaUnits());
   }
 
@@ -88,7 +93,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
 
     // should not throw
     quotasService.validateUserHasEnoughQuota(
-        TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION);
+        TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 1);
   }
 
   @Test
@@ -102,12 +107,52 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
             .isEmpty());
 
     // should not throw, and should create a default allocation for the user
-    quotasService.validateUserHasEnoughQuota(TestUtils.TEST_USER_1_ID, pipeline);
+    quotasService.validateUserHasEnoughQuota(TestUtils.TEST_USER_1_ID, pipeline, 1);
 
     List<QuotaAllocation> allocations =
         quotasService.getAllQuotaAllocationsForUserAndPipeline(TestUtils.TEST_USER_1_ID, pipeline);
     assertEquals(1, allocations.size());
     assertEquals(QuotaAllocationSourceEnum.DEFAULT_FREE, allocations.get(0).getQuotaSource());
+  }
+
+  @Test
+  void verifyUserQuotaUsesVersionSpecificMinimum() {
+    // user has 600 available: enough for v1 (min 500) but not for v2 (min 700)
+    quotasService.allocateQuotaForUserAndPipeline(
+        TestUtils.TEST_USER_1_ID,
+        PipelinesEnum.ARRAY_IMPUTATION,
+        QuotaAllocationSourceEnum.DEFAULT_FREE,
+        600,
+        null);
+
+    // should not throw for v1
+    quotasService.validateUserHasEnoughQuota(
+        TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 1);
+
+    BadRequestException exception =
+        assertThrows(
+            BadRequestException.class,
+            () ->
+                quotasService.validateUserHasEnoughQuota(
+                    TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 2));
+    assertEquals(
+        "Insufficient quota to run the pipeline. Quota available: 600, Minimum quota required: 700. "
+            + "Please visit https://services.terra.bio/pipelines/quotas to purchase additional quota.",
+        exception.getMessage());
+  }
+
+  @Test
+  void verifyUnknownPipelineVersionDoesNotCreateDefaultAllocation() {
+    PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
+
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> quotasService.validateUserHasEnoughQuota(TestUtils.TEST_USER_1_ID, pipeline, 999));
+
+    assertTrue(
+        quotasService
+            .getAllQuotaAllocationsForUserAndPipeline(TestUtils.TEST_USER_1_ID, pipeline)
+            .isEmpty());
   }
 
   @Test
@@ -128,7 +173,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
             BadRequestException.class,
             () ->
                 quotasService.validateUserHasEnoughQuota(
-                    TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION));
+                    TestUtils.TEST_USER_1_ID, PipelinesEnum.ARRAY_IMPUTATION, 1));
 
     // Validate the exception message
     assertEquals(
@@ -860,7 +905,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   @Test
   void getOrInitializeQuotaTotalsCreatesDefaultWhenNoAllocationExists() {
     PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
-    int expectedDefaultQuota = quotasService.getPipelineQuota(pipeline).getDefaultQuota();
+    int expectedDefaultQuota = quotasService.getPipelineQuota(pipeline, 1).getDefaultQuota();
 
     // verify no allocations exist yet
     assertTrue(
@@ -915,8 +960,6 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     PipelineConfigurations.PipelineQuotaConfiguration defaultQuotaZeroConfig =
         new PipelineConfigurations.PipelineQuotaConfiguration();
     defaultQuotaZeroConfig.setDefaultQuota(0);
-    defaultQuotaZeroConfig.setMinQuotaConsumed(100);
-    defaultQuotaZeroConfig.setMaxQuotaConsumed(1000);
     defaultQuotaZeroConfig.setQuotaUnits(QuotaUnitsEnum.SAMPLES);
 
     PipelineConfigurations mockPipelineConfigurations = mock(PipelineConfigurations.class);
@@ -991,7 +1034,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     PipelinesEnum lowPassImputationWithDefault = PipelinesEnum.LOW_PASS_IMPUTATION;
     PipelinesEnum arrayImputationWithNoDefault = PipelinesEnum.ARRAY_IMPUTATION;
     int arrayImputationDefaultQuota =
-        quotasService.getPipelineQuota(arrayImputationWithNoDefault).getDefaultQuota();
+        quotasService.getPipelineQuota(arrayImputationWithNoDefault, 1).getDefaultQuota();
 
     // create a DEFAULT_FREE allocation for LOW_PASS_IMPUTATION
     quotasService.getOrInitializeQuotaTotalsForUserAndPipeline(
@@ -1033,7 +1076,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
   void getOrInitializeQuotaTotalsCreatesDefaultPerUser() {
     PipelinesEnum pipeline = PipelinesEnum.ARRAY_IMPUTATION;
     String otherUserId = "rocket-raccoon";
-    int defaultQuota = quotasService.getPipelineQuota(pipeline).getDefaultQuota();
+    int defaultQuota = quotasService.getPipelineQuota(pipeline, 1).getDefaultQuota();
 
     // DEFAULT_FREE for one user should not suppress the default for another user
     quotasService.getOrInitializeQuotaTotalsForUserAndPipeline(GROOT_USER_ID, pipeline);
@@ -1107,7 +1150,7 @@ class QuotasServiceTest extends BaseEmbeddedDbTest {
     assertTrue(endLatch.await(10, TimeUnit.SECONDS), "All threads should complete within timeout");
 
     // Every thread, including those that lost the race, should see the default quota
-    int expectedDefaultQuota = quotasService.getPipelineQuota(pipelineName).getDefaultQuota();
+    int expectedDefaultQuota = quotasService.getPipelineQuota(pipelineName, 1).getDefaultQuota();
     for (Future<UserQuotaTotals> future : futures) {
       UserQuotaTotals totals = future.get(1, TimeUnit.SECONDS);
       assertEquals(expectedDefaultQuota, totals.totalAllocated());
