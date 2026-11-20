@@ -47,21 +47,14 @@ public class QuotasService {
     this.pipelineConfigurations = pipelineConfigurations;
   }
 
-  /** This method gets the PipelineQuota settings for a given pipeline from YAML definition. */
-  public PipelineQuota getPipelineQuota(PipelinesEnum pipelineName) {
-    PipelineConfigurations.PipelineQuotaConfiguration quotaConfig =
-        pipelineConfigurations.getQuotaForPipeline(pipelineName);
-    return new PipelineQuota(
-        pipelineName,
-        quotaConfig.getDefaultQuota(),
-        quotaConfig.getMinQuotaConsumed(),
-        quotaConfig.getMaxQuotaConsumed(),
-        quotaConfig.getQuotaUnits());
+  /** This method gets the PipelineQuota settings for a pipeline version from YAML definition. */
+  public PipelineQuota getPipelineQuota(PipelinesEnum pipelineName, int pipelineVersion) {
+    return pipelineConfigurations.getPipelineQuota(pipelineName, pipelineVersion);
   }
 
-  /** This method gets the quota units value for a given pipeline. */
+  /** This method gets the quota units value for a pipeline. */
   public QuotaUnitsEnum getQuotaUnitsForPipeline(PipelinesEnum pipelineName) {
-    return getPipelineQuota(pipelineName).getQuotaUnits();
+    return pipelineConfigurations.getQuotaForPipeline(pipelineName).getQuotaUnits();
   }
 
   /**
@@ -70,11 +63,17 @@ public class QuotasService {
    *
    * @param userId - the user id
    * @param pipelineName - the pipeline name
+   * @param pipelineVersion - the pipeline version, whose minimum quota is required
    */
-  public void validateUserHasEnoughQuota(String userId, PipelinesEnum pipelineName) {
+  public void validateUserHasEnoughQuota(
+      String userId, PipelinesEnum pipelineName, int pipelineVersion) {
+    // look up the version quota first so a bad version fails before any allocation is created
+    int minQuotaNeededByPipeline =
+        pipelineConfigurations
+            .getVersionQuotaForPipeline(pipelineName, pipelineVersion)
+            .getMinQuotaConsumed();
     UserQuotaTotals userQuotaTotals =
         getOrInitializeQuotaTotalsForUserAndPipeline(userId, pipelineName);
-    int minQuotaNeededByPipeline = getPipelineQuota(pipelineName).getMinQuotaConsumed();
     int availableUserQuota = userQuotaTotals.totalAllocated() - userQuotaTotals.totalConsumed();
 
     if (availableUserQuota < minQuotaNeededByPipeline) {
@@ -164,7 +163,8 @@ public class QuotasService {
    */
   public UserQuotaTotals getOrInitializeQuotaTotalsForUserAndPipeline(
       String userId, PipelinesEnum pipelineName) {
-    PipelineQuota pipelineQuota = getPipelineQuota(pipelineName);
+    PipelineConfigurations.PipelineQuotaConfiguration pipelineQuota =
+        pipelineConfigurations.getQuotaForPipeline(pipelineName);
     boolean userHasDefaultFreeAllocation =
         quotaAllocationsRepository.existsByUserIdAndPipelineNameAndQuotaSource(
             userId, pipelineName, QuotaAllocationSourceEnum.DEFAULT_FREE);

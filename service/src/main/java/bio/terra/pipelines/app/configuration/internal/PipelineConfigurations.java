@@ -8,6 +8,7 @@ import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.common.utils.QuotaUnitsEnum;
 import bio.terra.pipelines.model.PipelineInputDefinition;
 import bio.terra.pipelines.model.PipelineOutputDefinition;
+import bio.terra.pipelines.model.PipelineQuota;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -63,13 +64,57 @@ public class PipelineConfigurations {
   @Getter
   public static class PipelineQuotaConfiguration {
     private Integer defaultQuota;
+    private QuotaUnitsEnum quotaUnits;
+    private Map<String, PipelineQuotaVersionConfiguration> versions;
+  }
+
+  @Setter
+  @Getter
+  public static class PipelineQuotaVersionConfiguration {
     private Integer minQuotaConsumed;
     private Integer maxQuotaConsumed;
-    private QuotaUnitsEnum quotaUnits;
   }
 
   public PipelineQuotaConfiguration getQuotaForPipeline(PipelinesEnum pipelineName) {
-    return pipelineQuotas.get(pipelineName.getConfigKeyValue());
+    PipelineQuotaConfiguration quota = pipelineQuotas.get(pipelineName.getConfigKeyValue());
+    if (quota == null) {
+      throw new IllegalArgumentException(
+          "No quota configuration found for pipeline '%s'"
+              .formatted(pipelineName.getConfigKeyValue()));
+    }
+    return quota;
+  }
+
+  public PipelineQuotaVersionConfiguration getVersionQuotaForPipeline(
+      PipelinesEnum pipelineName, int pipelineVersion) {
+    PipelineQuotaConfiguration pipelineQuota = getQuotaForPipeline(pipelineName);
+    Map<String, PipelineQuotaVersionConfiguration> versions = pipelineQuota.getVersions();
+    if (versions == null) {
+      throw new IllegalArgumentException(
+          "No version quota configuration found for pipeline '%s'"
+              .formatted(pipelineName.getConfigKeyValue()));
+    }
+
+    PipelineQuotaVersionConfiguration versionQuota = versions.get(String.valueOf(pipelineVersion));
+    if (versionQuota == null) {
+      throw new IllegalArgumentException(
+          "No quota configuration found for pipeline '%s' version '%s'"
+              .formatted(pipelineName.getConfigKeyValue(), pipelineVersion));
+    }
+    return versionQuota;
+  }
+
+  public PipelineQuota getPipelineQuota(PipelinesEnum pipelineName, int pipelineVersion) {
+    PipelineQuotaConfiguration pipelineQuota = getQuotaForPipeline(pipelineName);
+    PipelineQuotaVersionConfiguration versionQuota =
+        getVersionQuotaForPipeline(pipelineName, pipelineVersion);
+
+    return new PipelineQuota(
+        pipelineName,
+        pipelineQuota.getDefaultQuota(),
+        versionQuota.getMinQuotaConsumed(),
+        versionQuota.getMaxQuotaConsumed(),
+        pipelineQuota.getQuotaUnits());
   }
 
   public WdlBasedPipelineConfiguration getPipelineConfiguration(String pipelineKey) {

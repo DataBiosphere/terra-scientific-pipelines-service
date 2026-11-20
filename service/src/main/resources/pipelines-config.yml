@@ -45,19 +45,34 @@ configurations:
   pipelineQuotas:
     arrayImputation:
       defaultQuota: 2500
-      minQuotaConsumed: 500
-      maxQuotaConsumed: 70000
       quotaUnits: SAMPLES
+      versions:
+        "1":
+          minQuotaConsumed: 500
+          maxQuotaConsumed: 10000
+        "2":
+          minQuotaConsumed: 500
+          maxQuotaConsumed: 10000
+        "3":
+          minQuotaConsumed: 500
+          maxQuotaConsumed: 70000
     lowPassImputation:
       defaultQuota: 300
-      minQuotaConsumed: 100
-      maxQuotaConsumed: 1000
       quotaUnits: SAMPLES
+      versions:
+        "1":
+          minQuotaConsumed: 100
+          maxQuotaConsumed: 1000
+        "2":
+          minQuotaConsumed: 100
+          maxQuotaConsumed: 1000
     svImputation:
       defaultQuota: 500
-      minQuotaConsumed: 250
-      maxQuotaConsumed: 10000
       quotaUnits: SAMPLES
+      versions:
+        "1":
+          minQuotaConsumed: 250
+          maxQuotaConsumed: 10000
   pipelines:
     arrayImputation:
       1:
