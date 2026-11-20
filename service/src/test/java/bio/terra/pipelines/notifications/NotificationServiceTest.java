@@ -3,6 +3,7 @@ package bio.terra.pipelines.notifications;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
@@ -27,11 +28,13 @@ import bio.terra.pipelines.testutils.TestUtils;
 import bio.terra.stairway.FlightContext;
 import bio.terra.stairway.StepResult;
 import bio.terra.stairway.StepStatus;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -242,19 +245,13 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
   void sendUserQuotaChangeNotificationSuccess() throws IOException {
     String userId = "groot-user";
     String pipelineName = "my-test-pipeline";
-    int previousQuotaLimit = 100;
-    int newQuotaLimit = 200;
-    int quotaConsumedByUser = 50;
-    int quotaAvailable = 150;
+    String customMessage = "Your 'lifetime quota allocated' has been updated.";
+    UserQuotaTotals previousQuotaTotals = new UserQuotaTotals(100, 50);
+    UserQuotaTotals updatedQuotaTotals = new UserQuotaTotals(200, 50);
 
     TeaspoonsUserQuotaChangedNotification expectedNotification =
         new TeaspoonsUserQuotaChangedNotification(
-            userId,
-            pipelineName,
-            String.valueOf(previousQuotaLimit),
-            String.valueOf(newQuotaLimit),
-            String.valueOf(quotaConsumedByUser),
-            String.valueOf(quotaAvailable));
+            userId, pipelineName, customMessage, previousQuotaTotals, updatedQuotaTotals, "150");
 
     String expectedMessage = objectMapper.writeValueAsString(expectedNotification);
 
@@ -266,12 +263,7 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
             expectedMessage);
 
     notificationService.configureAndSendUserQuotaChangedNotification(
-        userId,
-        pipelineName,
-        previousQuotaLimit,
-        newQuotaLimit,
-        quotaConsumedByUser,
-        quotaAvailable);
+        userId, pipelineName, customMessage, previousQuotaTotals, updatedQuotaTotals);
 
     // assert that pubsub service is called with expected parameters
     verify(pubsubService, times(1))
@@ -282,22 +274,50 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
+  void sendUserQuotaChangeNotificationForManualConsumeHasExpectedFields() throws IOException {
+    String userId = "groot-user";
+    String pipelineName = "my-test-pipeline";
+    String customMessage = "A manual adjustment was made to your 'lifetime quota consumed'.";
+
+    // allocated is unchanged, consumed goes from 50 to 70
+    notificationService.configureAndSendUserQuotaChangedNotification(
+        userId,
+        pipelineName,
+        customMessage,
+        new UserQuotaTotals(200, 50),
+        new UserQuotaTotals(200, 70));
+
+    ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+    verify(pubsubService, times(1))
+        .publishMessage(
+            eq(notificationConfiguration.projectId()),
+            eq(notificationConfiguration.topicId()),
+            messageCaptor.capture());
+
+    JsonNode published = objectMapper.readTree(messageCaptor.getValue());
+    assertEquals(
+        "TeaspoonsUserQuotaChangedNotification", published.get("notificationType").asText());
+    assertEquals(userId, published.get("recipientUserId").asText());
+    assertEquals(pipelineName, published.get("pipelineDisplayName").asText());
+    assertEquals(customMessage, published.get("customMessage").asText());
+    assertEquals("200", published.get("previousQuotaAllocated").asText());
+    assertEquals("200", published.get("updatedQuotaAllocated").asText());
+    assertEquals("50", published.get("previousQuotaConsumed").asText());
+    assertEquals("70", published.get("updatedQuotaConsumed").asText());
+    assertEquals("130", published.get("quotaAvailable").asText());
+  }
+
+  @Test
   void sendUserQuotaChangeNotificationThrowsIOException() throws IOException {
     String userId = "groot-user";
     String pipelineName = "my-test-pipeline";
-    int previousQuotaLimit = 100;
-    int newQuotaLimit = 200;
-    int quotaConsumedByUser = 50;
-    int quotaAvailable = 150;
+    String customMessage = "Your 'lifetime quota allocated' has been updated.";
+    UserQuotaTotals previousQuotaTotals = new UserQuotaTotals(100, 50);
+    UserQuotaTotals updatedQuotaTotals = new UserQuotaTotals(200, 50);
 
     TeaspoonsUserQuotaChangedNotification expectedNotification =
         new TeaspoonsUserQuotaChangedNotification(
-            userId,
-            pipelineName,
-            String.valueOf(previousQuotaLimit),
-            String.valueOf(newQuotaLimit),
-            String.valueOf(quotaConsumedByUser),
-            String.valueOf(quotaAvailable));
+            userId, pipelineName, customMessage, previousQuotaTotals, updatedQuotaTotals, "150");
 
     String expectedMessage = objectMapper.writeValueAsString(expectedNotification);
 
@@ -312,12 +332,7 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
     assertDoesNotThrow(
         () ->
             notificationService.configureAndSendUserQuotaChangedNotification(
-                userId,
-                pipelineName,
-                previousQuotaLimit,
-                newQuotaLimit,
-                quotaConsumedByUser,
-                quotaAvailable));
+                userId, pipelineName, customMessage, previousQuotaTotals, updatedQuotaTotals));
   }
 
   /**

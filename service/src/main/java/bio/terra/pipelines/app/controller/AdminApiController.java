@@ -37,6 +37,11 @@ public class AdminApiController implements AdminApi {
   private final QuotasService quotasService;
   private final NotificationService notificationService;
 
+  private static final String QUOTA_ALLOCATED_EMAIL_MSG =
+      "Your 'lifetime quota allocated' has been updated.";
+  private static final String QUOTA_CONSUMED_EMAIL_MSG =
+      "A manual adjustment was made to your 'lifetime quota consumed'.";
+
   @Autowired
   public AdminApiController(
       SamConfiguration samConfiguration,
@@ -162,10 +167,18 @@ public class AdminApiController implements AdminApi {
     UserQuotaTotals quotaTotals =
         quotasService.getQuotaTotalsForUserAndPipeline(targetUserId, validatedPipelineName);
 
-    // if requested, send email notification to the user about the quota allocation
+    // if requested, send email notification to the user about the quota allocation.
+    // The quota consumed is unchanged by an allocation, so the previous and new consumed values
+    // are the same.
     if (body.isNotifyUser()) {
+      UserQuotaTotals previousQuotaTotals =
+          new UserQuotaTotals(quotaTotals.totalAllocated() - amount, quotaTotals.totalConsumed());
       sendQuotaChangedNotification(
-          targetUserId, validatedPipelineName, quotaTotals.totalAllocated() - amount, quotaTotals);
+          targetUserId,
+          validatedPipelineName,
+          QUOTA_ALLOCATED_EMAIL_MSG,
+          previousQuotaTotals,
+          quotaTotals);
     }
 
     return new ResponseEntity<>(
@@ -214,12 +227,14 @@ public class AdminApiController implements AdminApi {
         quotasService.getQuotaTotalsForUserAndPipeline(targetUserId, validatedPipelineName);
 
     // if requested, send email notification to the user about the quota change.
+    // quotaTotals was fetched before the consumption, so it holds the previous totals.
     // The quota limit is unchanged by a consumption, so the previous and new limits are the same.
     if (body.isNotifyUser()) {
       sendQuotaChangedNotification(
           targetUserId,
           validatedPipelineName,
-          updatedQuotaTotals.totalAllocated(),
+          QUOTA_CONSUMED_EMAIL_MSG,
+          quotaTotals,
           updatedQuotaTotals);
     }
 
@@ -331,22 +346,19 @@ public class AdminApiController implements AdminApi {
    *
    * @param userId the user's Sam id
    * @param pipelineName the pipeline for which the quota changed
-   * @param previousQuotaLimit the user's quota limit before the change
+   * @param customMessage message included in the email describing what changed
+   * @param previousQuotaTotals the user's quota totals before the change
    * @param updatedQuotaTotals the user's quota totals after the change
    */
   private void sendQuotaChangedNotification(
       String userId,
       PipelinesEnum pipelineName,
-      int previousQuotaLimit,
+      String customMessage,
+      UserQuotaTotals previousQuotaTotals,
       UserQuotaTotals updatedQuotaTotals) {
     String pipelineDisplayName = pipelinesService.getLatestPipeline(pipelineName).getDisplayName();
 
     notificationService.configureAndSendUserQuotaChangedNotification(
-        userId,
-        pipelineDisplayName,
-        previousQuotaLimit,
-        updatedQuotaTotals.totalAllocated(),
-        updatedQuotaTotals.totalConsumed(),
-        updatedQuotaTotals.totalAllocated() - updatedQuotaTotals.totalConsumed());
+        userId, pipelineDisplayName, customMessage, previousQuotaTotals, updatedQuotaTotals);
   }
 }
