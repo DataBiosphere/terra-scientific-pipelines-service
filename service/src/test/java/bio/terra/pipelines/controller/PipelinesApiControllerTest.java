@@ -64,7 +64,7 @@ class PipelinesApiControllerTest {
         .thenReturn(testUser);
     when(pipelinesServiceMock.getPipeline(any(PipelinesEnum.class), anyInt(), anyBoolean()))
         .thenReturn(getTestPipeline());
-    when(quotasServiceMock.getPipelineQuota(any(PipelinesEnum.class)))
+    when(quotasServiceMock.getPipelineQuota(any(PipelinesEnum.class), eq(1)))
         .thenReturn(TestUtils.TEST_PIPELINE_QUOTA_1);
   }
 
@@ -211,7 +211,7 @@ class PipelinesApiControllerTest {
         .thenReturn(TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1);
     PipelineQuota testQuota =
         new PipelineQuota(pipelineNameEnum, 100, 15, 1000, QuotaUnitsEnum.SAMPLES);
-    when(quotasServiceMock.getPipelineQuota(pipelineNameEnum)).thenReturn(testQuota);
+    when(quotasServiceMock.getPipelineQuota(pipelineNameEnum, 1)).thenReturn(testQuota);
 
     MvcResult result =
         mockMvc
@@ -232,6 +232,34 @@ class PipelinesApiControllerTest {
     assertEquals(100, response.getPipelineQuota().getDefaultQuota());
     assertEquals(15, response.getPipelineQuota().getMinQuotaConsumed());
     assertEquals("samples", response.getPipelineQuota().getQuotaUnits());
+  }
+
+  @Test
+  void getPipelineDetailsUsesQuotaForRequestedVersion() throws Exception {
+    PipelinesEnum pipelineNameEnum = PipelinesEnum.ARRAY_IMPUTATION;
+    String pipelineName = pipelineNameEnum.getLowerCaseValue();
+
+    Pipeline version2Pipeline =
+        TestUtils.TEST_ARRAY_IMPUTATION_PIPELINE_1.toBuilder().version(2).build();
+    when(pipelinesServiceMock.getPipeline(pipelineNameEnum, 2, false)).thenReturn(version2Pipeline);
+    when(quotasServiceMock.getPipelineQuota(pipelineNameEnum, 2))
+        .thenReturn(new PipelineQuota(pipelineNameEnum, 100, 700, 20000, QuotaUnitsEnum.SAMPLES));
+
+    MvcResult result =
+        mockMvc
+            .perform(
+                post("/api/pipelines/v1/" + pipelineName)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"pipelineVersion\": 2}"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    ApiPipelineWithDetails response =
+        new ObjectMapper()
+            .readValue(result.getResponse().getContentAsString(), ApiPipelineWithDetails.class);
+
+    assertEquals(700, response.getPipelineQuota().getMinQuotaConsumed());
+    assertEquals(20000, response.getPipelineQuota().getMaxQuotaConsumed());
   }
 
   @Test
