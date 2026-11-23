@@ -39,7 +39,7 @@ dependencyManagement {
         // BOM would require upgrading Spring to 4.x, which is a larger refactor that is difficult to do with current
         // Terra dependencies.
         // Anytime this updates, check the associated io.prometheus compatibility, pinned separately below.
-        dependencySet(group: 'io.micrometer', version: '1.17.2') {
+        dependencySet(group: 'io.micrometer', version: '1.18.0') {
             entry 'micrometer-core'
             entry 'micrometer-commons'
             entry 'micrometer-observation'
@@ -63,7 +63,7 @@ dependencyManagement {
 
         // Spring Boot BOM pins logback to 1.5.32; override to 1.6.3 for a security fix (CVE-2026-19880).
         // See https://broadworkbench.atlassian.net/browse/TSPS-1271
-        dependencySet(group: 'ch.qos.logback', version: '1.6.6') {
+        dependencySet(group: 'ch.qos.logback', version: '1.6.8') {
             entry 'logback-classic'
             entry 'logback-core'
         }
@@ -130,10 +130,10 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
     // OpenTelemetry @WithSpan annotations:
-    implementation 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.33.1'
+    implementation 'io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.34.0'
 
     // gcs
-    implementation platform('com.google.cloud:libraries-bom:26.93.0')
+    implementation platform('com.google.cloud:libraries-bom:26.94.0')
     implementation 'com.google.cloud:google-cloud-storage'
     implementation 'com.google.cloud:google-cloud-pubsub'
 
@@ -146,7 +146,7 @@ dependencies {
     implementation 'io.micrometer:micrometer-registry-prometheus'
 
     // sentry
-    implementation 'io.sentry:sentry:8.64.0'
+    implementation 'io.sentry:sentry:8.65.0'
 
     // jersey hk2 for dependency injection
     implementation 'org.glassfish.jersey.inject:jersey-hk2'
