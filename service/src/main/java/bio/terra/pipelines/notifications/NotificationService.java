@@ -45,9 +45,9 @@ public class NotificationService {
 
   // custom messages included in the quota changed email, describing what changed
   private static final String QUOTA_ALLOCATED_EMAIL_MSG =
-      "Your 'lifetime quota allocated' has been updated.";
+      "Your Lifetime Quota Allocated has been updated.";
   private static final String QUOTA_CONSUMED_EMAIL_MSG =
-      "A manual adjustment was made to your 'lifetime quota consumed'.";
+      "A manual adjustment was made to your Lifetime Quota Consumed.";
 
   public NotificationService(
       PipelineRunsService pipelineRunsService,

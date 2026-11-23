@@ -255,7 +255,7 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
         new TeaspoonsUserQuotaChangedNotification(
             userId,
             pipelineDisplayName,
-            "Your 'lifetime quota allocated' has been updated.",
+            "Your Lifetime Quota Allocated has been updated.",
             previousQuotaTotals,
             updatedQuotaTotals,
             "150");
@@ -285,7 +285,7 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
     String userId = "groot-user";
     Pipeline pipeline =
         pipelinesService.getPipelineByPipelineKey(TestUtils.TEST_PIPELINE_KEY_1, true);
-    String customMessage = "Your 'lifetime quota allocated' has been updated.";
+    String customMessage = "Your Lifetime Quota Allocated has been updated.";
     UserQuotaTotals previousQuotaTotals = new UserQuotaTotals(100, 50);
     UserQuotaTotals updatedQuotaTotals = new UserQuotaTotals(200, 50);
 
@@ -339,7 +339,7 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
     assertEquals(userId, published.get("recipientUserId").asText());
     assertEquals(pipelineDisplayName, published.get("pipelineDisplayName").asText());
     assertEquals(
-        "A manual adjustment was made to your 'lifetime quota consumed'.",
+        "A manual adjustment was made to your Lifetime Quota Consumed.",
         published.get("customMessage").asText());
     assertEquals("200", published.get("previousQuotaAllocated").asText());
     assertEquals("200", published.get("updatedQuotaAllocated").asText());
@@ -353,7 +353,7 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
     String userId = "groot-user";
     Pipeline pipeline =
         pipelinesService.getPipelineByPipelineKey(TestUtils.TEST_PIPELINE_KEY_1, true);
-    String customMessage = "A manual adjustment was made to your 'lifetime quota consumed'";
+    String customMessage = "A manual adjustment was made to your Lifetime Quota Consumed'";
     UserQuotaTotals previousQuotaTotals = new UserQuotaTotals(100, 50);
     UserQuotaTotals updatedQuotaTotals = new UserQuotaTotals(200, 50);
 
