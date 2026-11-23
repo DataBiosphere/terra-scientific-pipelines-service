@@ -242,16 +242,23 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void sendUserQuotaChangeNotificationSuccess() throws IOException {
+  void sendQuotaAllocationNotificationSuccess() throws IOException {
     String userId = "groot-user";
-    String pipelineName = "my-test-pipeline";
-    String customMessage = "Your 'lifetime quota allocated' has been updated.";
+    Pipeline pipeline =
+        pipelinesService.getPipelineByPipelineKey(TestUtils.TEST_PIPELINE_KEY_1, true);
+    String pipelineDisplayName =
+        pipelinesService.getLatestPipeline(pipeline.getName()).getDisplayName();
     UserQuotaTotals previousQuotaTotals = new UserQuotaTotals(100, 50);
     UserQuotaTotals updatedQuotaTotals = new UserQuotaTotals(200, 50);
 
     TeaspoonsUserQuotaChangedNotification expectedNotification =
         new TeaspoonsUserQuotaChangedNotification(
-            userId, pipelineName, customMessage, previousQuotaTotals, updatedQuotaTotals, "150");
+            userId,
+            pipelineDisplayName,
+            "Your 'lifetime quota allocated' has been updated.",
+            previousQuotaTotals,
+            updatedQuotaTotals,
+            "150");
 
     String expectedMessage = objectMapper.writeValueAsString(expectedNotification);
 
@@ -262,8 +269,8 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
             notificationConfiguration.topicId(),
             expectedMessage);
 
-    notificationService.configureAndSendUserQuotaChangedNotification(
-        userId, pipelineName, customMessage, previousQuotaTotals, updatedQuotaTotals);
+    notificationService.sendAdminQuotaAllocationNotification(
+        userId, pipeline.getName(), previousQuotaTotals, updatedQuotaTotals);
 
     // assert that pubsub service is called with expected parameters
     verify(pubsubService, times(1))
@@ -274,50 +281,22 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
   }
 
   @Test
-  void sendUserQuotaChangeNotificationForManualConsumeHasExpectedFields() throws IOException {
+  void sendQuotaAllocationNotificationThrowsIOException() throws IOException {
     String userId = "groot-user";
-    String pipelineName = "my-test-pipeline";
-    String customMessage = "A manual adjustment was made to your 'lifetime quota consumed'.";
-
-    // allocated is unchanged, consumed goes from 50 to 70
-    notificationService.configureAndSendUserQuotaChangedNotification(
-        userId,
-        pipelineName,
-        customMessage,
-        new UserQuotaTotals(200, 50),
-        new UserQuotaTotals(200, 70));
-
-    ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
-    verify(pubsubService, times(1))
-        .publishMessage(
-            eq(notificationConfiguration.projectId()),
-            eq(notificationConfiguration.topicId()),
-            messageCaptor.capture());
-
-    JsonNode published = objectMapper.readTree(messageCaptor.getValue());
-    assertEquals(
-        "TeaspoonsUserQuotaChangedNotification", published.get("notificationType").asText());
-    assertEquals(userId, published.get("recipientUserId").asText());
-    assertEquals(pipelineName, published.get("pipelineDisplayName").asText());
-    assertEquals(customMessage, published.get("customMessage").asText());
-    assertEquals("200", published.get("previousQuotaAllocated").asText());
-    assertEquals("200", published.get("updatedQuotaAllocated").asText());
-    assertEquals("50", published.get("previousQuotaConsumed").asText());
-    assertEquals("70", published.get("updatedQuotaConsumed").asText());
-    assertEquals("130", published.get("quotaAvailable").asText());
-  }
-
-  @Test
-  void sendUserQuotaChangeNotificationThrowsIOException() throws IOException {
-    String userId = "groot-user";
-    String pipelineName = "my-test-pipeline";
+    Pipeline pipeline =
+        pipelinesService.getPipelineByPipelineKey(TestUtils.TEST_PIPELINE_KEY_1, true);
     String customMessage = "Your 'lifetime quota allocated' has been updated.";
     UserQuotaTotals previousQuotaTotals = new UserQuotaTotals(100, 50);
     UserQuotaTotals updatedQuotaTotals = new UserQuotaTotals(200, 50);
 
     TeaspoonsUserQuotaChangedNotification expectedNotification =
         new TeaspoonsUserQuotaChangedNotification(
-            userId, pipelineName, customMessage, previousQuotaTotals, updatedQuotaTotals, "150");
+            userId,
+            pipeline.getDisplayName(),
+            customMessage,
+            previousQuotaTotals,
+            updatedQuotaTotals,
+            "150");
 
     String expectedMessage = objectMapper.writeValueAsString(expectedNotification);
 
@@ -331,8 +310,76 @@ class NotificationServiceTest extends BaseEmbeddedDbTest {
     // assert that exception is caught and does not propagate
     assertDoesNotThrow(
         () ->
-            notificationService.configureAndSendUserQuotaChangedNotification(
-                userId, pipelineName, customMessage, previousQuotaTotals, updatedQuotaTotals));
+            notificationService.sendAdminQuotaAllocationNotification(
+                userId, pipeline.getName(), previousQuotaTotals, updatedQuotaTotals));
+  }
+
+  @Test
+  void sendManualQuotaConsumedNotificationSuccess() throws IOException {
+    String userId = "groot-user";
+    Pipeline pipeline =
+        pipelinesService.getPipelineByPipelineKey(TestUtils.TEST_PIPELINE_KEY_1, true);
+    String pipelineDisplayName =
+        pipelinesService.getLatestPipeline(pipeline.getName()).getDisplayName();
+
+    // allocated is unchanged, consumed goes from 50 to 70
+    notificationService.sendAdminManualQuotaConsumptionNotification(
+        userId, pipeline.getName(), new UserQuotaTotals(200, 50), new UserQuotaTotals(200, 70));
+
+    ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+    verify(pubsubService, times(1))
+        .publishMessage(
+            eq(notificationConfiguration.projectId()),
+            eq(notificationConfiguration.topicId()),
+            messageCaptor.capture());
+
+    JsonNode published = objectMapper.readTree(messageCaptor.getValue());
+    assertEquals(
+        "TeaspoonsUserQuotaChangedNotification", published.get("notificationType").asText());
+    assertEquals(userId, published.get("recipientUserId").asText());
+    assertEquals(pipelineDisplayName, published.get("pipelineDisplayName").asText());
+    assertEquals(
+        "A manual adjustment was made to your 'lifetime quota consumed'.",
+        published.get("customMessage").asText());
+    assertEquals("200", published.get("previousQuotaAllocated").asText());
+    assertEquals("200", published.get("updatedQuotaAllocated").asText());
+    assertEquals("50", published.get("previousQuotaConsumed").asText());
+    assertEquals("70", published.get("updatedQuotaConsumed").asText());
+    assertEquals("130", published.get("quotaAvailable").asText());
+  }
+
+  @Test
+  void sendManualQuotaConsumedNotificationThrowsIOException() throws IOException {
+    String userId = "groot-user";
+    Pipeline pipeline =
+        pipelinesService.getPipelineByPipelineKey(TestUtils.TEST_PIPELINE_KEY_1, true);
+    String customMessage = "A manual adjustment was made to your 'lifetime quota consumed'";
+    UserQuotaTotals previousQuotaTotals = new UserQuotaTotals(100, 50);
+    UserQuotaTotals updatedQuotaTotals = new UserQuotaTotals(200, 50);
+
+    TeaspoonsUserQuotaChangedNotification expectedNotification =
+        new TeaspoonsUserQuotaChangedNotification(
+            userId,
+            pipeline.getDisplayName(),
+            customMessage,
+            previousQuotaTotals,
+            updatedQuotaTotals,
+            "150");
+
+    String expectedMessage = objectMapper.writeValueAsString(expectedNotification);
+
+    doThrow(new IOException("Test PubsubService IOException"))
+        .when(pubsubService)
+        .publishMessage(
+            notificationConfiguration.projectId(),
+            notificationConfiguration.topicId(),
+            expectedMessage);
+
+    // assert that exception is caught and does not propagate
+    assertDoesNotThrow(
+        () ->
+            notificationService.sendAdminManualQuotaConsumptionNotification(
+                userId, pipeline.getName(), previousQuotaTotals, updatedQuotaTotals));
   }
 
   /**

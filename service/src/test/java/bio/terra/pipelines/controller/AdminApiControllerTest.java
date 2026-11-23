@@ -617,8 +617,6 @@ class AdminApiControllerTest {
       when(quotasServiceMock.getQuotaTotalsForUserAndPipeline(
               userId, PipelinesEnum.ARRAY_IMPUTATION))
           .thenReturn(quotaTotals);
-      when(pipelinesServiceMock.getLatestPipeline(PipelinesEnum.ARRAY_IMPUTATION))
-          .thenReturn(MockMvcUtils.getTestPipeline());
 
       mockMvc
           .perform(
@@ -635,10 +633,9 @@ class AdminApiControllerTest {
       // unchanged by an allocation so previous and updated consumed are the same; available is
       // allocated - consumed
       verify(notificationService)
-          .configureAndSendUserQuotaChangedNotification(
+          .sendAdminQuotaAllocationNotification(
               userId,
-              MockMvcUtils.getTestPipeline().getDisplayName(),
-              "Your 'lifetime quota allocated' has been updated.",
+              PipelinesEnum.ARRAY_IMPUTATION,
               new UserQuotaTotals(3500, 3200),
               new UserQuotaTotals(4000, 3200));
     }
@@ -864,8 +861,6 @@ class AdminApiControllerTest {
       when(quotasServiceMock.manuallyConsumeQuotaForUserAndPipeline(
               userId, PipelinesEnum.ARRAY_IMPUTATION, 500, mockComments))
           .thenReturn(List.of(consumedAllocation));
-      when(pipelinesServiceMock.getLatestPipeline(PipelinesEnum.ARRAY_IMPUTATION))
-          .thenReturn(MockMvcUtils.getTestPipeline());
 
       MvcResult result =
           mockMvc
@@ -904,10 +899,9 @@ class AdminApiControllerTest {
       // the same (4000). Previous consumed is the pre-consumption total (3000), updated consumed
       // is the post-consumption total (3500), and available is 4000 - 3500.
       verify(notificationService)
-          .configureAndSendUserQuotaChangedNotification(
+          .sendAdminManualQuotaConsumptionNotification(
               userId,
-              MockMvcUtils.getTestPipeline().getDisplayName(),
-              "A manual adjustment was made to your 'lifetime quota consumed'.",
+              PipelinesEnum.ARRAY_IMPUTATION,
               new UserQuotaTotals(4000, 3000),
               new UserQuotaTotals(4000, 3500));
     }
@@ -939,7 +933,6 @@ class AdminApiControllerTest {
           .andExpect(status().isOk());
 
       verifyNoInteractions(notificationService);
-      verify(pipelinesServiceMock, never()).getLatestPipeline(any());
     }
 
     @Test

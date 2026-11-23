@@ -4,6 +4,7 @@ import static bio.terra.pipelines.app.controller.JobApiUtils.buildApiErrorReport
 
 import bio.terra.pipelines.app.configuration.internal.NotificationConfiguration;
 import bio.terra.pipelines.app.configuration.internal.PipelineConfigurations;
+import bio.terra.pipelines.common.utils.PipelinesEnum;
 import bio.terra.pipelines.db.entities.PipelineRun;
 import bio.terra.pipelines.generated.model.ApiErrorReport;
 import bio.terra.pipelines.model.Pipeline;
@@ -41,6 +42,12 @@ public class NotificationService {
   private final NotificationConfiguration notificationConfiguration;
   private final PipelineConfigurations pipelineConfigurations;
   private final ObjectMapper objectMapper;
+
+  // custom messages included in the quota changed email, describing what changed
+  private static final String QUOTA_ALLOCATED_EMAIL_MSG =
+      "Your 'lifetime quota allocated' has been updated.";
+  private static final String QUOTA_CONSUMED_EMAIL_MSG =
+      "A manual adjustment was made to your 'lifetime quota consumed'.";
 
   public NotificationService(
       PipelineRunsService pipelineRunsService,
@@ -141,6 +148,37 @@ public class NotificationService {
   }
 
   /**
+   * Configure and send an email notification that a user's quota has changed.
+   *
+   * @param userId the user's Sam id
+   * @param pipelineName the pipeline for which the quota changed
+   * @param customMessage message included in the email describing what changed
+   * @param previousQuotaTotals the user's quota totals before the change
+   * @param updatedQuotaTotals the user's quota totals after the change
+   */
+  private void configureAndSendUserQuotaChangedNotification(
+      String userId,
+      PipelinesEnum pipelineName,
+      String customMessage,
+      UserQuotaTotals previousQuotaTotals,
+      UserQuotaTotals updatedQuotaTotals) {
+    String pipelineDisplayName = pipelinesService.getLatestPipeline(pipelineName).getDisplayName();
+    String quotaAvailable =
+        String.valueOf(updatedQuotaTotals.totalAllocated() - updatedQuotaTotals.totalConsumed());
+
+    TeaspoonsUserQuotaChangedNotification notificationObj =
+        new TeaspoonsUserQuotaChangedNotification(
+            userId,
+            pipelineDisplayName,
+            customMessage,
+            previousQuotaTotals,
+            updatedQuotaTotals,
+            quotaAvailable);
+
+    publishNotificationMessage(notificationObj);
+  }
+
+  /**
    * Format an Instant as a date time string in UTC using the RFC-1123 date-time formatter, such as
    * 'Tue, 3 Jun 2008 11:05:30 GMT'.
    *
@@ -174,33 +212,36 @@ public class NotificationService {
   }
 
   /**
-   * Configure and send an email notification that a user's quota has changed. The quota available
-   * is derived from the updated quota totals.
+   * Send an email notification that an admin allocated additional quota to a user.
    *
    * @param userId the user's Sam id
-   * @param pipelineDisplayName the display name of the pipeline for which the quota changed
-   * @param customMessage message included in the email describing what changed
-   * @param previousQuotaTotals the user's quota totals before the change
-   * @param updatedQuotaTotals the user's quota totals after the change
+   * @param pipelineName the pipeline for which quota was allocated
+   * @param previousQuotaTotals the user's quota totals before the allocation
+   * @param updatedQuotaTotals the user's quota totals after the allocation
    */
-  public void configureAndSendUserQuotaChangedNotification(
+  public void sendAdminQuotaAllocationNotification(
       String userId,
-      String pipelineDisplayName,
-      String customMessage,
+      PipelinesEnum pipelineName,
       UserQuotaTotals previousQuotaTotals,
       UserQuotaTotals updatedQuotaTotals) {
-    String quotaAvailable =
-        String.valueOf(updatedQuotaTotals.totalAllocated() - updatedQuotaTotals.totalConsumed());
+    configureAndSendUserQuotaChangedNotification(
+        userId, pipelineName, QUOTA_ALLOCATED_EMAIL_MSG, previousQuotaTotals, updatedQuotaTotals);
+  }
 
-    TeaspoonsUserQuotaChangedNotification notificationObj =
-        new TeaspoonsUserQuotaChangedNotification(
-            userId,
-            pipelineDisplayName,
-            customMessage,
-            previousQuotaTotals,
-            updatedQuotaTotals,
-            quotaAvailable);
-
-    publishNotificationMessage(notificationObj);
+  /**
+   * Send an email notification that an admin manually consumed quota on behalf of a user.
+   *
+   * @param userId the user's Sam id
+   * @param pipelineName the pipeline for which quota was consumed
+   * @param previousQuotaTotals the user's quota totals before the consumption
+   * @param updatedQuotaTotals the user's quota totals after the consumption
+   */
+  public void sendAdminManualQuotaConsumptionNotification(
+      String userId,
+      PipelinesEnum pipelineName,
+      UserQuotaTotals previousQuotaTotals,
+      UserQuotaTotals updatedQuotaTotals) {
+    configureAndSendUserQuotaChangedNotification(
+        userId, pipelineName, QUOTA_CONSUMED_EMAIL_MSG, previousQuotaTotals, updatedQuotaTotals);
   }
 }
