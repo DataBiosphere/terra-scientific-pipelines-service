@@ -1170,8 +1170,7 @@ components:
 
     PipelineQuota:
       description: |
-        The quota for the pipeline. The default quota and units apply to the pipeline as a whole,
-        while the minimum and maximum quota consumed are specific to the pipeline version.
+        The quota definition for the pipeline.
       type: object
       required: [ pipelineName, defaultQuota, minQuotaConsumed, maxQuotaConsumed, quotaUnits ]
       properties:
