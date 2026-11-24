@@ -617,8 +617,6 @@ class AdminApiControllerTest {
       when(quotasServiceMock.getQuotaTotalsForUserAndPipeline(
               userId, PipelinesEnum.ARRAY_IMPUTATION))
           .thenReturn(quotaTotals);
-      when(pipelinesServiceMock.getLatestPipeline(PipelinesEnum.ARRAY_IMPUTATION))
-          .thenReturn(MockMvcUtils.getTestPipeline());
 
       mockMvc
           .perform(
@@ -631,10 +629,15 @@ class AdminApiControllerTest {
                           ApiQuotaAllocationSource.EXTERNAL_PAID, 500, mockComments, true)))
           .andExpect(status().isOk());
 
-      // previous limit is the new limit minus the allocated amount; available is limit - consumed
+      // previous allocated is the new total minus the allocated amount (4000 - 500); consumed is
+      // unchanged by an allocation so previous and updated consumed are the same; available is
+      // allocated - consumed
       verify(notificationService)
-          .configureAndSendUserQuotaChangedNotification(
-              userId, MockMvcUtils.getTestPipeline().getDisplayName(), 3500, 4000, 3200, 800);
+          .sendAdminQuotaAllocationNotification(
+              userId,
+              PipelinesEnum.ARRAY_IMPUTATION,
+              new UserQuotaTotals(3500, 3200),
+              new UserQuotaTotals(4000, 3200));
     }
 
     @Test
@@ -858,8 +861,6 @@ class AdminApiControllerTest {
       when(quotasServiceMock.manuallyConsumeQuotaForUserAndPipeline(
               userId, PipelinesEnum.ARRAY_IMPUTATION, 500, mockComments))
           .thenReturn(List.of(consumedAllocation));
-      when(pipelinesServiceMock.getLatestPipeline(PipelinesEnum.ARRAY_IMPUTATION))
-          .thenReturn(MockMvcUtils.getTestPipeline());
 
       MvcResult result =
           mockMvc
@@ -894,10 +895,15 @@ class AdminApiControllerTest {
       assertEquals(500, allocationResponse.getQuotaConsumed());
       assertEquals(mockComments, allocationResponse.getComments());
 
-      // the limit is unchanged by a consumption, so previous and new limits are the same
+      // the allocated total is unchanged by a consumption, so previous and updated allocated are
+      // the same (4000). Previous consumed is the pre-consumption total (3000), updated consumed
+      // is the post-consumption total (3500), and available is 4000 - 3500.
       verify(notificationService)
-          .configureAndSendUserQuotaChangedNotification(
-              userId, MockMvcUtils.getTestPipeline().getDisplayName(), 4000, 4000, 3500, 500);
+          .sendAdminManualQuotaConsumptionNotification(
+              userId,
+              PipelinesEnum.ARRAY_IMPUTATION,
+              new UserQuotaTotals(4000, 3000),
+              new UserQuotaTotals(4000, 3500));
     }
 
     @Test
@@ -927,7 +933,6 @@ class AdminApiControllerTest {
           .andExpect(status().isOk());
 
       verifyNoInteractions(notificationService);
-      verify(pipelinesServiceMock, never()).getLatestPipeline(any());
     }
 
     @Test

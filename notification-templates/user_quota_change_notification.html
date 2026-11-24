@@ -167,7 +167,7 @@
 
                             <!-- Title and Subtitle -->
                             <h2 class="title">Your quota for %pipelineDisplayName% has changed</h2>
-                            <p class="subtitle">Please reach out to <a style="color: #4e6888" href="mailto:data-science-services-support@broadinstitute.org">data-science-services-support@broadinstitute.org</a> if you have any questions.</p>
+                            <p class="subtitle"><strong>%customMessage%</strong> Please reach out to <a style="color: #4e6888" href="mailto:data-science-services-support@broadinstitute.org">data-science-services-support@broadinstitute.org</a> if you have any questions.</p>
 
                             <!-- Quota Details-->
                             <table width="100%" cellpadding="0" cellspacing="0"
@@ -185,28 +185,37 @@
                                             <!-- Previous Quota Limit -->
                                             <tr>
                                                 <td style="padding:12px 24px; font-weight:bold; border-bottom:1px solid #e5e7eb;">
-                                                    Previous Quota Limit
+                                                    Previous Lifetime Quota Allocated
                                                 </td>
                                                 <td align="right" style="padding:12px 24px; border-bottom:1px solid #e5e7eb;">
-                                                    %previousQuotaLimit%
+                                                    %previousQuotaAllocated%
                                                 </td>
                                             </tr>
-                                            <!-- New Quota Limit -->
+                                            <!-- Updated Quota Limit -->
                                             <tr>
                                                 <td style="padding:12px 24px; font-weight:bold; border-bottom:1px solid #e5e7eb;">
-                                                    New Quota Limit
+                                                    Updated Lifetime Quota Allocated
                                                 </td>
                                                 <td align="right" style="padding:12px 24px; border-bottom:1px solid #e5e7eb;">
-                                                    %newQuotaLimit%
+                                                    %updatedQuotaAllocated%
                                                 </td>
                                             </tr>
-                                            <!-- Quota Consumed -->
+                                            <!-- Previous Quota Consumed -->
                                             <tr>
                                                 <td style="padding:12px 24px; font-weight:bold; border-bottom:1px solid #e5e7eb;">
-                                                    Quota Consumed
+                                                    Previous Lifetime Quota Consumed
                                                 </td>
                                                 <td align="right" style="padding:12px 24px; border-bottom:1px solid #e5e7eb;">
-                                                    %quotaConsumedByUser%
+                                                    %previousQuotaConsumed%
+                                                </td>
+                                            </tr>
+                                            <!-- Updated Quota Consumed -->
+                                            <tr>
+                                                <td style="padding:12px 24px; font-weight:bold; border-bottom:1px solid #e5e7eb;">
+                                                    Updated Lifetime Quota Consumed
+                                                </td>
+                                                <td align="right" style="padding:12px 24px; border-bottom:1px solid #e5e7eb;">
+                                                    %updatedQuotaConsumed%
                                                 </td>
                                             </tr>
                                             <!-- Quota Available -->
