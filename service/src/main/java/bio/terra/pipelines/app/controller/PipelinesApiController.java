@@ -81,8 +81,9 @@ public class PipelinesApiController implements PipelinesApi {
     Pipeline pipelineInfo =
         pipelinesService.getPipeline(validatedPipelineName, pipelineVersion, showHiddenPipelines);
 
-    // Fetch the quota settings to attach to the pipeline details
-    PipelineQuota pipelineQuota = quotasService.getPipelineQuota(validatedPipelineName);
+    // Fetch the quota settings for the selected pipeline version
+    PipelineQuota pipelineQuota =
+        quotasService.getPipelineQuota(validatedPipelineName, pipelineInfo.getVersion());
     ApiPipelineQuota apiPipelineQuota = pipelineQuotaToApi(pipelineQuota);
 
     ApiPipelineWithDetails result = pipelineWithDetailsToApi(pipelineInfo);

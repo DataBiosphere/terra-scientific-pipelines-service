@@ -1170,7 +1170,7 @@ components:
 
     PipelineQuota:
       description: |
-        The quota for the pipeline.
+        The quota definition for the pipeline.
       type: object
       required: [ pipelineName, defaultQuota, minQuotaConsumed, maxQuotaConsumed, quotaUnits ]
       properties:

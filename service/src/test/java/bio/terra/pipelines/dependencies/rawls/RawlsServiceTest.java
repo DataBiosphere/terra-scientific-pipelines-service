@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.doThrow;
 
-import bio.terra.pipelines.app.configuration.internal.RetryConfiguration;
 import bio.terra.pipelines.dependencies.common.HealthCheck;
 import bio.terra.pipelines.model.PipelineInputDefinition;
 import bio.terra.pipelines.model.PipelineOutputDefinition;
@@ -23,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.backoff.FixedBackOffPolicy;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -31,8 +31,9 @@ class RawlsServiceTest extends BaseEmbeddedDbTest {
   @Autowired @InjectMocks RawlsService rawlsService;
   @MockitoBean RawlsClient rawlsClient;
 
-  final RetryConfiguration retryConfig = new RetryConfiguration();
-  RetryTemplate template = retryConfig.rawlsRetryTemplate();
+  @Autowired
+  @Qualifier("rawlsRetryTemplate")
+  RetryTemplate template;
 
   final Answer<Object> errorAnswer =
       invocation -> {
